@@ -1,7 +1,5 @@
 using UnityEngine;
 
-// Put this on your player (or camera). It tells every LiDAR material where
-// the player is and how far the "scan" reaches.
 [ExecuteAlways]
 public class LiDAR_origin : MonoBehaviour
 {
