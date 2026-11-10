@@ -1439,23 +1439,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardSystem
   collection:
   - {fileID: 11400000, guid: 5581c7cdc03d11144ac4cb97ef27debd, type: 2}
-  - {fileID: 11400000, guid: 963580a95597c054d9cc715e189efca9, type: 2}
   - {fileID: 11400000, guid: 55484fa6e8300704cb155cc18f3c046c, type: 2}
-  - {fileID: 11400000, guid: 24af03919daeebe48ad6a9980a5e37c5, type: 2}
   - {fileID: 11400000, guid: 9950d436b576ecf4497f02a4ebbba73d, type: 2}
-  - {fileID: 11400000, guid: 1342c6f3850fad14eab631a3ba15eac2, type: 2}
   - {fileID: 11400000, guid: 69aaf5b550c28b3409ec2ec4b6f3d372, type: 2}
-  - {fileID: 11400000, guid: 1811256cb5cc8da4abc7fff471f4fe81, type: 2}
+  - {fileID: 11400000, guid: 479900938ed93694d886490a9a5b2af5, type: 2}
   deck:
   - {fileID: 11400000, guid: 5581c7cdc03d11144ac4cb97ef27debd, type: 2}
-  - {fileID: 11400000, guid: 963580a95597c054d9cc715e189efca9, type: 2}
   - {fileID: 11400000, guid: 55484fa6e8300704cb155cc18f3c046c, type: 2}
-  - {fileID: 11400000, guid: 24af03919daeebe48ad6a9980a5e37c5, type: 2}
   - {fileID: 11400000, guid: 9950d436b576ecf4497f02a4ebbba73d, type: 2}
-  - {fileID: 11400000, guid: 1342c6f3850fad14eab631a3ba15eac2, type: 2}
   - {fileID: 11400000, guid: 69aaf5b550c28b3409ec2ec4b6f3d372, type: 2}
-  - {fileID: 11400000, guid: 1811256cb5cc8da4abc7fff471f4fe81, type: 2}
-  deckSize: 8
+  - {fileID: 11400000, guid: 479900938ed93694d886490a9a5b2af5, type: 2}
+  deckSize: 5
   handSize: 4
   autoStartNextTurn: 1
   nextTurnDelay: 0.5
