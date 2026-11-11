@@ -2,9 +2,6 @@ using UnityEngine;
 
 public enum MoveDirection { Forward, Back, Left, Right }
 
-// Put this on the ROOT of every room prefab (dungeon, boss room, cave...).
-// The root's origin should be the CENTER of the room floor, and the room's
-// +Z axis points toward the far wall (the way the player faces).
 public class RoomNode : MonoBehaviour
 {
     [Header("Room size (meters)")]
@@ -47,17 +44,14 @@ public class RoomNode : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        // Room bounds
         Gizmos.matrix = transform.localToWorldMatrix;
         Gizmos.color = new Color(0.2f, 1f, 0.6f, 0.6f);
         Gizmos.DrawWireCube(new Vector3(0f, 1.5f, 0f), new Vector3(width, 3f, depth));
 
-        // Player stand point + facing direction
         Gizmos.color = Color.yellow;
         Gizmos.DrawSphere(LocalAnchor + Vector3.up * 0.1f, 0.15f);
         Gizmos.DrawLine(LocalAnchor + Vector3.up * 0.1f, LocalAnchor + Vector3.up * 0.1f + Vector3.forward * 1.5f);
 
-        // Links to neighbors
         Gizmos.matrix = Matrix4x4.identity;
         Gizmos.color = Color.cyan;
         DrawLink(forward);

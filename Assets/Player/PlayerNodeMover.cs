@@ -2,35 +2,33 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(LiDAR_origin))]
 public class PlayerNodeMover : MonoBehaviour
 {
     [Header("Setup")]
     public RoomNode startRoom;
+    [Tooltip("Assign your camera transform here so movement knows where you are looking")]
+    public Transform cameraTransform;
 
     [Header("Movement")]
-    [Tooltip("Walking speed in meters per second. Longer distances take longer.")]
     public float moveSpeed = 4f;
-    [Tooltip("Shortest allowed move time, so tiny hops still have room for the head turns")]
     public float minDuration = 0.8f;
     public float heightOffset = 1f;
     public AnimationCurve ease = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-    [Header("Head turn")]
-    [Tooltip("Share of the move spent turning toward the destination at the start, and turning back to the room's facing at the end")]
-    [Range(0.05f, 0.5f)] public float turnFraction = 0.3f;
-
     public RoomNode CurrentRoom { get; private set; }
 
-    LiDAR_origin lidar;
     InputAction moveAction;
     bool moving;
-    bool inputArmed = true;   // must return to neutral before the next step
+    bool inputArmed = true;
 
     void Awake()
     {
-        lidar = GetComponent<LiDAR_origin>();
         moveAction = InputSystem.actions.FindAction("Move");
+
+        if (cameraTransform == null && Camera.main != null)
+        {
+            cameraTransform = Camera.main.transform;
+        }
     }
 
     void Start()
@@ -43,34 +41,65 @@ public class PlayerNodeMover : MonoBehaviour
         }
 
         CurrentRoom = startRoom;
-        transform.SetPositionAndRotation(
-            startRoom.AnchorPosition + Vector3.up * heightOffset,
-            startRoom.AnchorRotation);
-
-        lidar.range = startRoom.scanRange;
+        transform.position = startRoom.AnchorPosition + Vector3.up * heightOffset;
+        transform.rotation = startRoom.AnchorRotation;
     }
 
     void Update()
     {
-        if (moveAction == null || moving) return;
+        if (moveAction == null || moving || CurrentRoom == null) return;
 
         Vector2 input = moveAction.ReadValue<Vector2>();
 
-        // One step per push: wait until the input is released
         if (input.magnitude < 0.5f) { inputArmed = true; return; }
         if (!inputArmed) return;
         inputArmed = false;
 
-        if (Mathf.Abs(input.x) > Mathf.Abs(input.y))
-            TryMove(input.x > 0f ? MoveDirection.Right : MoveDirection.Left);
-        else
-            TryMove(input.y > 0f ? MoveDirection.Forward : MoveDirection.Back);
-    }
+        Transform cam = cameraTransform != null ? cameraTransform : (Camera.main != null ? Camera.main.transform : null);
+        if (cam == null) return;
 
-    void TryMove(MoveDirection dir)
-    {
-        RoomNode target = CurrentRoom.GetNeighbor(dir);
-        if (target != null) StartCoroutine(MoveTo(target));
+        Vector3 camForward = cam.forward;
+        camForward.y = 0f;
+        camForward.Normalize();
+
+        Vector3 camRight = cam.right;
+        camRight.y = 0f;
+        camRight.Normalize();
+
+        Vector3 desiredWorldDir = (camForward * input.y + camRight * input.x).normalized;
+
+        RoomNode bestTarget = null;
+        float bestDot = -999f;
+
+        if (CurrentRoom.forward != null)
+        {
+            Vector3 neighborDir = (CurrentRoom.forward.AnchorPosition - CurrentRoom.AnchorPosition).normalized;
+            float dot = Vector3.Dot(desiredWorldDir, neighborDir);
+            if (dot > bestDot) { bestDot = dot; bestTarget = CurrentRoom.forward; }
+        }
+        if (CurrentRoom.back != null)
+        {
+            Vector3 neighborDir = (CurrentRoom.back.AnchorPosition - CurrentRoom.AnchorPosition).normalized;
+            float dot = Vector3.Dot(desiredWorldDir, neighborDir);
+            if (dot > bestDot) { bestDot = dot; bestTarget = CurrentRoom.back; }
+        }
+        if (CurrentRoom.left != null)
+        {
+            Vector3 neighborDir = (CurrentRoom.left.AnchorPosition - CurrentRoom.AnchorPosition).normalized;
+            float dot = Vector3.Dot(desiredWorldDir, neighborDir);
+            if (dot > bestDot) { bestDot = dot; bestTarget = CurrentRoom.left; }
+        }
+        if (CurrentRoom.right != null)
+        {
+            Vector3 neighborDir = (CurrentRoom.right.AnchorPosition - CurrentRoom.AnchorPosition).normalized;
+            float dot = Vector3.Dot(desiredWorldDir, neighborDir);
+            if (dot > bestDot) { bestDot = dot; bestTarget = CurrentRoom.right; }
+        }
+
+        if (bestTarget != null && bestDot > 0.1f)
+        {
+            StartCoroutine(MoveTo(bestTarget));
+        }
     }
 
     IEnumerator MoveTo(RoomNode target)
@@ -78,19 +107,8 @@ public class PlayerNodeMover : MonoBehaviour
         moving = true;
 
         Vector3 startPos = transform.position;
-        Quaternion startRot = transform.rotation;
         Vector3 endPos = target.AnchorPosition + Vector3.up * heightOffset;
-        Quaternion endRot = target.AnchorRotation;
-        float startRange = lidar.range;
 
-        // Look toward where we're going (flat, so the head doesn't tilt)
-        Vector3 travel = endPos - startPos;
-        travel.y = 0f;
-        Quaternion lookRot = travel.sqrMagnitude > 0.0001f
-            ? Quaternion.LookRotation(travel.normalized, Vector3.up)
-            : startRot;
-
-        // Longer walk = longer animation
         float duration = Mathf.Max(minDuration, Vector3.Distance(startPos, endPos) / Mathf.Max(0.01f, moveSpeed));
 
         float t = 0f;
@@ -100,22 +118,12 @@ public class PlayerNodeMover : MonoBehaviour
             float tc = Mathf.Clamp01(t);
             float k = ease.Evaluate(tc);
 
-            // Turn toward the destination at the start...
-            float turnIn = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, turnFraction, tc));
-            // ...and back to the room's defined facing at the end
-            float turnOut = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1f - turnFraction, 1f, tc));
-
-            Quaternion rot = Quaternion.Slerp(startRot, lookRot, turnIn);
-            rot = Quaternion.Slerp(rot, endRot, turnOut);
-
             transform.position = Vector3.Lerp(startPos, endPos, k);
-            transform.rotation = rot;
-            lidar.range = Mathf.Lerp(startRange, target.scanRange, k);
 
             yield return null;
         }
 
-        transform.SetPositionAndRotation(endPos, endRot);
+        transform.position = endPos;
         CurrentRoom = target;
         moving = false;
     }

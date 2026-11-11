@@ -81,8 +81,8 @@ public class CardSystem : MonoBehaviour
         if (collection.Count == 0)
             Debug.LogWarning("[Cards] Collection is empty. Add CardData assets to Collection.");
 
-        //EnterExploration(); 
-        EnterCombat();
+        EnterExploration(); 
+        //EnterCombat();
     }
 
     void Update()
