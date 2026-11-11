@@ -39,6 +39,9 @@ public class MenuPanelFocus : MonoBehaviour
     {
         RememberSelection();
 
+        if (ControlRemapping.BlocksMenuBack)
+            return;
+
         bool backPressed =
             (Keyboard.current != null &&
              Keyboard.current.escapeKey.wasPressedThisFrame) ||
