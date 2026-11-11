@@ -797,7 +797,10 @@ PlayerSettings:
   webEnableSubmoduleStrippingCompatibility: 0
   webProgressiveAssetLoading: 0
   scriptingDefineSymbols:
-    Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
+    Android: SHERPA_ONNX
+    Server: SHERPA_ONNX
+    Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY;SHERPA_ONNX
+    iPhone: SHERPA_ONNX
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
