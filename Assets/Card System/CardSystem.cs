@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 
 public class CardSystem : MonoBehaviour
 {
-    public enum Mode { Play, DeckBuilder }
+    public enum Mode { Exploration, Combat, DeckBuilder }
 
     [Header("Cards")]
     public List<CardData> collection = new List<CardData>();
@@ -14,16 +14,17 @@ public class CardSystem : MonoBehaviour
 
     [Header("Rules")]
     public int deckSize = 8;
+    public int minDeckRequired = 5;
     public int handSize = 4;
 
     [Header("Turns")]
     public bool autoStartNextTurn = true;
     public float nextTurnDelay = 0.5f;
 
-    [Header("Combat & Movement Lock")]
-    [Tooltip("Lock player movement and camera when entering Play (Combat) mode")]
-    public bool lockPlayerInPlayMode = true;
-    [Tooltip("Tag of the player object to find for locking movement/camera")]
+    [Header("Movement & Camera Freeze")]
+    [Tooltip("Freeze player movement and camera when in Deck Builder or Combat modes")]
+    public bool freezePlayerInMenus = true;
+    [Tooltip("Tag of the player object to find for freezing movement/camera")]
     public string playerTag = "Player";
 
     [Header("Input Action Names (Matches your Input Actions Asset)")]
@@ -39,7 +40,7 @@ public class CardSystem : MonoBehaviour
     public string slot3Action = "SelectSlot3";
     public string slot4Action = "SelectSlot4";
 
-    public Mode CurrentMode { get; private set; } = Mode.Play;
+    public Mode CurrentMode { get; private set; } = Mode.Exploration;
     public bool IsPlayerTurn { get; private set; }
     public IReadOnlyList<CardData> Hand => hand;
     public CardData NextCard => queue.Count > 0 ? queue.Peek() : null;
@@ -80,20 +81,20 @@ public class CardSystem : MonoBehaviour
         if (collection.Count == 0)
             Debug.LogWarning("[Cards] Collection is empty. Add CardData assets to Collection.");
 
-        if (!TryStartPlay())
-            EnterBuilder();
+        //EnterExploration(); 
+        EnterCombat();
     }
 
     void Update()
     {
         if (Pressed(toggle)) ToggleMode();
 
-        if (CurrentMode == Mode.Play)
+        if (CurrentMode == Mode.Combat)
         {
             PlayInput();
             TickNextTurnTimer();
         }
-        else
+        else if (CurrentMode == Mode.DeckBuilder)
         {
             BuilderInput();
         }
@@ -119,15 +120,20 @@ public class CardSystem : MonoBehaviour
         if (Pressed(remove)) RemoveFromDeck(CurrentBrowsed());
     }
 
-    bool TryStartPlay()
+    public void EnterExploration()
     {
-        if (!DeckIsValid(out string reason))
-        {
-            Debug.LogWarning($"[Cards] Deck not playable: {reason}");
-            return false;
-        }
+        CurrentMode = Mode.Exploration;
+        IsPlayerTurn = false;
+        nextTurnTimer = -1f;
 
-        CurrentMode = Mode.Play;
+        SetPlayerMovementEnabled(true);
+        Debug.Log("[Cards] Entered Exploration Mode.");
+        StateChanged?.Invoke();
+    }
+
+    public void EnterCombat()
+    {
+        CurrentMode = Mode.Combat;
         hand.Clear();
         queue.Clear();
         nextTurnTimer = -1f;
@@ -143,12 +149,82 @@ public class CardSystem : MonoBehaviour
         selected = 0;
         SetPlayerMovementEnabled(false);
         StartPlayerTurn();
-        return true;
+        Debug.Log("[Cards] Entered Combat Mode.");
+    }
+
+    public void EnterBuilder()
+    {
+        if (CurrentMode == Mode.Combat)
+        {
+            Debug.Log("[Cards] Cannot open Deck Builder while in Combat.");
+            return;
+        }
+
+        CurrentMode = Mode.DeckBuilder;
+        IsPlayerTurn = false;
+        nextTurnTimer = -1f;
+
+        SetPlayerMovementEnabled(false);
+
+        browsable.Clear();
+        foreach (CardData c in collection)
+            if (c != null && !browsable.Contains(c)) browsable.Add(c);
+        browseIndex = Mathf.Clamp(browseIndex, 0, Mathf.Max(0, browsable.Count - 1));
+
+        LogBuilder("Entered Deck Builder Mode.");
+    }
+
+    void ToggleMode()
+    {
+        if (CurrentMode == Mode.Combat) return;
+
+        if (CurrentMode == Mode.Exploration)
+        {
+            EnterBuilder();
+        }
+        else if (CurrentMode == Mode.DeckBuilder)
+        {
+            if (deck.Count < minDeckRequired)
+            {
+                Debug.LogWarning($"[Cards] Cannot return to Exploration! Your deck has {deck.Count} cards, but you need at least {minDeckRequired} cards.");
+                return;
+            }
+
+            EnterExploration();
+        }
+    }
+
+    void SetPlayerMovementEnabled(bool enabled)
+    {
+        if (!freezePlayerInMenus) return;
+
+        GameObject playerObj = GameObject.FindWithTag(playerTag);
+        if (playerObj == null) playerObj = transform.root.gameObject;
+
+        foreach (var mb in playerObj.GetComponentsInChildren<MonoBehaviour>())
+        {
+            string typeName = mb.GetType().Name.ToLower();
+            if (mb != this && (typeName.Contains("move") || typeName.Contains("look") || typeName.Contains("controller") || typeName.Contains("player")))
+            {
+                mb.enabled = enabled;
+            }
+        }
+
+        if (!enabled)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
 
     public void StartPlayerTurn()
     {
-        if (CurrentMode != Mode.Play || hand.Count == 0) return;
+        if (CurrentMode != Mode.Combat || hand.Count == 0) return;
 
         IsPlayerTurn = true;
         LogHand("Your turn - play one card");
@@ -214,7 +290,7 @@ public class CardSystem : MonoBehaviour
 
     public void SetSelection(int index)
     {
-        if (CurrentMode != Mode.Play) return;
+        if (CurrentMode != Mode.Combat) return;
         if (index < 0 || index >= hand.Count) return;
 
         if (selected != index)
@@ -226,66 +302,11 @@ public class CardSystem : MonoBehaviour
 
     public void PlayIndexDirectly(int index)
     {
-        if (CurrentMode != Mode.Play) return;
+        if (CurrentMode != Mode.Combat) return;
         if (index < 0 || index >= hand.Count) return;
 
         selected = index;
         PlaySelected();
-    }
-
-    void ToggleMode()
-    {
-        if (CurrentMode == Mode.Play)
-        {
-            EnterBuilder();
-        }
-        else if (TryStartPlay())
-        {
-            Debug.Log("[Cards] Left deck builder. New run started.");
-        }
-    }
-
-    void EnterBuilder()
-    {
-        CurrentMode = Mode.DeckBuilder;
-        IsPlayerTurn = false;
-        nextTurnTimer = -1f;
-        SetPlayerMovementEnabled(true);
-
-        browsable.Clear();
-        foreach (CardData c in collection)
-            if (c != null && !browsable.Contains(c)) browsable.Add(c);
-        browseIndex = Mathf.Clamp(browseIndex, 0, Mathf.Max(0, browsable.Count - 1));
-
-        LogBuilder("Deck builder");
-    }
-
-    void SetPlayerMovementEnabled(bool enabled)
-    {
-        if (!lockPlayerInPlayMode) return;
-
-        GameObject playerObj = GameObject.FindWithTag(playerTag);
-        if (playerObj == null) playerObj = transform.root.gameObject;
-
-        foreach (var mb in playerObj.GetComponentsInChildren<MonoBehaviour>())
-        {
-            string typeName = mb.GetType().Name.ToLower();
-            if (mb != this && (typeName.Contains("move") || typeName.Contains("look") || typeName.Contains("controller") || typeName.Contains("player")))
-            {
-                mb.enabled = enabled;
-            }
-        }
-
-        if (!enabled)
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-        else
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
     }
 
     CardData CurrentBrowsed() => browsable.Count > 0 ? browsable[browseIndex] : null;
@@ -297,7 +318,7 @@ public class CardSystem : MonoBehaviour
         LogBuilder("Browsing");
     }
 
-    void AddToDeck(CardData card)
+    public void AddToDeck(CardData card)
     {
         if (card == null) return;
         if (deck.Count >= deckSize) { Debug.Log($"[Cards] Deck full."); return; }
@@ -308,20 +329,11 @@ public class CardSystem : MonoBehaviour
         LogBuilder($"Added {card.displayName}");
     }
 
-    void RemoveFromDeck(CardData card)
+    public void RemoveFromDeck(CardData card)
     {
         if (card == null) return;
         if (deck.Remove(card)) LogBuilder($"Removed {card.displayName}");
         else Debug.Log($"[Cards] Not in deck.");
-    }
-
-    bool DeckIsValid(out string reason)
-    {
-        reason = null;
-        if (deckSize <= handSize) reason = $"Deck Size must be bigger than Hand Size";
-        else if (deck.Count != deckSize) reason = $"deck has {deck.Count} cards, needs {deckSize}";
-        else if (deck.Contains(null)) reason = "deck contains null slot";
-        return reason == null;
     }
 
     InputAction Find(string actionName)

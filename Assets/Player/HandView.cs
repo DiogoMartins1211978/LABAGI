@@ -85,7 +85,7 @@ public class HandView : MonoBehaviour
     {
         if (cardSystem == null) return;
 
-        if (cardSystem.CurrentMode != CardSystem.Mode.Play)
+        if (cardSystem.CurrentMode != CardSystem.Mode.Combat)
         {
             ClearAll();
             return;

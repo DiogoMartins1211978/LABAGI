@@ -1,7 +1,5 @@
 using UnityEngine;
 
-// Create cards with: Assets > Create > Cards > Card
-// Later, make subclasses (e.g. DamageCard) and override OnPlay for real effects.
 [CreateAssetMenu(menuName = "Cards/Card", fileName = "NewCard")]
 public class CardData : ScriptableObject
 {
@@ -16,7 +14,6 @@ public class CardData : ScriptableObject
     [Tooltip("Picture shown on the front of the card")]
     public Texture2D frontArt;
 
-    // Spawns this card's prefab, filled with this card's data
     public CardView CreateView(Transform parent = null)
     {
         if (cardPrefab == null)
@@ -30,7 +27,6 @@ public class CardData : ScriptableObject
         return view;
     }
 
-    // Placeholder: replace or override with the real effect
     public virtual void OnPlay(GameObject player)
     {
         Debug.Log($"[Card] {displayName} played (no effect yet)");

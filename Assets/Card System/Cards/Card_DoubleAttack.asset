@@ -16,4 +16,4 @@ MonoBehaviour:
   description: 
   maxCopies: 1
   cardPrefab: {fileID: 5402039138179560827, guid: ff40f389a2a765c4eb34c758a0ca0d36, type: 3}
-  frontArt: {fileID: 2800000, guid: 3b91004d1abfa1a4ea1df36719ba1fa5, type: 3}
+  frontArt: {fileID: 2800000, guid: 858f9b4a63183734185edc86daa133bc, type: 3}

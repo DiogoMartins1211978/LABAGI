@@ -5,8 +5,7 @@ using UnityEngine;
 public class CardView : MonoBehaviour
 {
     [Header("Faces")]
-    public Renderer frontRenderer;
-    public Renderer backRenderer;
+    public Renderer iconRenderer;
 
     public CardData Data { get; private set; }
     public bool FaceUp { get; private set; } = true;
@@ -22,13 +21,15 @@ public class CardView : MonoBehaviour
     {
         Data = data;
 
-        if (frontRenderer != null && data.frontArt != null)
+        if (iconRenderer != null && data.frontArt != null)
         {
-            block ??= new MaterialPropertyBlock();
-            frontRenderer.GetPropertyBlock(block);
-            block.SetTexture(BaseMapId, data.frontArt);
-            block.SetTexture(MainTexId, data.frontArt);
-            frontRenderer.SetPropertyBlock(block);
+            iconRenderer.material.mainTexture = data.frontArt;
+
+            float texAspect = (float)data.frontArt.width / data.frontArt.height;
+
+            Vector3 currentScale = iconRenderer.transform.localScale;
+            currentScale.x = currentScale.y * texAspect;
+            iconRenderer.transform.localScale = currentScale;
         }
     }
 
