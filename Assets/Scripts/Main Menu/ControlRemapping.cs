@@ -21,8 +21,6 @@ public class ControlRemapping : MonoBehaviour
         [NonSerialized] public int bindingIndex;
         [NonSerialized] public TMP_Text label;
         [NonSerialized] public UnityAction click;
-        [NonSerialized] public EventTrigger trigger;
-        [NonSerialized] public EventTrigger.Entry selectionEvent;
 
         public BindingRow(string name, string action, string path)
         {
@@ -34,10 +32,10 @@ public class ControlRemapping : MonoBehaviour
 
     [SerializeField] BindingRow[] bindings =
     {
-        new BindingRow("Forward", "Player/Move", "<Keyboard>/w"),
-        new BindingRow("Backward", "Player/Move", "<Keyboard>/s"),
-        new BindingRow("Left", "Player/Move", "<Keyboard>/a"),
-        new BindingRow("Right", "Player/Move", "<Keyboard>/d")
+        new BindingRow("Forward", "Player/Move", "<Keyboard>/upArrow"),
+        new BindingRow("Backward", "Player/Move", "<Keyboard>/downArrow"),
+        new BindingRow("Left", "Player/Move", "<Keyboard>/leftArrow"),
+        new BindingRow("Right", "Player/Move", "<Keyboard>/rightArrow")
     };
     [SerializeField] Button restoreDefaultsButton;
     [SerializeField] TMP_Text statusLabel;
@@ -54,6 +52,7 @@ public class ControlRemapping : MonoBehaviour
     bool actionWasEnabled;
     bool waitingForRelease;
     bool restoring;
+    GameObject lastNarratedSelection;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetSession()
@@ -102,12 +101,6 @@ public class ControlRemapping : MonoBehaviour
             row.click = () => BeginCapture(row);
             row.button.onClick.AddListener(row.click);
 
-            // Dynamic narration includes the current binding instead of a fixed key name.
-            row.trigger = row.button.GetComponent<EventTrigger>();
-            if (row.trigger == null) row.trigger = row.button.gameObject.AddComponent<EventTrigger>();
-            row.selectionEvent = new EventTrigger.Entry { eventID = EventTriggerType.Select };
-            row.selectionEvent.callback.AddListener(_ => Say(CurrentLabel(row)));
-            row.trigger.triggers.Add(row.selectionEvent);
         }
         if (restoreDefaultsButton != null)
             restoreDefaultsButton.onClick.AddListener(RestoreDefaults);
@@ -135,6 +128,24 @@ public class ControlRemapping : MonoBehaviour
 
         if (row.label != null) row.label.text = row.displayName + ": Press a key...";
         SetStatus("Choose a key for " + row.displayName + ". Escape cancels.");
+    }
+
+    void LateUpdate()
+    {
+        // Observe selection without adding EventTrigger, which also intercepts
+        // scroll/drag events and prevents them from reaching the ScrollRect.
+        GameObject selected = EventSystem.current != null
+            ? EventSystem.current.currentSelectedGameObject : null;
+        if (selected == lastNarratedSelection) return;
+        lastNarratedSelection = selected;
+        if (selected == null || IsCapturing) return;
+
+        foreach (var row in bindings)
+            if (row.button != null && row.button.gameObject == selected && row.bindingIndex >= 0)
+            {
+                Say(CurrentLabel(row));
+                break;
+            }
     }
 
     void Update()
@@ -272,7 +283,6 @@ public class ControlRemapping : MonoBehaviour
         foreach (var row in bindings)
         {
             if (row.button != null && row.click != null) row.button.onClick.RemoveListener(row.click);
-            if (row.trigger != null && row.selectionEvent != null) row.trigger.triggers.Remove(row.selectionEvent);
         }
         if (restoreDefaultsButton != null)
             restoreDefaultsButton.onClick.RemoveListener(RestoreDefaults);
