@@ -1,0 +1,260 @@
+{
+    "gridSpacing": 10.0,
+    "defaultPrefab": "Room_Standard",
+    "rooms": [
+        {
+            "id": "R01",
+            "prefab": "Room_Start"
+        },
+        {
+            "id": "R02",
+            "from": "R01",
+            "dir": "N"
+        },
+        {
+            "id": "R03",
+            "from": "R02",
+            "dir": "N"
+        },
+        {
+            "id": "R04",
+            "from": "R03",
+            "dir": "E"
+        },
+        {
+            "id": "R05",
+            "from": "R04",
+            "dir": "E"
+        },
+        {
+            "id": "R06",
+            "from": "R05",
+            "dir": "N"
+        },
+        {
+            "id": "R07",
+            "from": "R06",
+            "dir": "N"
+        },
+        {
+            "id": "R08",
+            "from": "R07",
+            "dir": "W"
+        },
+        {
+            "id": "R09",
+            "from": "R08",
+            "dir": "W",
+            "prefab": "Room_Pillar"
+        },
+        {
+            "id": "R10",
+            "from": "R03",
+            "dir": "W"
+        },
+        {
+            "id": "R11",
+            "from": "R10",
+            "dir": "W"
+        },
+        {
+            "id": "R12",
+            "from": "R11",
+            "dir": "N"
+        },
+        {
+            "id": "R13",
+            "from": "R12",
+            "dir": "N"
+        },
+        {
+            "id": "R14",
+            "from": "R11",
+            "dir": "S"
+        },
+        {
+            "id": "R15",
+            "from": "R14",
+            "dir": "W"
+        },
+        {
+            "id": "R16",
+            "from": "R15",
+            "dir": "W",
+            "prefab": "Room_Crate"
+        },
+        {
+            "id": "R17",
+            "from": "R05",
+            "dir": "S"
+        },
+        {
+            "id": "R18",
+            "from": "R17",
+            "dir": "S"
+        },
+        {
+            "id": "R19",
+            "from": "R18",
+            "dir": "E"
+        },
+        {
+            "id": "R20",
+            "from": "R19",
+            "dir": "E"
+        },
+        {
+            "id": "R21",
+            "from": "R20",
+            "dir": "N"
+        },
+        {
+            "id": "R22",
+            "from": "R21",
+            "dir": "E",
+            "prefab": "Room_Pillar"
+        },
+        {
+            "id": "R23",
+            "from": "R18",
+            "dir": "W"
+        },
+        {
+            "id": "R24",
+            "from": "R23",
+            "dir": "S"
+        },
+        {
+            "id": "R25",
+            "from": "R24",
+            "dir": "S"
+        },
+        {
+            "id": "R26",
+            "from": "R07",
+            "dir": "N"
+        },
+        {
+            "id": "R27",
+            "from": "R26",
+            "dir": "N"
+        },
+        {
+            "id": "R28",
+            "from": "R27",
+            "dir": "E"
+        },
+        {
+            "id": "R29",
+            "from": "R28",
+            "dir": "E"
+        },
+        {
+            "id": "R30",
+            "from": "R29",
+            "dir": "S"
+        },
+        {
+            "id": "R31",
+            "from": "R27",
+            "dir": "W"
+        },
+        {
+            "id": "R32",
+            "from": "R31",
+            "dir": "W"
+        },
+        {
+            "id": "R33",
+            "from": "R32",
+            "dir": "N"
+        },
+        {
+            "id": "R34",
+            "from": "R33",
+            "dir": "W",
+            "prefab": "Room_Crate"
+        },
+        {
+            "id": "R35",
+            "from": "R13",
+            "dir": "N"
+        },
+        {
+            "id": "R36",
+            "from": "R35",
+            "dir": "E"
+        },
+        {
+            "id": "R37",
+            "from": "R36",
+            "dir": "N"
+        },
+        {
+            "id": "R38",
+            "from": "R37",
+            "dir": "N"
+        },
+        {
+            "id": "R39",
+            "from": "R38",
+            "dir": "E"
+        },
+        {
+            "id": "R40",
+            "from": "R39",
+            "dir": "E"
+        },
+        {
+            "id": "R41",
+            "from": "R25",
+            "dir": "E"
+        },
+        {
+            "id": "R42",
+            "from": "R41",
+            "dir": "E"
+        },
+        {
+            "id": "R43",
+            "from": "R42",
+            "dir": "S"
+        },
+        {
+            "id": "R44",
+            "from": "R43",
+            "dir": "E"
+        },
+        {
+            "id": "R45",
+            "from": "R40",
+            "dir": "N"
+        },
+        {
+            "id": "R46",
+            "from": "R45",
+            "dir": "N"
+        },
+        {
+            "id": "R47",
+            "from": "R46",
+            "dir": "W"
+        },
+        {
+            "id": "R48",
+            "from": "R47",
+            "dir": "W"
+        },
+        {
+            "id": "R49",
+            "from": "R48",
+            "dir": "N"
+        },
+        {
+            "id": "R50",
+            "from": "R49",
+            "dir": "N",
+            "prefab": "Room_Exit"
+        }
+    ]
+}
