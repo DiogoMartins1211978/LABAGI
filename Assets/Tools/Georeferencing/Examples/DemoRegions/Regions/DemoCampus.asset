@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
+  m_Name: DemoCampus
+  m_EditorClassIdentifier: 
+  regionId: demo-3
+  displayName: DemoCampus
+  level: 3
+  parent: {fileID: 11400000, guid: 52e977dfcf8341a7aae9e236995cc5a9, type: 2}
+  contentIds:
+  - demo-content-3
+  libraryRegionId: 
+  regionColor: {r: 0.9, g: 0.342, b: 0.8304666, a: 1}
+  boundary: 2
+  centre:
+    latitude: 41.178
+    longitude: -8.608
+  radiusKilometres: 0.15
+  polygons:
+  - outline:
+      points:
+      - latitude: 41.17952621819563
+        longitude: -8.609266002654977
+      - latitude: 41.17736610376703
+        longitude: -8.60916407871241
+      - latitude: 41.17736206610326
+        longitude: -8.609067519187874
+      - latitude: 41.17707135365796
+        longitude: -8.60819311904902
+      - latitude: 41.17705520292872
+        longitude: -8.608059008598275
+      - latitude: 41.17707135365796
+        longitude: -8.608010728836007
+      - latitude: 41.177063278293836
+        longitude: -8.60795172023768
+      - latitude: 41.17713595653508
+        longitude: -8.607731779098458
+      - latitude: 41.17827053417859
+        longitude: -8.606573064804024
+      - latitude: 41.17845626387819
+        longitude: -8.606492598533578
+      - latitude: 41.17856931648095
+        longitude: -8.606379945754952
+      - latitude: 41.17858950442521
+        longitude: -8.606326301574654
+      - latitude: 41.178710631960016
+        longitude: -8.60620291995997
+      - latitude: 41.17881964654982
+        longitude: -8.606090267181344
+      - latitude: 41.179094201009036
+        longitude: -8.605843503951974
+      - latitude: 41.17961100628081
+        longitude: -8.605505545616097
+      - latitude: 41.1795302557259
+        longitude: -8.609260638236947
+    holes: []
+  description: Synthetic demonstration polygon, not an administrative boundary.
+  dataSource: Synthetic Test Area; Not An Administrative Boundary
+  legacyRadiusMetres: -1

@@ -1,0 +1,57 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements">
+    <ui:VisualElement class="tool-root">
+        <ui:VisualElement class="topbar">
+            <editor:ObjectField name="catalog" label="Catalogue" class="catalogue-field" />
+            <ui:VisualElement class="topbar-actions">
+                <ui:Button name="newCatalog" text="New Catalogue" />
+                <ui:Button name="addRegion" class="menu-button">
+                    <ui:Label text="Add Region" picking-mode="Ignore" />
+                    <ui:VisualElement class="menu-arrow" picking-mode="Ignore" />
+                </ui:Button>
+                <ui:Button name="refresh" text="Refresh" />
+                <ui:Button name="sample" text="Create Demo" />
+                <ui:Button name="save" text="Save Assets" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="toolbar-separator" />
+        <ui:VisualElement class="columns">
+            <ui:VisualElement class="region-list">
+                <ui:Label text="Regions" class="panel-title" />
+                <ui:TextField name="filter" label="Filter" />
+                <ui:ScrollView name="regionList" />
+            </ui:VisualElement>
+            <ui:VisualElement class="centre-panel">
+                <ui:Label text="Click To Select | Double-Click To Frame | Drag To Pan | Wheel To Zoom" class="hint" />
+                <ui:VisualElement name="mapHost" class="map-host">
+                    <ui:Button name="loadMap" text="Refresh Map" class="map-refresh" />
+                    <ui:Button name="osmAttribution" text="Map: (c) OpenStreetMap Contributors" class="map-attribution" />
+                    <ui:Button name="mapData" text="OSM Boundaries" tooltip="Export An OpenStreetMap Relation As GeoJSON, Then Import It In Region Details" class="map-data" />
+                </ui:VisualElement>
+                <ui:VisualElement class="toolbar map-actions">
+                    <ui:DoubleField name="latitude" label="Latitude" />
+                    <ui:DoubleField name="longitude" label="Longitude" />
+                    <ui:Button name="centreMap" text="Centre Map" />
+                    <ui:Button name="worldMap" text="World View" />
+                </ui:VisualElement>
+                <ui:Label name="result" class="result" />
+            </ui:VisualElement>
+            <ui:VisualElement class="inspector-panel">
+                <ui:Label text="Region Details" class="panel-title" />
+                <ui:ScrollView name="inspector">
+                    <ui:VisualElement name="inspectorContent" class="inspector-content" />
+                    <ui:VisualElement name="regionActions" class="region-actions">
+                        <ui:Label text="Region Actions" class="panel-title" />
+                        <ui:Button name="fitRegion" text="Frame Region" />
+                        <ui:Button name="setCircle" text="Circle At Test Position" />
+                        <ui:Button name="drawPolygon" text="Draw Polygon" />
+                        <ui:Button name="applyPolygon" text="Apply Polygon" />
+                        <ui:Button name="clearDraft" text="Clear Draft" />
+                        <ui:Button name="import" text="Import Boundary GeoJSON" />
+                        <ui:Button name="removeRegion" text="Remove Region" tooltip="Remove This Region And Its Subregions From The Catalogue; Assets Are Kept And Undo Is Available" class="remove-region" />
+                    </ui:VisualElement>
+                </ui:ScrollView>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Label name="status" text="Loading Map View" class="hint" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -4,7 +4,6 @@ Each tool has its own folder, namespace and short setup guide.
 
 - `Events/`: reusable channels, Inspector listeners and optional metrics recording.
 - `Georeferencing/`: region authoring, coordinate tests, inherited content and location sources.
-- Offline analysis is kept outside Unity, in `Tools/Metrics/` at the project root.
 
 Keep asset creation menus direct: `Create > Events > Signal`, for example. Tools own their data and configuration. Gameplay components connect to them through public methods or channels; tools should not depend on a specific player, room or UI implementation.
 

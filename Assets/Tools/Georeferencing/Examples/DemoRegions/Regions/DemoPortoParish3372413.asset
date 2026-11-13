@@ -1,0 +1,195 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
+  m_Name: DemoPortoParish3372413
+  m_EditorClassIdentifier:
+  regionId: demo-porto-parish-3372413
+  libraryRegionId: osm:relation:3372413
+  displayName: "Ramalde"
+  level: 5
+  parent: {fileID: 11400000, guid: 52e977dfcf8341a7aae9e236995cc5a9, type: 2}
+  contentIds:
+  - demo-content-parish-3372413
+  regionColor: {r: 0.342, g: 0.9, b: 0.6201335320200001, a: 1}
+  boundary: 2
+  centre:
+    latitude: 41.178
+    longitude: -8.608
+  radiusKilometres: 0.1
+  polygons:
+  - outline:
+      points:
+      - latitude: 41.1794834
+        longitude: -8.6296378
+      - latitude: 41.1792398
+        longitude: -8.6319684
+      - latitude: 41.1792118
+        longitude: -8.6324014
+      - latitude: 41.1792561
+        longitude: -8.6326603
+      - latitude: 41.1840506
+        longitude: -8.6413213
+      - latitude: 41.1842715
+        longitude: -8.6417686
+      - latitude: 41.1843254
+        longitude: -8.6421654
+      - latitude: 41.1843187
+        longitude: -8.6426328
+      - latitude: 41.1840551
+        longitude: -8.6433387
+      - latitude: 41.1832526
+        longitude: -8.6450357
+      - latitude: 41.1817387
+        longitude: -8.6480016
+      - latitude: 41.1811473
+        longitude: -8.648996
+      - latitude: 41.1810473
+        longitude: -8.6491642
+      - latitude: 41.1809484
+        longitude: -8.6493306
+      - latitude: 41.1809154
+        longitude: -8.649386
+      - latitude: 41.1800014
+        longitude: -8.6509229
+      - latitude: 41.1788086
+        longitude: -8.6530592
+      - latitude: 41.1785204
+        longitude: -8.6539292
+      - latitude: 41.1778902
+        longitude: -8.6560563
+      - latitude: 41.1774354
+        longitude: -8.6577835
+      - latitude: 41.1771962
+        longitude: -8.6575529
+      - latitude: 41.1761923
+        longitude: -8.6568747
+      - latitude: 41.1762218
+        longitude: -8.6593925
+      - latitude: 41.176036
+        longitude: -8.6596874
+      - latitude: 41.1750599
+        longitude: -8.6615651
+      - latitude: 41.1746721
+        longitude: -8.662019
+      - latitude: 41.1741336
+        longitude: -8.6624463
+      - latitude: 41.1739379
+        longitude: -8.6620351
+      - latitude: 41.1739996
+        longitude: -8.6618944
+      - latitude: 41.1740254
+        longitude: -8.661553
+      - latitude: 41.1740132
+        longitude: -8.6606714
+      - latitude: 41.1739608
+        longitude: -8.6605554
+      - latitude: 41.173616
+        longitude: -8.6602634
+      - latitude: 41.1732799
+        longitude: -8.6598331
+      - latitude: 41.1721685
+        longitude: -8.6585951
+      - latitude: 41.1709382
+        longitude: -8.6568881
+      - latitude: 41.170734
+        longitude: -8.6570136
+      - latitude: 41.1690999
+        longitude: -8.6583828
+      - latitude: 41.1667704
+        longitude: -8.6603446
+      - latitude: 41.1663654
+        longitude: -8.6607372
+      - latitude: 41.1647357
+        longitude: -8.6620415
+      - latitude: 41.1639593
+        longitude: -8.662717
+      - latitude: 41.1635722
+        longitude: -8.6629987
+      - latitude: 41.1600486
+        longitude: -8.6419719
+      - latitude: 41.160956
+        longitude: -8.640969
+      - latitude: 41.1625025
+        longitude: -8.6393668
+      - latitude: 41.1627438
+        longitude: -8.6390186
+      - latitude: 41.1623161
+        longitude: -8.6383864
+      - latitude: 41.1603983
+        longitude: -8.6362491
+      - latitude: 41.1601281
+        longitude: -8.6360849
+      - latitude: 41.159759
+        longitude: -8.6359384
+      - latitude: 41.1602172
+        longitude: -8.6348259
+      - latitude: 41.1604907
+        longitude: -8.634221
+      - latitude: 41.1605684
+        longitude: -8.6328138
+      - latitude: 41.1608036
+        longitude: -8.6329447
+      - latitude: 41.1613453
+        longitude: -8.6331371
+      - latitude: 41.1613997
+        longitude: -8.6331556
+      - latitude: 41.1620504
+        longitude: -8.6324678
+      - latitude: 41.1626308
+        longitude: -8.6312493
+      - latitude: 41.1638114
+        longitude: -8.6333601
+      - latitude: 41.1643189
+        longitude: -8.6321825
+      - latitude: 41.1646715
+        longitude: -8.631618
+      - latitude: 41.1659112
+        longitude: -8.628818
+      - latitude: 41.166071
+        longitude: -8.6283732
+      - latitude: 41.1666294
+        longitude: -8.6265092
+      - latitude: 41.1667245
+        longitude: -8.6264359
+      - latitude: 41.1670348
+        longitude: -8.6251871
+      - latitude: 41.1670774
+        longitude: -8.6251732
+      - latitude: 41.1727188
+        longitude: -8.6264011
+      - latitude: 41.1729176
+        longitude: -8.6264739
+      - latitude: 41.1747833
+        longitude: -8.6275273
+      - latitude: 41.1758743
+        longitude: -8.6278414
+      - latitude: 41.1763148
+        longitude: -8.6261833
+      - latitude: 41.17634
+        longitude: -8.626069
+      - latitude: 41.176398
+        longitude: -8.6258634
+      - latitude: 41.1764857
+        longitude: -8.6256064
+      - latitude: 41.176589
+        longitude: -8.6254662
+      - latitude: 41.1777032
+        longitude: -8.6245803
+      - latitude: 41.1802514
+        longitude: -8.6226817
+      - latitude: 41.1801278
+        longitude: -8.6238435
+      - latitude: 41.1794834
+        longitude: -8.6296378
+    holes: []
+  dataSource: "OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3372413"
+  description: "Civil Parish; OSM administrative level 8."

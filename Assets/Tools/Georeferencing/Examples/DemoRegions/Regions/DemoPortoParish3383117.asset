@@ -1,0 +1,519 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
+  m_Name: DemoPortoParish3383117
+  m_EditorClassIdentifier:
+  regionId: demo-porto-parish-3383117
+  libraryRegionId: osm:relation:3383117
+  displayName: "Campanh\u00e3"
+  level: 5
+  parent: {fileID: 11400000, guid: 52e977dfcf8341a7aae9e236995cc5a9, type: 2}
+  contentIds:
+  - demo-content-parish-3383117
+  regionColor: {r: 0.9, g: 0.342, b: 0.528577645319999, a: 1}
+  boundary: 2
+  centre:
+    latitude: 41.178
+    longitude: -8.608
+  radiusKilometres: 0.1
+  polygons:
+  - outline:
+      points:
+      - latitude: 41.1670501
+        longitude: -8.5882043
+      - latitude: 41.1666403
+        longitude: -8.5883916
+      - latitude: 41.1663557
+        longitude: -8.5885093
+      - latitude: 41.1642901
+        longitude: -8.5893634
+      - latitude: 41.1630221
+        longitude: -8.5903852
+      - latitude: 41.1614373
+        longitude: -8.5917498
+      - latitude: 41.1609536
+        longitude: -8.5920428
+      - latitude: 41.1607417
+        longitude: -8.5921043
+      - latitude: 41.1604363
+        longitude: -8.5922566
+      - latitude: 41.1578089
+        longitude: -8.5937995
+      - latitude: 41.1575347
+        longitude: -8.5930951
+      - latitude: 41.1574679
+        longitude: -8.5928211
+      - latitude: 41.1570704
+        longitude: -8.5911908
+      - latitude: 41.1565573
+        longitude: -8.5910796
+      - latitude: 41.1565037
+        longitude: -8.5911876
+      - latitude: 41.1562226
+        longitude: -8.5911191
+      - latitude: 41.1556627
+        longitude: -8.5911077
+      - latitude: 41.1535505
+        longitude: -8.5911634
+      - latitude: 41.1533916
+        longitude: -8.59121
+      - latitude: 41.1527709
+        longitude: -8.5917695
+      - latitude: 41.1526518
+        longitude: -8.5911485
+      - latitude: 41.1525433
+        longitude: -8.5910069
+      - latitude: 41.1520752
+        longitude: -8.5908321
+      - latitude: 41.1517283
+        longitude: -8.5904833
+      - latitude: 41.1504886
+        longitude: -8.5904353
+      - latitude: 41.1502769
+        longitude: -8.5904251
+      - latitude: 41.1500491
+        longitude: -8.5902283
+      - latitude: 41.1499181
+        longitude: -8.590279
+      - latitude: 41.1493306
+        longitude: -8.5880663
+      - latitude: 41.1471364
+        longitude: -8.5890705
+      - latitude: 41.1469294
+        longitude: -8.5889891
+      - latitude: 41.1465943
+        longitude: -8.5883054
+      - latitude: 41.1465546
+        longitude: -8.5881545
+      - latitude: 41.1465482
+        longitude: -8.5879417
+      - latitude: 41.1460804
+        longitude: -8.5875412
+      - latitude: 41.1457498
+        longitude: -8.5876269
+      - latitude: 41.1456561
+        longitude: -8.5875293
+      - latitude: 41.1455958
+        longitude: -8.5873489
+      - latitude: 41.1452788
+        longitude: -8.5874528
+      - latitude: 41.1451108
+        longitude: -8.587619
+      - latitude: 41.144826
+        longitude: -8.5874732
+      - latitude: 41.1442659
+        longitude: -8.5872864
+      - latitude: 41.1440216
+        longitude: -8.587328
+      - latitude: 41.1437206
+        longitude: -8.5872435
+      - latitude: 41.1435387
+        longitude: -8.5872751
+      - latitude: 41.1434085
+        longitude: -8.5871893
+      - latitude: 41.1429495
+        longitude: -8.5871355
+      - latitude: 41.1427655
+        longitude: -8.5870508
+      - latitude: 41.1420407
+        longitude: -8.5876768
+      - latitude: 41.1410776
+        longitude: -8.5864078
+      - latitude: 41.1414986
+        longitude: -8.5857883
+      - latitude: 41.1421532
+        longitude: -8.5849783
+      - latitude: 41.1422839
+        longitude: -8.5839702
+      - latitude: 41.142424
+        longitude: -8.5820928
+      - latitude: 41.142358
+        longitude: -8.5801802
+      - latitude: 41.1422006
+        longitude: -8.5791378
+      - latitude: 41.1418914
+        longitude: -8.577905
+      - latitude: 41.1413123
+        longitude: -8.5769489
+      - latitude: 41.1399579
+        longitude: -8.5757632
+      - latitude: 41.1417542
+        longitude: -8.5743067
+      - latitude: 41.1423049
+        longitude: -8.5738805
+      - latitude: 41.1422547
+        longitude: -8.5737729
+      - latitude: 41.1416931
+        longitude: -8.5732207
+      - latitude: 41.1416204
+        longitude: -8.5731395
+      - latitude: 41.141755
+        longitude: -8.5729407
+      - latitude: 41.1418713
+        longitude: -8.5729334
+      - latitude: 41.1420021
+        longitude: -8.5728698
+      - latitude: 41.1421015
+        longitude: -8.5727831
+      - latitude: 41.1422462
+        longitude: -8.5726746
+      - latitude: 41.1425439
+        longitude: -8.5724856
+      - latitude: 41.1427472
+        longitude: -8.5724604
+      - latitude: 41.1429661
+        longitude: -8.5725199
+      - latitude: 41.1430221
+        longitude: -8.5724118
+      - latitude: 41.1424896
+        longitude: -8.5718749
+      - latitude: 41.1424747
+        longitude: -8.5718296
+      - latitude: 41.142477
+        longitude: -8.5717825
+      - latitude: 41.1424872
+        longitude: -8.5717499
+      - latitude: 41.1428767
+        longitude: -8.5712926
+      - latitude: 41.1436798
+        longitude: -8.5699869
+      - latitude: 41.1437296
+        longitude: -8.5698902
+      - latitude: 41.1437574
+        longitude: -8.5698032
+      - latitude: 41.143783
+        longitude: -8.5697476
+      - latitude: 41.1438147
+        longitude: -8.5695395
+      - latitude: 41.144193
+        longitude: -8.5692784
+      - latitude: 41.1445724
+        longitude: -8.5693558
+      - latitude: 41.1447332
+        longitude: -8.5695371
+      - latitude: 41.1450141
+        longitude: -8.5698461
+      - latitude: 41.1451606
+        longitude: -8.569962
+      - latitude: 41.1452918
+        longitude: -8.5700647
+      - latitude: 41.1459602
+        longitude: -8.5696502
+      - latitude: 41.1466122
+        longitude: -8.5693305
+      - latitude: 41.1467994
+        longitude: -8.5688432
+      - latitude: 41.1467971
+        longitude: -8.5687093
+      - latitude: 41.1467306
+        longitude: -8.5682454
+      - latitude: 41.1468253
+        longitude: -8.5680267
+      - latitude: 41.1467875
+        longitude: -8.5673104
+      - latitude: 41.1465135
+        longitude: -8.5667083
+      - latitude: 41.1462311
+        longitude: -8.5666083
+      - latitude: 41.1462179
+        longitude: -8.5665161
+      - latitude: 41.1463892
+        longitude: -8.5661779
+      - latitude: 41.1464301
+        longitude: -8.5656351
+      - latitude: 41.1464717
+        longitude: -8.5654204
+      - latitude: 41.1464613
+        longitude: -8.5648501
+      - latitude: 41.1463337
+        longitude: -8.5646163
+      - latitude: 41.1462059
+        longitude: -8.5644469
+      - latitude: 41.145988
+        longitude: -8.5641145
+      - latitude: 41.1463678
+        longitude: -8.5636888
+      - latitude: 41.146732
+        longitude: -8.5633792
+      - latitude: 41.1470297
+        longitude: -8.5632045
+      - latitude: 41.1473112
+        longitude: -8.5631197
+      - latitude: 41.1474547
+        longitude: -8.562972
+      - latitude: 41.1476541
+        longitude: -8.56284
+      - latitude: 41.1477811
+        longitude: -8.5626674
+      - latitude: 41.1481075
+        longitude: -8.5624373
+      - latitude: 41.1485454
+        longitude: -8.5624276
+      - latitude: 41.1486644
+        longitude: -8.5624782
+      - latitude: 41.1488311
+        longitude: -8.5623708
+      - latitude: 41.1493062
+        longitude: -8.5624326
+      - latitude: 41.1494584
+        longitude: -8.5624089
+      - latitude: 41.1496305
+        longitude: -8.5623
+      - latitude: 41.149696
+        longitude: -8.5621595
+      - latitude: 41.1498247
+        longitude: -8.5615409
+      - latitude: 41.1497581
+        longitude: -8.5612205
+      - latitude: 41.1496389
+        longitude: -8.5608879
+      - latitude: 41.1495874
+        longitude: -8.5608165
+      - latitude: 41.1495823
+        longitude: -8.5606671
+      - latitude: 41.1496111
+        longitude: -8.5605819
+      - latitude: 41.1503108
+        longitude: -8.5595977
+      - latitude: 41.1503583
+        longitude: -8.5594129
+      - latitude: 41.1503824
+        longitude: -8.5589693
+      - latitude: 41.1504892
+        longitude: -8.5587091
+      - latitude: 41.1507318
+        longitude: -8.5584225
+      - latitude: 41.1510334
+        longitude: -8.5581618
+      - latitude: 41.1514781
+        longitude: -8.5578882
+      - latitude: 41.1518137
+        longitude: -8.5574607
+      - latitude: 41.151981
+        longitude: -8.5573384
+      - latitude: 41.1525422
+        longitude: -8.556711
+      - latitude: 41.1526082
+        longitude: -8.5565879
+      - latitude: 41.1526936
+        longitude: -8.5563038
+      - latitude: 41.1528831
+        longitude: -8.5559729
+      - latitude: 41.1530113
+        longitude: -8.5552894
+      - latitude: 41.1529361
+        longitude: -8.5549198
+      - latitude: 41.1529603
+        longitude: -8.5542682
+      - latitude: 41.152931
+        longitude: -8.5539592
+      - latitude: 41.1528462
+        longitude: -8.5533946
+      - latitude: 41.1529493
+        longitude: -8.5533005
+      - latitude: 41.1532011
+        longitude: -8.5531953
+      - latitude: 41.1534271
+        longitude: -8.5528121
+      - latitude: 41.1535552
+        longitude: -8.5527416
+      - latitude: 41.1536432
+        longitude: -8.5525077
+      - latitude: 41.1538133
+        longitude: -8.552411
+      - latitude: 41.1539133
+        longitude: -8.5523461
+      - latitude: 41.154352
+        longitude: -8.552098
+      - latitude: 41.1544461
+        longitude: -8.5519965
+      - latitude: 41.1546634
+        longitude: -8.5525927
+      - latitude: 41.1548558
+        longitude: -8.5532592
+      - latitude: 41.1549691
+        longitude: -8.5538202
+      - latitude: 41.1550679
+        longitude: -8.5543308
+      - latitude: 41.1552335
+        longitude: -8.5552096
+      - latitude: 41.1554414
+        longitude: -8.5562449
+      - latitude: 41.1557455
+        longitude: -8.557508
+      - latitude: 41.1559044
+        longitude: -8.558076
+      - latitude: 41.1561438
+        longitude: -8.5587344
+      - latitude: 41.1580425
+        longitude: -8.5615413
+      - latitude: 41.1585953
+        longitude: -8.5609172
+      - latitude: 41.1589396
+        longitude: -8.5608486
+      - latitude: 41.1592271
+        longitude: -8.5609776
+      - latitude: 41.1598386
+        longitude: -8.5613738
+      - latitude: 41.16089
+        longitude: -8.5621388
+      - latitude: 41.161522
+        longitude: -8.5631364
+      - latitude: 41.1622973
+        longitude: -8.5643868
+      - latitude: 41.1629252
+        longitude: -8.5653271
+      - latitude: 41.1632874
+        longitude: -8.5655951
+      - latitude: 41.1641946
+        longitude: -8.5657491
+      - latitude: 41.1653791
+        longitude: -8.5659937
+      - latitude: 41.1656394
+        longitude: -8.5661035
+      - latitude: 41.1662395
+        longitude: -8.566451
+      - latitude: 41.1668642
+        longitude: -8.5668671
+      - latitude: 41.1674794
+        longitude: -8.5684113
+      - latitude: 41.1675259
+        longitude: -8.5687627
+      - latitude: 41.1675209
+        longitude: -8.5700836
+      - latitude: 41.1675665
+        longitude: -8.5702277
+      - latitude: 41.1676906
+        longitude: -8.5704965
+      - latitude: 41.1677946
+        longitude: -8.5706133
+      - latitude: 41.1679071
+        longitude: -8.5706997
+      - latitude: 41.1681388
+        longitude: -8.570751
+      - latitude: 41.1696454
+        longitude: -8.5705151
+      - latitude: 41.1698462
+        longitude: -8.5704446
+      - latitude: 41.1700178
+        longitude: -8.5702994
+      - latitude: 41.1700914
+        longitude: -8.5701864
+      - latitude: 41.1703726
+        longitude: -8.569487
+      - latitude: 41.1711276
+        longitude: -8.5676089
+      - latitude: 41.171213
+        longitude: -8.5674328
+      - latitude: 41.1714478
+        longitude: -8.567183
+      - latitude: 41.1715699
+        longitude: -8.5671097
+      - latitude: 41.1717301
+        longitude: -8.5670767
+      - latitude: 41.1720189
+        longitude: -8.5671166
+      - latitude: 41.1736018
+        longitude: -8.5678164
+      - latitude: 41.1739193
+        longitude: -8.5678639
+      - latitude: 41.1741344
+        longitude: -8.5677593
+      - latitude: 41.1756891
+        longitude: -8.5660765
+      - latitude: 41.1757551
+        longitude: -8.566043
+      - latitude: 41.1758923
+        longitude: -8.5660552
+      - latitude: 41.176055
+        longitude: -8.5661926
+      - latitude: 41.1772846
+        longitude: -8.5678327
+      - latitude: 41.1782339
+        longitude: -8.5691881
+      - latitude: 41.1786155
+        longitude: -8.5696787
+      - latitude: 41.179206
+        longitude: -8.5703764
+      - latitude: 41.1794615
+        longitude: -8.5706123
+      - latitude: 41.1797519
+        longitude: -8.5709623
+      - latitude: 41.1799884
+        longitude: -8.5715312
+      - latitude: 41.1790993
+        longitude: -8.571811
+      - latitude: 41.1787751
+        longitude: -8.5718727
+      - latitude: 41.1783693
+        longitude: -8.5720471
+      - latitude: 41.1783035
+        longitude: -8.5721172
+      - latitude: 41.1779823
+        longitude: -8.5726526
+      - latitude: 41.1779256
+        longitude: -8.5731445
+      - latitude: 41.1778703
+        longitude: -8.5733434
+      - latitude: 41.1776762
+        longitude: -8.5735664
+      - latitude: 41.1775552
+        longitude: -8.5738978
+      - latitude: 41.1775158
+        longitude: -8.5742269
+      - latitude: 41.177532
+        longitude: -8.5743312
+      - latitude: 41.1778238
+        longitude: -8.5752519
+      - latitude: 41.1779355
+        longitude: -8.5757787
+      - latitude: 41.1779367
+        longitude: -8.5759577
+      - latitude: 41.177879
+        longitude: -8.5762568
+      - latitude: 41.1778378
+        longitude: -8.5767395
+      - latitude: 41.177998
+        longitude: -8.5779352
+      - latitude: 41.1779815
+        longitude: -8.5781428
+      - latitude: 41.1780154
+        longitude: -8.5785482
+      - latitude: 41.1778341
+        longitude: -8.5786598
+      - latitude: 41.1776453
+        longitude: -8.5788417
+      - latitude: 41.1774019
+        longitude: -8.5791452
+      - latitude: 41.1772259
+        longitude: -8.5793647
+      - latitude: 41.1761765
+        longitude: -8.5807612
+      - latitude: 41.1755785
+        longitude: -8.5819915
+      - latitude: 41.1748829
+        longitude: -8.582697
+      - latitude: 41.1741074
+        longitude: -8.5837347
+      - latitude: 41.1743542
+        longitude: -8.5845634
+      - latitude: 41.1689238
+        longitude: -8.5872931
+      - latitude: 41.168426
+        longitude: -8.5875284
+      - latitude: 41.1673773
+        longitude: -8.5880704
+      - latitude: 41.1670501
+        longitude: -8.5882043
+    holes: []
+  dataSource: "OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3383117"
+  description: "Civil Parish; OSM administrative level 8."
