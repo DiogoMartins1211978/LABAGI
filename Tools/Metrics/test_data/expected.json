@@ -1,0 +1,44 @@
+{
+  "sessions": 3,
+  "runs": 5,
+  "roomEntries": 12,
+  "roomsVisited": 11,
+  "roomsCompleted": 9,
+  "combats": 7,
+  "victories": 4,
+  "confirmedDecisions": 12,
+  "cancelledDecisions": 1,
+  "incompleteDecisions": 1,
+  "meanDecisionSeconds": 6.475,
+  "attemptsToBoss": 3,
+  "signals": 41,
+  "signalCounts": {
+    "panel.opened": 10,
+    "panel.closed": 7,
+    "exploration.started": 5,
+    "feedback.played": 7,
+    "help.requested": 12
+  },
+  "decisionContexts": {
+    "path": {
+      "count": 3,
+      "mean": 5.066666666666666,
+      "median": 3.2
+    },
+    "card": {
+      "count": 3,
+      "mean": 7.199999999999999,
+      "median": 4.3
+    },
+    "target": {
+      "count": 3,
+      "mean": 4.1,
+      "median": 2.8
+    },
+    "reward": {
+      "count": 3,
+      "mean": 9.533333333333333,
+      "median": 6.7
+    }
+  }
+}
