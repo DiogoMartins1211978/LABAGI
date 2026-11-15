@@ -24,7 +24,10 @@ public class RoomNode : MonoBehaviour
     [Tooltip("LiDAR range used while the player is in this room")]
     public float scanRange = 12f;
 
-    // Local position of the stand point (floor level)
+    [Header("Encounter")]
+    [Tooltip("Optional. Where an enemy stands in this room. If empty, a spot ahead of the player is used.")]
+    public Transform enemySpawnPoint;
+    [HideInInspector] public Enemy enemy;
     Vector3 LocalAnchor => new Vector3(width * (widthSplit - 0.5f), 0f, depth * (depthBehind - 0.5f));
 
     public Vector3 AnchorPosition => transform.TransformPoint(LocalAnchor);
@@ -35,9 +38,9 @@ public class RoomNode : MonoBehaviour
         switch (dir)
         {
             case MoveDirection.Forward: return forward;
-            case MoveDirection.Back:    return back;
-            case MoveDirection.Left:    return left;
-            case MoveDirection.Right:   return right;
+            case MoveDirection.Back: return back;
+            case MoveDirection.Left: return left;
+            case MoveDirection.Right: return right;
         }
         return null;
     }
@@ -58,6 +61,12 @@ public class RoomNode : MonoBehaviour
         DrawLink(back);
         DrawLink(left);
         DrawLink(right);
+
+        if (enemySpawnPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(enemySpawnPoint.position + Vector3.up * 0.5f, 0.4f);
+        }
     }
 
     void DrawLink(RoomNode other)

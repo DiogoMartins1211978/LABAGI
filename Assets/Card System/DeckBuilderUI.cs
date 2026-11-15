@@ -75,7 +75,7 @@ public class DeckBuilderUI : MonoBehaviour
 
             if (hasCard)
             {
-                CardData card = cardSystem.deck[i];
+                CombatManager card = cardSystem.deck[i];
                 GameObject item = Instantiate(cardUiPrefab, targetRow);
                 SetupCardSlotUI(item, card, isInDeck: true);
             }
@@ -90,7 +90,7 @@ public class DeckBuilderUI : MonoBehaviour
     {
         ClearContainer(collectionContainer);
 
-        List<CardData> uniqueCollection = new List<CardData>(new HashSet<CardData>(cardSystem.collection));
+        List<CombatManager> uniqueCollection = new List<CombatManager>(new HashSet<CombatManager>(cardSystem.collection));
         int totalCards = uniqueCollection.Count;
 
         int rowsForCards = Mathf.CeilToInt((float)Mathf.Max(1, totalCards) / collectionRowCapacity);
@@ -118,7 +118,7 @@ public class DeckBuilderUI : MonoBehaviour
         }
     }
 
-    void SetupCardSlotUI(GameObject item, CardData card, bool isInDeck)
+    void SetupCardSlotUI(GameObject item, CombatManager card, bool isInDeck)
     {
         TMP_Text titleText = item.GetComponentInChildren<TMP_Text>();
         if (titleText != null) titleText.text = card.displayName;

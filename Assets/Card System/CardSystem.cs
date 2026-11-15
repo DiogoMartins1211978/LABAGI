@@ -9,8 +9,8 @@ public class CardSystem : MonoBehaviour
     public enum Mode { Exploration, Combat, DeckBuilder }
 
     [Header("Cards")]
-    public List<CardData> collection = new List<CardData>();
-    public List<CardData> deck = new List<CardData>();
+    public List<CombatManager> collection = new List<CombatManager>();
+    public List<CombatManager> deck = new List<CombatManager>();
 
     [Header("Rules")]
     public int deckSize = 8;
@@ -42,21 +42,21 @@ public class CardSystem : MonoBehaviour
 
     public Mode CurrentMode { get; private set; } = Mode.Exploration;
     public bool IsPlayerTurn { get; private set; }
-    public IReadOnlyList<CardData> Hand => hand;
-    public CardData NextCard => queue.Count > 0 ? queue.Peek() : null;
+    public IReadOnlyList<CombatManager> Hand => hand;
+    public CombatManager NextCard => queue.Count > 0 ? queue.Peek() : null;
     public int SelectedIndex => selected;
 
     public event Action TurnStarted;
-    public event Action<CardData> CardPlayed;
+    public event Action<CombatManager> CardPlayed;
     public event Action TurnEnded;
     public event Action StateChanged;
 
-    readonly List<CardData> hand = new List<CardData>();
-    readonly Queue<CardData> queue = new Queue<CardData>();
+    readonly List<CombatManager> hand = new List<CombatManager>();
+    readonly Queue<CombatManager> queue = new Queue<CombatManager>();
     int selected;
     float nextTurnTimer = -1f;
 
-    readonly List<CardData> browsable = new List<CardData>();
+    readonly List<CombatManager> browsable = new List<CombatManager>();
     int browseIndex;
 
     InputAction prev, next, confirm, remove, toggle;
@@ -138,7 +138,7 @@ public class CardSystem : MonoBehaviour
         queue.Clear();
         nextTurnTimer = -1f;
 
-        var shuffled = new List<CardData>(deck);
+        var shuffled = new List<CombatManager>(deck);
         Shuffle(shuffled);
         for (int i = 0; i < shuffled.Count; i++)
         {
@@ -167,7 +167,7 @@ public class CardSystem : MonoBehaviour
         SetPlayerMovementEnabled(false);
 
         browsable.Clear();
-        foreach (CardData c in collection)
+        foreach (CombatManager c in collection)
             if (c != null && !browsable.Contains(c)) browsable.Add(c);
         browseIndex = Mathf.Clamp(browseIndex, 0, Mathf.Max(0, browsable.Count - 1));
 
@@ -273,7 +273,7 @@ public class CardSystem : MonoBehaviour
             return;
         }
 
-        CardData card = hand[selected];
+        CombatManager card = hand[selected];
         IsPlayerTurn = false;
 
         card.OnPlay(gameObject);
@@ -309,7 +309,7 @@ public class CardSystem : MonoBehaviour
         PlaySelected();
     }
 
-    CardData CurrentBrowsed() => browsable.Count > 0 ? browsable[browseIndex] : null;
+    CombatManager CurrentBrowsed() => browsable.Count > 0 ? browsable[browseIndex] : null;
 
     void MoveBrowse(int dir)
     {
@@ -318,7 +318,7 @@ public class CardSystem : MonoBehaviour
         LogBuilder("Browsing");
     }
 
-    public void AddToDeck(CardData card)
+    public void AddToDeck(CombatManager card)
     {
         if (card == null) return;
         if (deck.Count >= deckSize) { Debug.Log($"[Cards] Deck full."); return; }
@@ -329,7 +329,7 @@ public class CardSystem : MonoBehaviour
         LogBuilder($"Added {card.displayName}");
     }
 
-    public void RemoveFromDeck(CardData card)
+    public void RemoveFromDeck(CombatManager card)
     {
         if (card == null) return;
         if (deck.Remove(card)) LogBuilder($"Removed {card.displayName}");
@@ -347,14 +347,14 @@ public class CardSystem : MonoBehaviour
 
     static bool Pressed(InputAction a) => a != null && a.WasPressedThisFrame();
 
-    static int Count(List<CardData> list, CardData card)
+    static int Count(List<CombatManager> list, CombatManager card)
     {
         int n = 0;
-        foreach (CardData c in list) if (c == card) n++;
+        foreach (CombatManager c in list) if (c == card) n++;
         return n;
     }
 
-    static void Shuffle(List<CardData> list)
+    static void Shuffle(List<CombatManager> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
         {

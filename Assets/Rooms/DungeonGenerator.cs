@@ -25,8 +25,9 @@ public class DungeonGenerator : MonoBehaviour
     {
         public string id;
         public string from;
-        public string dir;    // "N", "S", "E", "W"
-        public string prefab; // Optional
+        public string dir;
+        public string prefab;
+        public string enemy;
     }
 
     [Serializable]
@@ -39,10 +40,21 @@ public class DungeonGenerator : MonoBehaviour
     [Header("Configuration")]
     [SerializeField] private TextAsset _layoutJson;
     [SerializeField] private List<PrefabMapping> _roomPrefabs = new List<PrefabMapping>();
+    [Tooltip("Enemy key (used in the JSON 'enemy' field) -> enemy prefab.")]
+    [SerializeField] private List<PrefabMapping> _enemyPrefabs = new List<PrefabMapping>();
+
+    [Header("Enemy placement")]
+    [Tooltip("Place each enemy at a random point inside its room. If off, uses the room's enemySpawnPoint (or a default spot).")]
+    [SerializeField] private bool _randomEnemySpawn = true;
+    [Tooltip("Keeps enemies this far from the room's walls (meters).")]
+    [SerializeField] private float _enemyWallMargin = 1f;
+    [Tooltip("Keeps enemies at least this far from where the player stands (meters).")]
+    [SerializeField] private float _enemyMinDistanceFromPlayer = 3f;
     [Tooltip("Room the player starts in. If not found, the first placed room is used.")]
     [SerializeField] private string _startRoomId = "R01";
 
     private readonly Dictionary<string, GameObject> _prefabLookup = new Dictionary<string, GameObject>();
+    private readonly Dictionary<string, GameObject> _enemyLookup = new Dictionary<string, GameObject>();
     private readonly Dictionary<string, RoomNode> _nodesById = new Dictionary<string, RoomNode>();
     private readonly Dictionary<Vector2Int, RoomNode> _nodesByGrid = new Dictionary<Vector2Int, RoomNode>();
 
@@ -59,6 +71,13 @@ public class DungeonGenerator : MonoBehaviour
         {
             if (!string.IsNullOrEmpty(mapping.key) && mapping.prefab != null)
                 _prefabLookup[mapping.key] = mapping.prefab;
+        }
+
+        _enemyLookup.Clear();
+        foreach (var mapping in _enemyPrefabs)
+        {
+            if (!string.IsNullOrEmpty(mapping.key) && mapping.prefab != null)
+                _enemyLookup[mapping.key] = mapping.prefab;
         }
     }
 
@@ -93,9 +112,7 @@ public class DungeonGenerator : MonoBehaviour
         var gridCoords = new Dictionary<string, Vector2Int>();
         RoomNode firstNode = null;
 
-        // Place rooms. A room may appear in the JSON before its parent; we retry
-        // deferred rooms until nothing more can be placed.
-        List<RoomEntry> pending = new List<RoomEntry>(data.rooms);
+       List<RoomEntry> pending = new List<RoomEntry>(data.rooms);
         while (pending.Count > 0)
         {
             var deferred = new List<RoomEntry>();
@@ -123,10 +140,8 @@ public class DungeonGenerator : MonoBehaviour
             pending = deferred;
         }
 
-        // Link every pair of rooms that sit next to each other on the grid.
         StitchAllAdjacentRooms();
 
-        // Hand the start room to the player.
         RoomNode startNode = null;
         if (!_nodesById.TryGetValue(_startRoomId, out startNode))
         {
@@ -153,7 +168,6 @@ public class DungeonGenerator : MonoBehaviour
         float w = data.cellWidth;
         float d = data.cellDepth;
 
-        // Rooms only touch if the spacing matches their real size.
         if ((w <= 0f || d <= 0f) && _prefabLookup.TryGetValue(data.defaultPrefab, out GameObject prefab))
         {
             RoomNode rn = prefab.GetComponent<RoomNode>();
@@ -210,7 +224,65 @@ public class DungeonGenerator : MonoBehaviour
         gridCoords[entry.id] = coord;
         _nodesById[entry.id] = node;
         _nodesByGrid[coord] = node;
+
+        SpawnEnemy(entry, node);
         return node;
+    }
+
+    private void SpawnEnemy(RoomEntry entry, RoomNode room)
+    {
+        if (string.IsNullOrEmpty(entry.enemy)) return;
+
+        if (!_enemyLookup.TryGetValue(entry.enemy, out GameObject enemyPrefab))
+        {
+            Debug.LogError($"[DungeonGenerator] Missing enemy prefab mapping for key '{entry.enemy}' (room '{entry.id}')");
+            return;
+        }
+
+        Vector3 pos;
+        if (_randomEnemySpawn)
+        {
+            pos = RandomPointInRoom(room);
+        }
+        else
+        {
+            pos = room.enemySpawnPoint != null
+                ? room.enemySpawnPoint.position
+                : room.transform.TransformPoint(new Vector3(0f, 0f, room.depth * 0.25f));
+        }
+
+        Vector3 toPlayer = room.AnchorPosition - pos;
+        toPlayer.y = 0f;
+        Quaternion rot = toPlayer.sqrMagnitude > 0.001f ? Quaternion.LookRotation(toPlayer) : Quaternion.identity;
+
+        GameObject enemyObj = Instantiate(enemyPrefab, pos, rot, room.transform);
+        enemyObj.name = $"{entry.id}_Enemy_{entry.enemy}";
+
+        Enemy enemy = enemyObj.GetComponent<Enemy>();
+        if (enemy == null) enemy = enemyObj.AddComponent<Enemy>();
+
+        enemy.Room = room;
+        room.enemy = enemy;
+    }
+
+    private Vector3 RandomPointInRoom(RoomNode room)
+    {
+        float halfW = Mathf.Max(0f, room.width * 0.5f - _enemyWallMargin);
+        float halfD = Mathf.Max(0f, room.depth * 0.5f - _enemyWallMargin);
+        Vector3 playerLocal = room.transform.InverseTransformPoint(room.AnchorPosition);
+
+        Vector3 local = Vector3.zero;
+        for (int i = 0; i < 20; i++) 
+        {
+            local = new Vector3(
+                UnityEngine.Random.Range(-halfW, halfW),
+                0f,
+                UnityEngine.Random.Range(-halfD, halfD));
+
+            if (Vector3.Distance(local, playerLocal) >= _enemyMinDistanceFromPlayer) break;
+        }
+
+        return room.transform.TransformPoint(local);
     }
 
     private void StitchAllAdjacentRooms()

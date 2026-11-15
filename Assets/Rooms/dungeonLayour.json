@@ -9,17 +9,20 @@
         {
             "id": "R02",
             "from": "R01",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "TestEnemy"
         },
         {
             "id": "R03",
             "from": "R02",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "TestEnemy"
         },
         {
             "id": "R04",
             "from": "R03",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "TestEnemy"
         },
         {
             "id": "R05",
@@ -50,7 +53,8 @@
         {
             "id": "R10",
             "from": "R03",
-            "dir": "W"
+            "dir": "W",
+            "enemy": "TestEnemy"
         },
         {
             "id": "R11",

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,6 +21,21 @@ public class PlayerNodeMover : MonoBehaviour
     [Range(0f, 1f)] public float minAlignment = 0.1f;
 
     public RoomNode CurrentRoom { get; private set; }
+    public bool IsMoving => moving;
+
+    public bool BlockLeaving { get; set; }
+    
+    public event Action<RoomNode> LeaveBlocked;
+
+    public bool InputLocked { get; private set; }
+
+    public event Action<RoomNode> RoomEntered;
+
+    public void SetInputLocked(bool locked)
+    {
+        InputLocked = locked;
+        if (locked) inputArmed = false;
+    }
 
     private static readonly MoveDirection[] AllDirections =
     {
@@ -37,6 +53,12 @@ public class PlayerNodeMover : MonoBehaviour
 
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
+
+        if (cameraTransform == null)
+        {
+            Camera childCam = GetComponentInChildren<Camera>(true);
+            if (childCam != null) cameraTransform = childCam.transform;
+        }
     }
 
     void ResolveMoveAction()
@@ -84,21 +106,24 @@ public class PlayerNodeMover : MonoBehaviour
         StopAllCoroutines();
         moving = false;
         inputArmed = true;
+        InputLocked = false;
+        BlockLeaving = false;
 
         startRoom = room;
         CurrentRoom = room;
         transform.position = room.AnchorPosition + Vector3.up * heightOffset;
         transform.rotation = room.AnchorRotation;
         enabled = true;
+
+        RoomEntered?.Invoke(room);
     }
 
     void Update()
     {
-        if (moving || CurrentRoom == null) return;
+        if (moving || InputLocked || CurrentRoom == null) return;
 
         Vector2 input = ReadInput();
 
-        // One step per key press: must release before the next move.
         if (input.sqrMagnitude < 0.25f) { inputArmed = true; return; }
         if (!inputArmed) return;
         inputArmed = false;
@@ -107,8 +132,15 @@ public class PlayerNodeMover : MonoBehaviour
         if (desiredDir == Vector3.zero) return;
 
         RoomNode target = FindBestNeighbor(desiredDir);
-        if (target != null)
-            StartCoroutine(MoveTo(target));
+        if (target == null) return;
+
+        if (BlockLeaving)
+        {
+            LeaveBlocked?.Invoke(target);
+            return;
+        }
+
+        StartCoroutine(MoveTo(target));
     }
 
     Vector2 ReadInput()
@@ -118,7 +150,6 @@ public class PlayerNodeMover : MonoBehaviour
         if (moveAction != null)
             input = moveAction.ReadValue<Vector2>();
 
-        // Keyboard backup if the action isn't hooked up or returns nothing.
         if (input == Vector2.zero && Keyboard.current != null)
         {
             if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) input.y += 1f;
@@ -134,25 +165,23 @@ public class PlayerNodeMover : MonoBehaviour
     {
         if (cameraTransform != null) return cameraTransform;
         if (Camera.main != null) return Camera.main.transform;
-        return transform; // last resort so movement never silently dies
+        return transform;
     }
 
-    // Converts WASD into a world direction based on where the camera is looking.
     Vector3 GetDesiredWorldDirection(Vector2 input)
     {
         Transform look = GetLookTransform();
 
         Vector3 fwd = Vector3.ProjectOnPlane(look.forward, Vector3.up);
         if (fwd.sqrMagnitude < 0.001f)
-            fwd = Vector3.ProjectOnPlane(look.up, Vector3.up); // looking straight up/down
+            fwd = Vector3.ProjectOnPlane(look.up, Vector3.up);
         fwd.Normalize();
 
         Vector3 right = Vector3.Cross(Vector3.up, fwd);
 
         return (fwd * input.y + right * input.x).normalized;
     }
-
-    // Picks the connected room whose real direction best matches the desired direction.
+    
     RoomNode FindBestNeighbor(Vector3 desiredDir)
     {
         RoomNode best = null;
@@ -199,5 +228,7 @@ public class PlayerNodeMover : MonoBehaviour
         transform.position = endPos;
         CurrentRoom = target;
         moving = false;
+
+        RoomEntered?.Invoke(target);
     }
 }

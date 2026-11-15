@@ -355,6 +355,7 @@ GameObject:
   - component: {fileID: 269744960}
   - component: {fileID: 269744962}
   - component: {fileID: 269744963}
+  - component: {fileID: 269744964}
   m_Layer: 0
   m_Name: Controllers
   m_TagString: Untagged
@@ -462,7 +463,37 @@ MonoBehaviour:
     prefab: {fileID: 210042922301311582, guid: 53d28037671c7b646900e7cc4fa4770c, type: 3}
   - key: Room_Standard
     prefab: {fileID: 3254160609925099903, guid: 5326542a6a56bba4eb9016573a8974af, type: 3}
+  _enemyPrefabs:
+  - key: TestEnemy
+    prefab: {fileID: 5369705083690209763, guid: 3bdc2afac6ea863498283e644999eeff, type: 3}
+  _randomEnemySpawn: 1
+  _enemyWallMargin: 1
+  _enemyMinDistanceFromPlayer: 3
   _startRoomId: R01
+--- !u!114 &269744964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 269744959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc30c3423549784fbe1fd8755c426d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatController
+  player: {fileID: 604149155}
+  cameraTransform: {fileID: 906570674}
+  cardSystem: {fileID: 269744960}
+  cameraControlScripts:
+  - {fileID: 906570675}
+  disableDuringCombat:
+  - {fileID: 1063468866}
+  deactivateDuringCombat: []
+  useViewConeDetection: 1
+  lockMovementInEnemyRooms: 0
+  focusTurnDuration: 0.6
+  releaseTurnDuration: 0.5
 --- !u!1 &295016958
 GameObject:
   m_ObjectHideFlags: 0
@@ -1346,7 +1377,7 @@ GameObject:
   - component: {fileID: 906570678}
   m_Layer: 2
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
