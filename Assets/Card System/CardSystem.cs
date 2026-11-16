@@ -87,6 +87,7 @@ public class CardSystem : MonoBehaviour
 
     void Update()
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (Pressed(toggle)) ToggleMode();
 
         if (CurrentMode == Mode.Combat)
@@ -252,6 +253,7 @@ public class CardSystem : MonoBehaviour
 
     public void SelectOrPlayIndex(int index)
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (index < 0 || index >= hand.Count) return;
 
         if (selected == index)
@@ -267,6 +269,7 @@ public class CardSystem : MonoBehaviour
 
     void PlaySelected()
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (!IsPlayerTurn)
         {
             Debug.Log("[Cards] It's not your turn.");
@@ -290,6 +293,7 @@ public class CardSystem : MonoBehaviour
 
     public void SetSelection(int index)
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (CurrentMode != Mode.Combat) return;
         if (index < 0 || index >= hand.Count) return;
 
@@ -302,6 +306,7 @@ public class CardSystem : MonoBehaviour
 
     public void PlayIndexDirectly(int index)
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (CurrentMode != Mode.Combat) return;
         if (index < 0 || index >= hand.Count) return;
 
@@ -320,6 +325,7 @@ public class CardSystem : MonoBehaviour
 
     public void AddToDeck(CombatManager card)
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (card == null) return;
         if (deck.Count >= deckSize) { Debug.Log($"[Cards] Deck full."); return; }
         if (Count(deck, card) >= Count(collection, card)) { Debug.Log($"[Cards] Don't own more copies."); return; }
@@ -331,6 +337,7 @@ public class CardSystem : MonoBehaviour
 
     public void RemoveFromDeck(CombatManager card)
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (card == null) return;
         if (deck.Remove(card)) LogBuilder($"Removed {card.displayName}");
         else Debug.Log($"[Cards] Not in deck.");

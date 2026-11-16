@@ -71,6 +71,7 @@ public class LiDARScanner : MonoBehaviour
 
     private void Update()
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (!UpdateFocus()) return;
 
         _scanTimer += Time.deltaTime;

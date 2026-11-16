@@ -22,6 +22,7 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (Mouse.current == null) return;
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue() * sensitivity;

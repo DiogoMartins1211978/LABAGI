@@ -120,6 +120,7 @@ public class PlayerNodeMover : MonoBehaviour
 
     void Update()
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (moving || InputLocked || CurrentRoom == null) return;
 
         Vector2 input = ReadInput();
@@ -150,7 +151,9 @@ public class PlayerNodeMover : MonoBehaviour
         if (moveAction != null)
             input = moveAction.ReadValue<Vector2>();
 
-        if (input == Vector2.zero && Keyboard.current != null)
+        // An idle action legitimately returns zero. Only fall back when the
+        // action is missing, so keyboard shortcuts cannot bypass saved remaps.
+        if (moveAction == null && Keyboard.current != null)
         {
             if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) input.y += 1f;
             if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) input.y -= 1f;

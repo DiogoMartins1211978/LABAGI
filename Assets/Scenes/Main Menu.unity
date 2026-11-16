@@ -425,6 +425,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 22568545}
   backButton: {fileID: 219247370}
+  tabOrder: []
 --- !u!1 &39942282
 GameObject:
   m_ObjectHideFlags: 0
@@ -1126,6 +1127,22 @@ MonoBehaviour:
   - {fileID: 1782834959}
   - {fileID: 720502643}
   - {fileID: 2118068595}
+  - {fileID: 203526604}
+  - {fileID: 475588289}
+  - {fileID: 626645431}
+  - {fileID: 1578404120}
+  - {fileID: 565359785}
+  - {fileID: 1402886782}
+  - {fileID: 1229180554}
+  - {fileID: 1015421421}
+  - {fileID: 501939602}
+  - {fileID: 1920002053}
+  - {fileID: 937650508}
+  - {fileID: 200999454}
+  - {fileID: 623474043}
+  - {fileID: 932005305}
+  additionalTextRoot: {fileID: 43027333}
+  largestAutomaticFontSize: 48
 --- !u!114 &137110702
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1992,6 +2009,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 2015972460}
   backButton: {fileID: 2081596598}
+  tabOrder: []
 --- !u!114 &214218058
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3077,6 +3095,7 @@ GameObject:
   - component: {fileID: 316825991}
   - component: {fileID: 316825990}
   - component: {fileID: 316825988}
+  - component: {fileID: 316825992}
   m_Layer: 5
   m_Name: SessionCodeInput
   m_TagString: Untagged
@@ -3243,6 +3262,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 316825987}
   m_CullTransparentMesh: 1
+--- !u!114 &316825992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316825987}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7e62c1f02fb4ac9bd114d33711c627a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NarratedInputField
+  narration: {fileID: 1874742662}
+  spokenName: Session code
 --- !u!1 &320952504
 GameObject:
   m_ObjectHideFlags: 0
@@ -3858,6 +3891,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 1041181936}
   backButton: {fileID: 0}
+  tabOrder: []
 --- !u!114 &368118467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5752,6 +5786,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 0}
   backButton: {fileID: 928746920}
+  tabOrder: []
 --- !u!114 &590586318
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5804,6 +5839,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 952842657}
   backButton: {fileID: 928746920}
+  tabOrder: []
 --- !u!1 &597787124
 GameObject:
   m_ObjectHideFlags: 0
@@ -6566,6 +6602,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 1315171158}
   backButton: {fileID: 1010310754}
+  tabOrder: []
 --- !u!1 &716203342
 GameObject:
   m_ObjectHideFlags: 0
@@ -13198,6 +13235,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 316825988}
   backButton: {fileID: 942269318}
+  tabOrder:
+  - {fileID: 316825988}
+  - {fileID: 942269318}
 --- !u!114 &1503481741
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18399,6 +18439,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 2007440784}
   backButton: {fileID: 1839260332}
+  tabOrder: []
 --- !u!114 &1980234279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19154,6 +19195,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuPanelFocus
   firstSelected: {fileID: 1886269814}
   backButton: {fileID: 1886269814}
+  tabOrder: []
 --- !u!114 &2083673174
 MonoBehaviour:
   m_ObjectHideFlags: 0

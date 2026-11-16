@@ -113,6 +113,7 @@ public class CombatController : MonoBehaviour
 
     void Update()
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (CurrentState != State.Exploring || activeEnemy == null) return;
         if (player.IsMoving || player.CurrentRoom != activeEnemy.Room) return;
 
@@ -122,12 +123,14 @@ public class CombatController : MonoBehaviour
 
     void LateUpdate()
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (CurrentState == State.Combat && trackEnemy && activeEnemy != null)
             cameraTransform.rotation = FocusRotation(activeEnemy);
     }
 
     public void NotifyEnemySpotted(Enemy enemy)
     {
+        if (PauseMenuController.BlocksGameplayInput) return;
         if (CurrentState == State.Exploring && enemy != null && enemy == activeEnemy)
             BeginCombat(CombatStart.PlayerSpotted);
     }
