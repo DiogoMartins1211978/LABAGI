@@ -2,6 +2,8 @@
 
 Assign `DemoRegions/DemoRegions.asset` in **Tools > Georeferencing**. The catalogue has its own `Regions` folder. Double-click an entry to frame its complete boundary.
 
+The demo is read-only in the tool. To use its base, select an editable catalogue or create one with **New Catalogue**, then choose **Populate From Demo**. This copies the demo's regions and location rules into that catalogue without changing the template.
+
 | Latitude | Longitude | Expected Regions | Expected Content Count |
 |---|---|---|---|
 | 41.178 | -8.608 | Europe, Portugal, Porto District, Porto, Paranhos, Campus | 6 |
@@ -9,6 +11,8 @@ Assign `DemoRegions/DemoRegions.asset` in **Tools > Georeferencing**. The catalo
 | 41.1579 | -8.6291 | Europe, Portugal, Porto District, Porto, Matching Parish | 5 |
 | 40.4168 | -3.7038 | Europe, Spain | 2 |
 | 0 | 0 | None | 0 |
+
+These expectations use geometry matching without location rules. With the default rules, Precise permission includes the custom zone; Approximate permission returns only Administrative Area and its ancestors.
 
 Portugal contains the OpenStreetMap administrative boundary from relation `295480`; Spain uses relation `1311341`. Both include territorial waters. Europe uses an OSM-derived coastline outline from OpenPlanetData, generalized for continental overview. Porto District uses relation `3459013`; Porto uses municipality relation `3372453`. The municipality's seven civil parishes are included as Subdivision assets. Campus is a synthetic polygon, not an administrative boundary. Each region has a demonstration content ID.
 

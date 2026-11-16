@@ -169,3 +169,6 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# Sherpa token tables are read by native Android code.
+Assets/StreamingAssets/SherpaOnnx/**/tokens.txt text eol=lf

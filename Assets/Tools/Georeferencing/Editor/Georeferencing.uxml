@@ -9,7 +9,7 @@
                     <ui:VisualElement class="menu-arrow" picking-mode="Ignore" />
                 </ui:Button>
                 <ui:Button name="refresh" text="Refresh" />
-                <ui:Button name="sample" text="Create Demo" />
+                <ui:Button name="populateDemo" text="Populate From Demo" tooltip="Replace The Selected Catalogue's Regions And Rules With Independent Copies Of The Demo" />
                 <ui:Button name="save" text="Save Assets" />
             </ui:VisualElement>
         </ui:VisualElement>
@@ -31,7 +31,12 @@
                     <ui:DoubleField name="latitude" label="Latitude" />
                     <ui:DoubleField name="longitude" label="Longitude" />
                     <ui:Button name="centreMap" text="Centre Map" />
-                    <ui:Button name="worldMap" text="World View" />
+                </ui:VisualElement>
+                <ui:VisualElement class="toolbar location-test">
+                    <ui:Button name="locationRules" text="Location Rules" />
+                    <ui:Toggle name="applyLocationRules" label="Apply Location Rules" />
+                    <ui:EnumField name="testOrigin" label="Source" />
+                    <ui:EnumField name="testPrecision" label="Permission" />
                 </ui:VisualElement>
                 <ui:Label name="result" class="result" />
             </ui:VisualElement>

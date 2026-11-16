@@ -6,6 +6,7 @@ namespace Tools.Georeferencing
     [CreateAssetMenu(menuName = "Georeferencing/Region Catalog")]
     public sealed class RegionCatalog : ScriptableObject
     {
+        public LocationRules locationRules;
         public List<ContentRegion> regions = new List<ContentRegion>();
     }
 }

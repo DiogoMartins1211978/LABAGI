@@ -13,6 +13,30 @@ namespace Tools.Georeferencing
 
     public static class RegionResolver
     {
+        public static RegionResult Resolve(RegionCatalog catalog, GeoPoint point,
+            LocationOrigin source, LocationPrecision precision = LocationPrecision.Unknown) =>
+            ApplyLocationRules(catalog, Resolve(catalog, point), source, precision);
+
+        public static RegionResult ApplyLocationRules(RegionCatalog catalog, RegionResult geometric,
+            LocationOrigin source, LocationPrecision precision = LocationPrecision.Unknown)
+        {
+            if (!geometric.IsValid || catalog == null || catalog.locationRules == null) return geometric;
+            var result = new RegionResult();
+            if (!catalog.locationRules.TryGetMinimumLevel(source, precision, out var minimumLevel)) return result;
+            var content = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var region in geometric.Regions)
+            {
+                if (RegionLevels.Rank(region.level) > RegionLevels.Rank(minimumLevel)) continue;
+                result.Regions.Add(region);
+                foreach (string id in region.contentIds)
+                    if (!string.IsNullOrWhiteSpace(id)) content.Add(id);
+            }
+            // Build content from permitted regions only; excluded children must not leak IDs.
+            result.ContentIds.AddRange(content);
+            result.ContentIds.Sort(StringComparer.Ordinal);
+            return result;
+        }
+
         public static RegionResult Resolve(RegionCatalog catalog, GeoPoint point)
         {
             var result = new RegionResult();

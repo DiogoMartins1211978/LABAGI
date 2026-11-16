@@ -12,11 +12,17 @@ namespace Tools.Georeferencing.Editor
     public sealed class GeoreferencingWindow : EditorWindow
     {
         const string Folder = "Assets/Tools/Georeferencing/Editor/";
+        const string DemoFolder = "Assets/Tools/Georeferencing/Examples/DemoRegions/";
+        const string DemoCatalogPath = DemoFolder + "DemoRegions.asset";
+        bool IsDemoCatalog => catalog != null && AssetDatabase.GetAssetPath(catalog).StartsWith(DemoFolder, StringComparison.Ordinal);
         [SerializeField] RegionCatalog catalog;
         [SerializeField] ContentRegion selected;
         [SerializeField] GeoPoint viewCentre = new GeoPoint(41.178, -8.608);
         [SerializeField] int viewZoom = 12;
         [SerializeField] List<RegionLevel> collapsedLevels = new List<RegionLevel>();
+        [SerializeField] bool applyLocationRules;
+        [SerializeField] LocationOrigin testOrigin = LocationOrigin.IPAddress;
+        [SerializeField] LocationPrecision testPrecision = LocationPrecision.Unknown;
         RegionMap map;
         VisualElement regionList, inspector;
         Label status, result;
@@ -57,6 +63,15 @@ namespace Tools.Georeferencing.Editor
             result = rootVisualElement.Q<Label>("result");
             latitude = rootVisualElement.Q<DoubleField>("latitude");
             longitude = rootVisualElement.Q<DoubleField>("longitude");
+            var rulesToggle = rootVisualElement.Q<Toggle>("applyLocationRules");
+            rulesToggle.SetValueWithoutNotify(applyLocationRules);
+            rulesToggle.RegisterValueChangedCallback(evt => { applyLocationRules = evt.newValue; UpdateResult(); });
+            var originField = rootVisualElement.Q<EnumField>("testOrigin");
+            originField.Init(testOrigin);
+            originField.RegisterValueChangedCallback(evt => { testOrigin = (LocationOrigin)evt.newValue; UpdateResult(); });
+            var precisionField = rootVisualElement.Q<EnumField>("testPrecision");
+            precisionField.Init(testPrecision);
+            precisionField.RegisterValueChangedCallback(evt => { testPrecision = (LocationPrecision)evt.newValue; UpdateResult(); });
 
             map = new RegionMap { Catalog = catalog, Selected = selected, Centre = viewCentre,
                 Zoom = viewZoom, Status = message => status.text = message };
@@ -71,6 +86,9 @@ namespace Tools.Georeferencing.Editor
             };
             latitude.SetValueWithoutNotify(map.TestPoint.latitude);
             longitude.SetValueWithoutNotify(map.TestPoint.longitude);
+            // Typed coordinates and map clicks use the same test point and content query.
+            latitude.RegisterValueChangedCallback(_ => Test());
+            longitude.RegisterValueChangedCallback(_ => Test());
             rootVisualElement.Q<TextField>("filter").SetValueWithoutNotify(filter);
             rootVisualElement.Q<TextField>("filter").RegisterValueChangedCallback(evt => { filter = evt.newValue; lastListClick = null; RefreshList(); });
             var catalogField = rootVisualElement.Q<ObjectField>("catalog");
@@ -90,9 +108,9 @@ namespace Tools.Georeferencing.Editor
             BindButton("newCatalog", NewCatalog);
             BindButton("addRegion", ShowAddRegionMenu);
             BindButton("refresh", Refresh);
-            BindButton("sample", CreateSample);
-            BindButton("centreMap", () => { map.Centre = new GeoPoint(latitude.value, longitude.value); map.Reload(); });
-            BindButton("worldMap", () => { map.Centre = new GeoPoint(0, 0); map.Zoom = 0; map.Reload(); });
+            BindButton("populateDemo", PopulateFromDemo);
+            BindButton("locationRules", EditLocationRules);
+            BindButton("centreMap", CentreMap);
             BindButton("loadMap", map.LoadVisibleTiles);
             BindButton("osmAttribution", () => Application.OpenURL("https://www.openstreetmap.org/copyright"));
             BindButton("mapData", () => Application.OpenURL("https://polygons.openstreetmap.fr/"));
@@ -180,16 +198,20 @@ namespace Tools.Georeferencing.Editor
         {
             bool hasCatalog = catalog != null;
             bool hasRegion = hasCatalog && selected != null;
-            rootVisualElement.Q<Button>("addRegion").SetEnabled(hasCatalog);
-            rootVisualElement.Q<Button>("save").SetEnabled(hasCatalog);
-            foreach (string name in new[] { "setCircle", "import", "fitRegion", "removeRegion" })
-                rootVisualElement.Q<Button>(name).SetEnabled(hasRegion);
-            bool canDraw = hasRegion && !RegionSelection.IsFromLibrary(selected);
+            bool canEdit = hasCatalog && !IsDemoCatalog;
+            inspector.SetEnabled(canEdit);
+            foreach (string name in new[] { "addRegion", "save", "locationRules", "populateDemo" })
+                rootVisualElement.Q<Button>(name).SetEnabled(canEdit);
+            rootVisualElement.Q<Button>("fitRegion").SetEnabled(hasRegion);
+            foreach (string name in new[] { "setCircle", "import", "removeRegion" })
+                rootVisualElement.Q<Button>(name).SetEnabled(canEdit && hasRegion);
+            bool canDraw = canEdit && hasRegion && !RegionSelection.IsFromLibrary(selected);
             foreach (string name in new[] { "drawPolygon", "clearDraft", "applyPolygon" })
             {
                 var button = rootVisualElement.Q<Button>(name);
                 button.SetEnabled(canDraw);
-                button.tooltip = hasRegion && !canDraw ? "Drawing Is Available For Custom Regions" : "";
+                button.tooltip = IsDemoCatalog ? "The Demo Is Read-Only; Populate An Editable Catalogue"
+                    : hasRegion && !canDraw ? "Drawing Is Available For Custom Regions" : "";
             }
             rootVisualElement.Q<Button>("drawPolygon").text = map.DrawPolygon ? "Stop Drawing" : "Draw Polygon";
             rootVisualElement.Q("regionActions").EnableInClassList("hidden", !hasRegion);
@@ -200,7 +222,7 @@ namespace Tools.Georeferencing.Editor
             map.Catalog = catalog;
             map.InvalidateGeometry();
             if (selected != null && (catalog == null || !catalog.regions.Contains(selected))) Select(null);
-            if (catalog != null)
+            if (catalog != null && !IsDemoCatalog)
                 foreach (var region in catalog.regions.Where(region => region != null && region.regionColor.a <= 0))
                 {
                     Undo.RecordObject(region, "Assign Region Color");
@@ -370,8 +392,31 @@ namespace Tools.Georeferencing.Editor
             EnsureFolder(folder);
             var value = CreateInstance<RegionCatalog>();
             AssetDatabase.CreateAsset(value, folder + "/" + name + ".asset");
+            value.locationRules = CreateRules(folder);
+            EditorUtility.SetDirty(value);
             RegionsFolder(value);
             return value;
+        }
+
+        static LocationRules CreateRules(string folder)
+        {
+            var rules = CreateInstance<LocationRules>();
+            AssetDatabase.CreateAsset(rules, AssetDatabase.GenerateUniqueAssetPath(folder + "/LocationRules.asset"));
+            return rules;
+        }
+
+        void EditLocationRules()
+        {
+            if (catalog == null) return;
+            if (catalog.locationRules == null)
+            {
+                Undo.RecordObject(catalog, "Assign Location Rules");
+                catalog.locationRules = CreateRules(Path.GetDirectoryName(AssetDatabase.GetAssetPath(catalog)).Replace('\\', '/'));
+                EditorUtility.SetDirty(catalog);
+                AssetDatabase.SaveAssets();
+            }
+            Selection.activeObject = catalog.locationRules;
+            EditorGUIUtility.PingObject(catalog.locationRules);
         }
 
         void NewCatalog()
@@ -430,11 +475,25 @@ namespace Tools.Georeferencing.Editor
         void Test()
         {
             showSelectionResult = false;
-            if (catalog == null) { result.text = "Assign A Catalogue To Test Content"; return; }
             var point = new GeoPoint(latitude.value, longitude.value);
             map.TestPoint = point;
-            ShowResult(RegionResolver.Resolve(catalog, point));
             map.MarkDirtyRepaint();
+            if (!point.IsValid)
+            {
+                result.text = "Latitude Must Be Between -90 And 90; Longitude Between -180 And 180";
+                return;
+            }
+            if (catalog == null) { result.text = "Assign A Catalogue To Test Content"; return; }
+            ShowResult(RegionResolver.Resolve(catalog, point));
+        }
+
+        void CentreMap()
+        {
+            // Invalid coordinates must not reach the projection or leave a misleading old marker.
+            Test();
+            if (!map.TestPoint.IsValid) return;
+            map.Centre = map.TestPoint;
+            map.Reload();
         }
 
         void UpdateResult()
@@ -446,8 +505,16 @@ namespace Tools.Georeferencing.Editor
 
         void ShowResult(RegionResult resolved)
         {
+            string ruleInfo = "";
+            if (applyLocationRules)
+            {
+                resolved = RegionResolver.ApplyLocationRules(catalog, resolved, testOrigin, testPrecision);
+                ruleInfo = catalog?.locationRules == null ? "Location Rules: Not Assigned (Unfiltered)\n"
+                    : catalog.locationRules.TryGetMinimumLevel(testOrigin, testPrecision, out var level)
+                        ? $"Source: {testOrigin}; Minimum Level: {level}\n" : $"Source: {testOrigin}; Disabled\n";
+            }
             result.text = resolved.IsValid
-                ? "Regions: " + string.Join(", ", resolved.Regions.Select(region => region.displayName))
+                ? ruleInfo + "Regions: " + string.Join(", ", resolved.Regions.Select(region => region.displayName))
                     + "\nContent: " + string.Join(", ", resolved.ContentIds)
                 : string.Join("\n", resolved.Errors.Distinct());
         }
@@ -498,29 +565,76 @@ namespace Tools.Georeferencing.Editor
             UpdateResult();
         }
 
-        void CreateSample()
+        void PopulateFromDemo()
         {
-            var value = CreateCatalog("DemoRegions");
-            if (value == null) return;
-            var template = AssetDatabase.LoadAssetAtPath<RegionCatalog>("Assets/Tools/Georeferencing/Examples/DemoRegions/DemoRegions.asset");
-            if (template == null) throw new InvalidOperationException("The Included Demo Catalogue Is Missing");
-            catalog = value;
+            if (catalog == null || IsDemoCatalog) return;
+            var template = AssetDatabase.LoadAssetAtPath<RegionCatalog>(DemoCatalogPath);
+            var errors = new List<string>();
+            RegionResolver.Validate(template, errors);
+            if (errors.Count > 0) throw new InvalidOperationException(string.Join("; ", errors));
+            if (template.locationRules == null) throw new InvalidOperationException("The Demo Has No Location Rules");
+            if (catalog.regions.Count > 0 && !EditorUtility.DisplayDialog("Populate From Demo",
+                "Replace the regions and location rules in " + catalog.name
+                + " with the demo base? Undo is available.", "Replace", "Cancel")) return;
+
+            string folder = RegionsFolder(catalog);
+            string catalogueFolder = Path.GetDirectoryName(AssetDatabase.GetAssetPath(catalog)).Replace('\\', '/');
+            var existing = catalog.regions.Where(region => region != null).ToList();
             var copies = new Dictionary<ContentRegion, ContentRegion>();
+            var sharedRegions = new HashSet<ContentRegion>();
+            var sharedRules = new HashSet<LocationRules>();
+            foreach (string guid in AssetDatabase.FindAssets("t:RegionCatalog"))
+            {
+                var other = AssetDatabase.LoadAssetAtPath<RegionCatalog>(AssetDatabase.GUIDToAssetPath(guid));
+                if (other == null || other == catalog) continue;
+                if (other.locationRules != null) sharedRules.Add(other.locationRules);
+                if (other.regions != null)
+                    foreach (var region in other.regions)
+                        if (region != null) sharedRegions.Add(region);
+            }
+            Undo.IncrementCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Populate Catalogue From Demo");
+            Undo.RecordObject(catalog, "Populate Catalogue From Demo");
+
+            // Reuse owned assets on repeated population; never overwrite shared or demo assets.
+            if (catalog.locationRules == null || sharedRules.Contains(catalog.locationRules)
+                || !AssetDatabase.GetAssetPath(catalog.locationRules).StartsWith(catalogueFolder + "/", StringComparison.Ordinal))
+            {
+                catalog.locationRules = CreateRules(catalogueFolder);
+                Undo.RegisterCreatedObjectUndo(catalog.locationRules, "Create Catalogue Rules");
+            }
+            else Undo.RecordObject(catalog.locationRules, "Populate Location Rules");
+            EditorUtility.CopySerialized(template.locationRules, catalog.locationRules);
+            EditorUtility.SetDirty(catalog.locationRules);
+
             foreach (var region in template.regions)
             {
-                var copy = Instantiate(region);
-                copy.regionId = Guid.NewGuid().ToString("N");
-                copy.regionColor = RegionPalette.Next(catalog);
-                AssetDatabase.CreateAsset(copy, AssetDatabase.GenerateUniqueAssetPath(RegionsFolder(catalog) + "/" + region.name + ".asset"));
-                catalog.regions.Add(copy);
+                var copy = existing.FirstOrDefault(candidate => !sharedRegions.Contains(candidate) && !copies.ContainsValue(candidate)
+                    && (candidate.regionId == region.regionId || candidate.name == region.name)
+                    && AssetDatabase.GetAssetPath(candidate).StartsWith(folder + "/", StringComparison.Ordinal));
+                if (copy == null)
+                {
+                    copy = CreateInstance<ContentRegion>();
+                    AssetDatabase.CreateAsset(copy, AssetDatabase.GenerateUniqueAssetPath(folder + "/" + region.name + ".asset"));
+                    Undo.RegisterCreatedObjectUndo(copy, "Create Catalogue Region");
+                }
+                else Undo.RecordObject(copy, "Populate Catalogue Region");
+                EditorUtility.CopySerialized(region, copy);
                 copies.Add(region, copy);
             }
-            foreach (var pair in copies)
+
+            // Remap every parent after all copies exist, preserving the complete hierarchy.
+            catalog.regions.Clear();
+            foreach (var region in template.regions)
             {
-                pair.Value.parent = pair.Key.parent != null ? copies[pair.Key.parent] : null;
-                EditorUtility.SetDirty(pair.Value);
+                var copy = copies[region];
+                copy.parent = region.parent != null ? copies[region.parent] : null;
+                catalog.regions.Add(copy);
+                EditorUtility.SetDirty(copy);
             }
             EditorUtility.SetDirty(catalog);
+            Undo.CollapseUndoOperations(undoGroup);
             AssetDatabase.SaveAssets();
             selected = null;
             CreateGUI();

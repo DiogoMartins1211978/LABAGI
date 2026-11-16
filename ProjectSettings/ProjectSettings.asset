@@ -265,7 +265,7 @@ PlayerSettings:
   clonedFromGUID: 3c72c65a16f0acb438eed22b8b16c24a
   templatePackageId: com.unity.template.urp-blank@17.2.6
   templateDefaultScene: Assets/Scenes/SampleScene.unity
-  useCustomMainManifest: 0
+  useCustomMainManifest: 1
   useCustomLauncherManifest: 0
   useCustomMainGradleTemplate: 0
   useCustomLauncherGradleManifest: 0
@@ -797,7 +797,7 @@ PlayerSettings:
   webEnableSubmoduleStrippingCompatibility: 0
   webProgressiveAssetLoading: 0
   scriptingDefineSymbols:
-    Android: SHERPA_ONNX
+    Android: SHERPA_ONNX;SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
     Server: SHERPA_ONNX
     Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY;SHERPA_ONNX
     iPhone: SHERPA_ONNX

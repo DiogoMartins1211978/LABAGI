@@ -358,11 +358,14 @@ namespace Tools.Georeferencing.Editor
                 if (index == 0) painter.MoveTo(Screen(Draft[index]));
                 else painter.LineTo(Screen(Draft[index]));
             painter.Stroke();
-            Vector2 test = Screen(TestPoint);
-            painter.BeginPath();
-            painter.MoveTo(test + Vector2.left * 7); painter.LineTo(test + Vector2.right * 7);
-            painter.MoveTo(test + Vector2.up * 7); painter.LineTo(test + Vector2.down * 7);
-            painter.Stroke();
+            if (TestPoint.IsValid)
+            {
+                Vector2 test = Screen(TestPoint);
+                painter.BeginPath();
+                painter.MoveTo(test + Vector2.left * 7); painter.LineTo(test + Vector2.right * 7);
+                painter.MoveTo(test + Vector2.up * 7); painter.LineTo(test + Vector2.down * 7);
+                painter.Stroke();
+            }
         }
 
         void DrawCell(MeshGenerationContext context, (int x, int y, int z) cell, Rect rect, int depth)

@@ -19,7 +19,7 @@ namespace Tools.Georeferencing
             if (service != null)
             {
                 service.SetPosition(position.latitude, position.longitude, 0,
-                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0);
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0, LocationOrigin.Simulated);
                 lastPosition = position;
                 nextUpdate = Time.unscaledTimeAsDouble + 1;
                 hasApplied = true;

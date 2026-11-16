@@ -28,6 +28,12 @@
 .map-actions { margin-top: 8px; }
 .map-actions .unity-base-field__label { min-width: 65px; }
 .map-actions .unity-double-field { min-width: 160px; flex-grow: 1; }
+.location-test .unity-base-field__label { min-width: 0; margin-right: 5px; }
+.location-test { align-items: center; }
+.location-test > .unity-toggle { align-items: center; margin-top: 0; margin-bottom: 0; }
+.location-test > .unity-toggle > .unity-base-field__label { align-self: center; -unity-text-align: middle-left; }
+.location-test > .unity-toggle > .unity-base-field__input { align-self: center; }
+.location-test .unity-enum-field { min-width: 170px; flex-grow: 1; }
 .inspector-panel { width: 320px; min-width: 320px; max-width: 320px; flex-shrink: 0; margin-left: 8px; overflow: hidden; }
 .inspector-panel > .unity-scroll-view { flex-grow: 1; }
 .inspector-panel .unity-scroll-view__content-container { min-width: 0; max-width: 100%; }

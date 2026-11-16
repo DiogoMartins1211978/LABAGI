@@ -64,6 +64,6 @@ Use any context, such as `path`, `card`, `target` or `reward`. Timing requires a
 
 Recordings are JSONL files in `Application.persistentDataPath/Metrics`, one per session. Use **Print metrics file path** on the recorder in Play Mode. Writes flush periodically and on pause/close; abrupt termination can lose buffered rows. Disk errors stop recording and appear in the Console; `IsRecording` reports availability.
 
-Open `Tools/Metrics/MetricsAnalysis.ipynb` and select **Run All** to inspect the included test data. Change `DATA_DIR` for actual recordings. The tools README explains setup, tests and command-line CSV export.
+Open `Tools/Metrics/MetricsAnalysis.ipynb` and select **Run All** to inspect the included test data. Use `Tools/Metrics/RecordedMetricsAnalysis.ipynb` for actual recordings and set `DATA_DIR` to the recording folder. The [Analysis Guide](../../../Tools/Metrics/README.md) explains setup, tests and command-line CSV export.
 
 Analysis counts unique rooms per attempt, boolean combat outcomes, cumulative victories, applied damage, decision durations and Signal occurrences. Attempts to boss require the full local history from its beginning. Results are separated by game version, and missing measurements stay unavailable.

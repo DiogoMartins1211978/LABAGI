@@ -1,116 +1,113 @@
 # Georeferencing
 
-Create content regions, test coordinates and retrieve the content available at a position. Open **Tools > Georeferencing**. The tool operates independently of the game scenes.
+Create geographic regions and find the content IDs available at a position. Open **Tools > Georeferencing** to edit catalogues and test coordinates. The Editor map uses OpenStreetMap; runtime matching uses the region boundaries stored in the catalogue.
 
-## Quick Start
+## Create And Edit Regions
 
-1. Assign the included `Examples/DemoRegions/DemoRegions.asset` catalogue, or select **Create Demo** and choose where to save a new one.
-2. Select a region in the list or on the map. Selection highlights its border. Double-click a list entry or mapped region to frame its full boundary.
-3. Set latitude `41.178` and longitude `-8.608`, select **Centre Map**, then click the centre of the map. The demo returns six regions: Europe, Portugal, Porto District, Porto, Paranhos and Campus.
-4. The map loads automatically. Drag to pan and use the wheel to zoom; **Refresh Map** is overlaid in its top-right corner. Coordinate tests also work without map access.
-5. Use **New Catalogue** and **Add Region** &gt; **Custom** for your own content. Save with **Save Assets**.
-6. For existing geographic regions, use **Add Region** &gt; **Library**, select an entry and click **Add To Catalogue**. Enable **Include Subregions** to add a whole branch. Missing parents are included automatically.
+1. Assign a catalogue or choose **New Catalogue**. New catalogues have a dedicated folder containing their regions and location rules.
+2. Use **Add Region > Library** for existing boundaries, or **Add Region > Custom** to create your own. Library imports include missing parents; **Include Subregions** also imports descendants.
+3. Select a region in the list or on the map to edit its details and content IDs. Double-click to frame its boundary.
+4. For a custom boundary, use **Draw Polygon**, click at least three points and choose **Apply Polygon**. Alternatively, use **Circle At Test Position** and set its radius in kilometres, or **Import Boundary GeoJSON**. Drawing controls are disabled for library regions.
+5. Choose **Save Assets** to save changes. **Remove Region** removes the selected branch from the catalogue while keeping its assets; Undo restores the entries.
 
-Portugal and Spain use OpenStreetMap administrative boundaries, including islands and territorial waters. Europe uses OSM coastline data via OpenPlanetData, generalized for continental overview. The demo also contains the real Porto district, Porto municipality and its seven civil parishes. Campus is a synthetic demonstration polygon. The separate region library supplies the remaining Porto municipalities and subdivisions on request.
+Click the map to see matching **Regions** and **Content**. Editing Latitude or Longitude updates the test marker and matching content immediately; **Centre Map** moves the view to that position. Invalid coordinates hide the marker and leave the map centre unchanged. Latitude accepts -90 to 90 degrees; longitude accepts -180 to 180. The map loads automatically; drag to pan, use the wheel to zoom and use its top-right refresh button if needed. Coordinate matching also works without map access.
 
-## Catalogue Folders And Selection
+The included [Demo Catalogue](Examples/README.md) returns Europe, Portugal, Porto District, Porto, Paranhos and Campus at `41.178, -8.608` when location rules are disabled. The [Region Library](../../../Tools/Georeferencing/RegionLibrary/README.md) contains additional boundaries and documents their sources. Library imports start with empty content lists.
 
-The catalogue selector stays on the left of the top bar, with its actions on the right. Each new catalogue gets a dedicated folder with its catalogue asset and a `Regions` subfolder. **Add Region** &gt; **Custom** starts its save dialog in that subfolder. Older catalogues can stay in their existing location; their dedicated regions folder is created beside them. Catalogue-dependent actions are disabled until a catalogue is assigned. Region actions live in the fixed-width **Region Details** panel and require a selected region.
+The bundled demo is a read-only template in the tool. Create or select another catalogue, then choose **Populate From Demo** to fill it with independent regions, parent links and location rules. For a non-empty catalogue, confirm replacement to restore that base. Repeating the operation reuses its owned region assets; assets referenced by other catalogues remain untouched. Region IDs and content IDs are copied from the template. Undo restores the previous catalogue state.
 
-The region list is grouped by level under expandable headings with entry counts. Search opens matching groups temporarily; selecting a region on the map opens its group. Rows show region names, with the full parent path in their tooltip. Double-click a row or a mapped region to frame its boundary.
+## Game Catalogue
 
-Selecting a list entry updates **Regions** and **Content** for that region and its ancestors. Clicking the map queries all matches at the clicked coordinates. Both use the same selection and framing flow, while list selection leaves the coordinates unchanged. Use Latitude, Longitude and **Centre Map** to navigate to a position before clicking it.
+The game uses `Assets/Settings/Georeferencing/GameRegions/GameRegions.asset`, an independent copy of the demo with its own regions and rules. Changes to this catalogue do not change the demo. Its content IDs are copied from the demo and can be assigned to gameplay content when that integration is ready.
 
-**Remove Region** removes the selected region and its descendants from the current catalogue after confirmation. The assets remain in the project, and Unity Undo restores the catalogue entries. Descendants are included to preserve valid parent links among the remaining entries.
+`Assets/Resources/Georeferencing/StartupLocationSettings.asset` selects the startup catalogue. Assign another catalogue there to change the game's configuration; selecting a catalogue in the Editor tool only changes the authoring view. The settings asset is loaded on both Windows and Android, without scene references.
 
-The map shows configured region boundaries with translucent fills. Off-screen polygons are excluded; display contours are reduced to sub-pixel detail at each zoom and cached for the current view. Each polygon is filled with its own holes, so large multipart regions remain visible when zoomed in. Full source coordinates are retained for matching and editing. Newly generated colours are distinct within a catalogue; `Region Color` can be changed manually, including to a colour already in use. Selection uses a brighter border. Organisational parents without their own boundary highlight their descendants, rather than inventing a geographic outline.
+## Levels And Content
 
-`Description` is free text about the region. `Boundary Data Source / Licence` records where its coordinates came from and the applicable licence; it does not affect region matching.
+The hierarchy runs from **Continent > Country > Administrative Area > Locality > Subdivision > Custom Zone**. Levels can be skipped. In the Porto dataset, districts use Administrative Area, municipalities use Locality and civil parishes use Subdivision; other datasets can use their own mapping.
 
-**Polygon Data** shows the polygon count initially. Expand it explicitly to bind and edit raw coordinate lists. Refresh the tool after changing source geometry outside its own Inspector.
+Each region has a stable ID, an optional parent, a boundary and content IDs. A matching region includes its ancestors and combines their content IDs without duplicates. Parent links organise inheritance and do not clip a child's boundary.
 
-## Regions And Content
-
-Use the levels **Continent**, **Country**, **Administrative Area**, **Locality**, **Subdivision** and **Custom Zone**, in that order. Each asset has a stable ID, display name, optional parent and content IDs. A parent must be a broader level and belong to the same catalog. Levels can be skipped, so a custom zone can belong directly to a country.
-
-These are content hierarchy categories, not universal administrative definitions. The bundled Porto data maps districts to Administrative Area, municipalities to Locality and civil parishes to Subdivision. Other datasets explicitly choose their mapping; the runtime has no Portuguese place-name or OSM admin-level rules. Existing City assets keep their serialized value and are now labelled Locality.
-
-| Boundary | Behaviour |
+| Boundary | Matching |
 |---|---|
-| Descendants Only | Adds its content when a descendant matches; does not match coordinates itself |
-| Circle | Matches coordinates within its centre/radius in kilometres |
-| Polygon | Matches one or more polygon outlines, excluding holes |
+| Descendants Only | Included when a descendant matches |
+| Circle | Within the configured centre and radius in kilometres |
+| Polygon | Within any polygon outline, excluding its holes |
 
-A matching region also activates its ancestors. Content IDs are combined without duplicates. Parent links organise inheritance; they do not clip a child's boundary. A country needs an actual boundary to supply content everywhere in that country. An organisational parent alone supplies content only where its configured descendants match.
+A region needs boundary data to match coordinates directly. Its name and level alone do not define its geographic extent. **Boundary Data Source / Licence** records the data attribution.
 
-The catalog includes only the regions you create or import. The tool does not bundle every country or city. Region names and levels do not automatically supply geographical boundaries.
+## Location Rules
 
-## Region Library
+Each catalogue can reference a `LocationRules` asset. For an editable catalogue, **Location Rules**, below the map, opens it in the Inspector, creating one if missing. Rules can be shared between catalogues through the catalogue Inspector.
 
-**Add Region** &gt; **Library** opens a searchable list of available regions. Choose the target catalogue and an entry. **Add To Catalogue** creates independent region assets in that catalogue's `Regions` folder. **Include Subregions** adds its descendants too. Existing entries are matched by stable region ID and kept unchanged, so repeating an import creates no duplicates. Use **Save Assets** in the main window afterwards.
+A source's **Minimum Level** is the most specific level permitted; broader ancestors remain eligible. These are editable content policies, not accuracy guarantees.
 
-The bundled library contains Europe, Portugal, Spain, Porto district, 18 municipalities and 275 civil parishes from a dated OSM snapshot. It is stored as compressed GeoJSON under `Tools/Georeferencing/RegionLibrary`, outside player builds. Imported regions have empty content lists ready for game-specific IDs. The demo has thirteen region assets, including its Porto branch, and remains independent of this library.
+| Source | Unknown Permission | Approximate Permission | Precise Permission |
+|---|---|---|---|
+| DeviceLocation, IPAddress, Cellular, Default, Obfuscated | Administrative Area | Administrative Area | Custom Zone |
+| WiFi | Locality | Administrative Area | Custom Zone |
+| Satellite, ConfigurationOverride, Simulated | Custom Zone | Administrative Area | Custom Zone |
+| Unknown | Disabled | Disabled | Disabled |
 
-**Open Library File** loads another self-contained library FeatureCollection. Its parent links and level mapping are explicit; it is different from importing several polygons as the boundary of one region. The schema and sources are documented in `Tools/Georeferencing/RegionLibrary/README.md`.
+Each enabled source uses **Precise Minimum Level** for precise permission by default, including Cellular. Its **Use Precise Level** switch and precise level remain editable per source. Otherwise, **Minimum Level** applies. **Approximate Minimum Level** caps approximate samples at Administrative Area by default. Android reports `DeviceLocation` because Unity does not identify the underlying GPS, Wi-Fi or cellular provider; its permission mode selects the appropriate rule.
 
-## Draw Or Import A Boundary
+To preview filtering, enable **Apply Location Rules** below the map and choose **Source** and **Permission**. Only permitted regions contribute content IDs. Missing, duplicate or disabled source rules return no eligible content. A catalogue without a rules asset performs unfiltered matching.
 
-For a circle, select a region, set the test coordinates and click **Circle At Test Position**. Change `Radius Kilometres` in its properties.
+## Startup Location
 
-For a custom polygon, select **Draw Polygon**, click at least three vertices, then **Apply Polygon**. Dragging still pans the map. **Clear Draft** removes unfinished points. Applying a polygon replaces the selected region's previous polygons; Unity Undo restores them. **Draw Polygon**, **Apply Polygon** and **Clear Draft** are disabled for library regions, including copied library assets and the geographic demo regions. Campus remains a custom region.
+The game automatically creates **Startup Location**, requests one valid position and stops acquisition after capturing it. It waits up to 45 active seconds without blocking the menu; application pauses suspend that timeout. Scene changes preserve the snapshot. An unsuccessful attempt reports its status without automatically retrying.
 
-Use **Import Boundary GeoJSON** in Region Details to load a local Polygon, MultiPolygon, Feature or FeatureCollection. All polygons in the file become the selected region's boundary; choose a file containing the intended region. GeoJSON coordinates are longitude/latitude. Record the dataset's attribution in `Boundary Data Source / Licence`.
+After capturing a position, startup automatically resolves the configured catalogue with its source and permission rules. Read `StartupLocation.Current` for the permitted regions and content IDs, or subscribe to `StartupLocation.Resolved` before capture completes. `Catalog` identifies the configured asset; `Position`, `AccuracyMetres`, `Origin`, `Precision` and `Status` retain the raw snapshot.
 
-The **OSM Boundaries** helper in the map's bottom-right corner opens [OpenStreetMap France's polygon exporter](https://polygons.openstreetmap.fr/). Find the administrative relation on OpenStreetMap, enter its relation ID, export GeoJSON and import that file into the selected region. An administrative boundary may include territorial waters; it is not necessarily the coastline. Country and city boundaries are administrative data; a continent's extent follows a geographic convention rather than a shared administrative boundary.
-
-Use valid, simple polygon rings. The importer preserves polygon holes and multipart boundaries, but does not repair self-intersections or administrative topology. Edges are straight in longitude/latitude; polar caps and globe-spanning rings need a specialised geographic library. No automatic place search or worldwide administrative dataset is included.
-
-## Map Provider
-
-The Editor automatically loads OpenStreetMap raster tiles for the current viewport when the window opens, the catalogue changes, the tool refreshes or the view moves. Movement is debounced; obsolete queued views are discarded. Tiles appear progressively. Each patch uses one texture: a ready tile replaces its cached fallback rather than drawing over it. Cached children can also fill disjoint patches during zoom-out. Visible tiles are cached under `Library/GeoreferencingMap` for at least seven days. Attribution remains visible. Map tiles are not copied into builds or used to determine region membership.
-
-The map shows one finite Web Mercator world, without horizontal repetition. Pan stops at its edges; **World View** centres the full world at zoom 0. Empty space around the world remains a plain background when the viewport is larger than it. Clicks outside the world do not select regions or create polygon vertices.
-
-Tiles and region overlays share the Web Mercator projection. Place names and the amount of detail at each zoom are baked into the provider's raster images. The standard OSM layer uses local names and cannot be switched to English by a request parameter. Imported region boundaries remain separate geographic data; they are not extracted from the images.
-
-The map is a visual aid: editing a region does not modify OpenStreetMap. Use follows the [OSM tile policy](https://operations.osmfoundation.org/policies/tiles/), including attribution, caching and no bulk/offline downloads. The tool sends its own identifying User-Agent. A failed map request does not prevent authoring or testing coordinates.
-
-## Use In A Scene
-
-Add `GeoreferencingService` to an object and assign its catalog. Choose one position source:
-
-- `SimulatedLocationSource`: assign the service and coordinates. It is explicitly simulated, suitable for Windows and Editor testing. Continuous updates run once per second, with immediate updates when coordinates change.
-- `AndroidLocationSource`: assign the service and call `StartLocation()` from a user action. This requests location permission on Android, reads device samples and stops on pause/disable. Call `StartLocation()` again after resuming when wanted.
-- Another provider can call `SetPosition(latitude, longitude, accuracyMetres, utcSeconds)` without changing the resolver.
-
-Configure maximum age and accuracy on the service for the scale of your zones. Approximate permission may be sufficient for broad regions but fail a small zone's accuracy threshold. Invalid, stale, unavailable or inaccurate positions clear location-dependent content. The service exposes `State`, `Current` and a `Changed` event. Base-game content remains the game's responsibility.
+Messages prefixed `[Location]` report acquisition and the catalogue result. On Android, open **Tools > Android Logs** and follow the [capture workflow](../../../ANDROID.md#diagnose-and-iterate). To consume the stored result:
 
 ```csharp
 using Tools.Georeferencing;
 
-// Subscribe while this consumer is active, then unsubscribe on disable.
-service.Changed += OnRegionsChanged;
+// Startup has already applied the configured catalogue's location rules.
+RegionResult result = StartupLocation.Current;
 
-void OnRegionsChanged(RegionResult result)
+if (result.IsValid)
 {
-    // Resolve these IDs through the game's own card/enemy/dungeon data.
+    // Pass these IDs to the game's content lookup.
     foreach (string contentId in result.ContentIds)
     {
-        // Update available content.
+        // Enable the corresponding content.
     }
 }
 ```
 
-For a one-off query without scene components, use `RegionResolver.Resolve(catalog, new GeoPoint(latitude, longitude))`. Inspect `IsValid` and `Errors` before consuming results.
+`ContentIds` is the integration point for gameplay. Capturing a position does not activate game content automatically.
 
-## Optional Metrics
+Before capture, or if acquisition fails, `Current.IsValid` is false. A valid result with no regions means the position matched no permitted region. `StartupLocation.Resolve(otherCatalog)` remains available for an additional query using the same snapshot.
 
-Add `RegionEvents`, assign the service and two Metric channel assets. Bind them on `MetricsRecorder` as `region.entered` and `region.exited`. The subject is the region ID; there is no numeric payload. Events occur only when membership changes, including inherited regions. Coordinate values are not logged by this adapter.
+Windows uses the system Geolocator. Enable location services and desktop-app access in Windows settings. Its reported source can be IPAddress, WiFi or another system provider. IP-derived positions can be several kilometres away; reported accuracy is provider metadata, not a measured error. Requests for higher accuracy cannot guarantee a better fix.
 
-## Validation And Limits
+Android requests foreground location permission and reads Unity's location service. The user can choose approximate or precise access. Precise permission allows finer acquisition but does not guarantee GPS accuracy. Project-wide build configuration and USB setup are documented in [Android](../../../ANDROID.md).
 
-Use the coordinates in [Demo Catalogue](Examples/README.md) to check region matching. Catalogue validation reports invalid geometry and hierarchy errors in the tool.
+## Override The Position
 
-The Android source needs permission, sensor and lifecycle testing on an Android device. Windows currently uses simulated or externally supplied coordinates; automatic Windows positioning is not implemented. The map and Inspector still require visual validation in the Unity Editor. The feature does not include AR positioning, location persistence or integration into existing gameplay.
+`Application.persistentDataPath/location.json` supplies local test coordinates on Windows and Android. The **Create Location Configuration** context menu on `LocationSource` creates a disabled example and prints its exact path. A template also exists at `Tools/Georeferencing/location.example.json`.
 
-The Editor importer uses the Newtonsoft JSON package already resolved in this project. No package manifest change is required.
+```json
+{
+  "enabled": true,
+  "latitude": 41.178,
+  "longitude": -8.608,
+  "accuracyMetres": 0
+}
+```
+
+An enabled override replaces system acquisition and uses the `ConfigurationOverride` rule. Set `enabled` to `false` or remove the file to restore system location. Restart the app after editing, or use **Reload Location Configuration** while the source is running. Invalid enabled configuration reports an error. The live file stays outside the repository.
+
+On Android, copy it to the app's `Application.persistentDataPath`, normally `/sdcard/Android/data/<application-id>/files/location.json`. Use the identifier in Player Settings and edit the template before copying it. Test precise access, approximate access, denied permission, disabled location services and the override separately on an installed APK. Restart the app for each startup acquisition test; Unity Remote does not run the Android provider.
+
+## Other Runtime Uses
+
+For continuous acquisition, add `LocationSource` and call `StartLocation()` / `StopLocation()`. Its optional `GeoreferencingService` reference can remain empty when only raw samples are needed. To resolve continuously, assign a service with a catalogue and subscribe to `service.Changed`. Run one source per service; `SimulatedLocationSource` is available for Inspector-driven tests.
+
+The service exposes `Current`, `State`, the accepted position and its metadata. It rejects invalid or stale samples. **Maximum Accuracy Metres = 0** disables its optional accuracy cutoff, allowing coarse positions to reach broad regions through location rules.
+
+For direct queries, `RegionResolver.Resolve(catalog, point)` performs geometry matching; the overload accepting origin and permission also applies location rules. Check `IsValid` and `Errors` before using results.
+
+`RegionEvents` can forward membership changes to metric channels as `region.entered` and `region.exited`, using region IDs as subjects. Assign the service and channels, then bind those channels on `MetricsRecorder` when integrating metrics.

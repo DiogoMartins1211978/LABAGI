@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 590c48c2687e15140b6afa77da4583d8, type: 3}
   m_Name: DemoRegions
   m_EditorClassIdentifier: 
+  locationRules: {fileID: 11400000, guid: bafc3a953e75412cafc832ffd4abdc90, type: 2}
   regions:
   - {fileID: 11400000, guid: b466c909fe4f4b47bb827dbdffdddf6d, type: 2}
   - {fileID: 11400000, guid: b46fd1a07fbb47abaab33ec95f1ab704, type: 2}
