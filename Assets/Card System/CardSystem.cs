@@ -18,7 +18,7 @@ public class CardSystem : MonoBehaviour
     public int handSize = 4;
 
     [Header("Turns")]
-    public bool autoStartNextTurn = true;
+    public bool autoStartNextTurn = false;
     public float nextTurnDelay = 0.5f;
 
     [Header("Movement & Camera Freeze")]

@@ -10,19 +10,19 @@
             "id": "R02",
             "from": "R01",
             "dir": "N",
-            "enemy": "TestEnemy"
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R03",
             "from": "R02",
             "dir": "N",
-            "enemy": "TestEnemy"
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R04",
             "from": "R03",
             "dir": "E",
-            "enemy": "TestEnemy"
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R05",
@@ -53,8 +53,7 @@
         {
             "id": "R10",
             "from": "R03",
-            "dir": "W",
-            "enemy": "TestEnemy"
+            "dir": "W"
         },
         {
             "id": "R11",

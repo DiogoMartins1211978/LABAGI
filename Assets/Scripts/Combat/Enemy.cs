@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using System;
+using System.Collections;
 
 public class Enemy : MonoBehaviour
 {
@@ -16,6 +18,15 @@ public class Enemy : MonoBehaviour
     public Transform focusPoint;
     [Tooltip("Used when no focusPoint is assigned.")]
     public float focusHeight = 1.2f;
+
+    [Header("Combat Animation")]
+    public Animator animator;
+
+    private Action attackFinished;
+
+    public float attackDuration = 1.5f;
+
+    private Coroutine attackCoroutine;
 
     public RoomNode Room { get; set; }
     public bool Resolved { get; private set; }
@@ -52,6 +63,47 @@ public class Enemy : MonoBehaviour
     public virtual void OnSurpriseAttack()
     {
         Debug.Log($"[Enemy] '{name}' surprise attacks the player!");
+    }
+
+    public virtual void Attack(Action onFinished = null)
+    {
+        if (Resolved || animator == null)
+        {
+            onFinished?.Invoke();
+            return;
+        }
+
+        Debug.Log($"[Enemy] {name} started attack.");
+
+        attackFinished = onFinished;
+
+        animator.SetBool("isAttacking", true);
+
+        if (attackCoroutine != null)
+            StopCoroutine(attackCoroutine);
+
+        attackCoroutine = StartCoroutine(AttackRoutine());
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        yield return new WaitForSeconds(attackDuration);
+
+        EndAttack();
+    }
+
+    public virtual void EndAttack()
+    {
+        Debug.Log($"[Enemy] {name} finished attack.");
+
+        if (animator != null)
+            animator.SetBool("isAttacking", false);
+
+        Action callback = attackFinished;
+        attackFinished = null;
+        attackCoroutine = null;
+
+        callback?.Invoke();
     }
 
     public virtual void Resolve()

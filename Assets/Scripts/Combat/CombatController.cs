@@ -66,6 +66,9 @@ public class CombatController : MonoBehaviour
         if (cardSystem == null)
             Debug.LogWarning("[CombatController] No CardSystem found, so no cards will show in combat.");
 
+        if (cardSystem != null)
+            cardSystem.TurnEnded += HandlePlayerTurnEnded;
+
         player.RoomEntered += HandleRoomEntered;
         player.LeaveBlocked += HandleLeaveBlocked;
 
@@ -160,6 +163,36 @@ public class CombatController : MonoBehaviour
         else enemy.OnSpotted();
 
         if (cardSystem != null) cardSystem.EnterCombat();
+    }
+
+    private void HandlePlayerTurnEnded()
+    {
+        if (CurrentState != State.Combat)
+            return;
+
+        StartCoroutine(EnemyTurnRoutine());
+    }
+
+    private IEnumerator EnemyTurnRoutine()
+    {
+        Debug.Log("[Combat] Enemy turn started.");
+
+        yield return new WaitForSeconds(0.5f);
+
+        if (activeEnemy == null || activeEnemy.Resolved)
+            yield break;
+
+        activeEnemy.Attack(OnEnemyAttackFinished);
+    }
+
+    private void OnEnemyAttackFinished()
+    {
+        Debug.Log("[Combat] Enemy attack finished. Starting player turn.");
+
+        if (CurrentState != State.Combat)
+            return;
+
+        cardSystem.StartPlayerTurn();
     }
 
     public void EndCombat(bool enemyDefeated = true)
