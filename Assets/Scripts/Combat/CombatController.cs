@@ -29,7 +29,7 @@ public class CombatController : MonoBehaviour
     [Tooltip("Spot enemies automatically when they're inside the camera's view cone. Turn off if your LiDAR scan calls NotifyEnemySpotted() instead.")]
     public bool useViewConeDetection = true;
     [Tooltip("If the player tries to leave a room with an unresolved enemy, the move is blocked and the enemy ambushes them immediately.")]
-    public bool lockMovementInEnemyRooms = true;
+    private bool lockMovementInEnemyRooms = true;
     public float focusTurnDuration = 0.6f;
     public float releaseTurnDuration = 0.5f;
 
@@ -106,10 +106,14 @@ public class CombatController : MonoBehaviour
 
         activeEnemy = enemy;
         player.BlockLeaving = lockMovementInEnemyRooms;
+        Debug.Log($"[CombatController] Enemy room detected. " +$"Enemy: {activeEnemy.name} | " +$"BlockLeaving: {player.BlockLeaving}");
     }
 
     void HandleLeaveBlocked(RoomNode attemptedTarget)
     {
+
+        Debug.Log($"[CombatController] LeaveBlocked received. " +$"Active enemy: {(activeEnemy != null ? activeEnemy.name : "NULL")}");
+
         if (CurrentState == State.Exploring && activeEnemy != null)
             BeginCombat(CombatStart.Ambushed);
     }
@@ -159,10 +163,26 @@ public class CombatController : MonoBehaviour
         yield return TurnCameraTo(FocusRotation(enemy), focusTurnDuration);
         trackEnemy = true;
 
-        if (how == CombatStart.Ambushed) enemy.OnSurpriseAttack();
-        else enemy.OnSpotted();
+        if (how == CombatStart.Ambushed)
+        {
+            enemy.OnSurpriseAttack();
 
-        if (cardSystem != null) cardSystem.EnterCombat();
+            bool attackFinished = false;
+
+            enemy.Attack(() =>
+            {
+                attackFinished = true;
+            });
+
+            yield return new WaitUntil(() => attackFinished);
+        }
+        else
+        {
+            enemy.OnSpotted();
+        }
+
+        if (cardSystem != null)
+            cardSystem.EnterCombat();
     }
 
     private void HandlePlayerTurnEnded()
@@ -175,7 +195,7 @@ public class CombatController : MonoBehaviour
 
     private IEnumerator EnemyTurnRoutine()
     {
-        Debug.Log("[Combat] Enemy turn started.");
+
 
         yield return new WaitForSeconds(0.5f);
 
