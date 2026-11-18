@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoPortoParish3383117
-  m_EditorClassIdentifier:
-  regionId: demo-porto-parish-3383117
-  libraryRegionId: osm:relation:3383117
-  displayName: "Campanh\u00e3"
+  m_Name: porto-parish-3383117
+  m_EditorClassIdentifier: 
+  regionId: porto-parish-3383117
+  displayName: "Campanh\xE3"
   level: 5
   parent: {fileID: 11400000, guid: 33ef366617ac49af92300f541c77f623, type: 2}
   contentIds:
   - demo-content-parish-3383117
-  regionColor: {r: 0.9, g: 0.342, b: 0.528577645319999, a: 1}
+  maximumAccuracyMetres: 0
+  libraryRegionId: osm:relation:3383117
+  regionColor: {r: 0.9, g: 0.342, b: 0.5285776, a: 1}
   boundary: 2
   centre:
     latitude: 41.178
@@ -515,5 +516,6 @@ MonoBehaviour:
       - latitude: 41.1670501
         longitude: -8.5882043
     holes: []
-  dataSource: "OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3383117"
-  description: "Civil Parish; OSM administrative level 8."
+  description: Civil Parish; OSM administrative level 8.
+  dataSource: OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3383117
+  legacyRadiusMetres: -1

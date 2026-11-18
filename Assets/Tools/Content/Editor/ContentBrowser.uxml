@@ -1,0 +1,33 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement class="content-browser">
+        <ui:VisualElement class="browser-toolbar">
+            <uie:ObjectField name="catalog" label="Catalogue" class="catalogue-field" />
+            <ui:Button name="add" text="Add Entry" />
+            <ui:Button name="save" text="Save Assets" />
+            <ui:Button name="refresh" text="Refresh" />
+        </ui:VisualElement>
+        <uie:ObjectField name="geographicCatalog" label="Geographic Catalogue" class="geographic-catalogue-field" tooltip="Geographic Catalogue Shared By All Entries In The Open Content Catalogue" />
+        <ui:VisualElement name="context" class="browser-context">
+            <ui:Label name="contextLabel" class="context-label" />
+            <ui:Button name="clearContext" text="Done" />
+        </ui:VisualElement>
+        <ui:VisualElement class="browser-columns">
+            <ui:VisualElement class="category-list">
+                <uie:ToolbarSearchField name="search" class="browser-search" tooltip="Search Names, IDs, Categories, Requirements And Assigned Regions" />
+                <ui:ScrollView name="categories" class="category-scroll" mode="Vertical" />
+            </ui:VisualElement>
+            <ui:TwoPaneSplitView name="contentSplit" fixed-pane-index="1" fixed-pane-initial-dimension="340" orientation="Horizontal" class="content-split">
+                <ui:VisualElement class="browser-main">
+                    <ui:Label name="summary" class="section-title" />
+                    <ui:ScrollView name="contentScroll" class="content-scroll" mode="Vertical">
+                        <ui:VisualElement name="grid" class="content-grid" />
+                    </ui:ScrollView>
+                </ui:VisualElement>
+                <ui:ScrollView name="detailScroll" class="detail-scroll" mode="Vertical">
+                    <ui:VisualElement name="details" class="content-details" />
+                </ui:ScrollView>
+            </ui:TwoPaneSplitView>
+        </ui:VisualElement>
+        <ui:Label name="status" class="browser-status" />
+    </ui:VisualElement>
+</ui:UXML>

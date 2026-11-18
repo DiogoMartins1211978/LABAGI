@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPortoParish3382145
   m_EditorClassIdentifier:
   regionId: demo-porto-parish-3382145
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:3382145
   displayName: "Lordelo do Ouro e Massarelos"
   level: 5

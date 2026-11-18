@@ -14,19 +14,25 @@ namespace Tools.Georeferencing
     public static class RegionResolver
     {
         public static RegionResult Resolve(RegionCatalog catalog, GeoPoint point,
-            LocationOrigin source, LocationPrecision precision = LocationPrecision.Unknown) =>
-            ApplyLocationRules(catalog, Resolve(catalog, point), source, precision);
+            LocationOrigin source, LocationPrecision precision = LocationPrecision.Unknown, double? accuracyMetres = null) =>
+            ApplyLocationRules(catalog, Resolve(catalog, point), source, precision, accuracyMetres);
 
         public static RegionResult ApplyLocationRules(RegionCatalog catalog, RegionResult geometric,
-            LocationOrigin source, LocationPrecision precision = LocationPrecision.Unknown)
+            LocationOrigin source, LocationPrecision precision = LocationPrecision.Unknown, double? accuracyMetres = null)
         {
             if (!geometric.IsValid || catalog == null || catalog.locationRules == null) return geometric;
             var result = new RegionResult();
-            if (!catalog.locationRules.TryGetMinimumLevel(source, precision, out var minimumLevel)) return result;
+            var accepted = new HashSet<ContentRegion>();
+            foreach (var region in geometric.Regions)
+            {
+                if (!catalog.locationRules.Allows(region, source, precision, accuracyMetres)) continue;
+                // Accept the region's ancestors without granting content from rejected children.
+                for (var parent = region; parent != null && accepted.Add(parent); parent = parent.parent) { }
+            }
             var content = new HashSet<string>(StringComparer.Ordinal);
             foreach (var region in geometric.Regions)
             {
-                if (RegionLevels.Rank(region.level) > RegionLevels.Rank(minimumLevel)) continue;
+                if (!accepted.Contains(region)) continue;
                 result.Regions.Add(region);
                 foreach (string id in region.contentIds)
                     if (!string.IsNullOrWhiteSpace(id)) content.Add(id);
@@ -81,6 +87,8 @@ namespace Tools.Georeferencing
                 if (string.IsNullOrWhiteSpace(region.regionId) || !ids.Add(region.regionId))
                     errors.Add("Missing or duplicate region ID: " + region.name);
                 if (region.contentIds == null) errors.Add("Missing content list: " + region.name);
+                if (!GeoGeometry.Finite(region.maximumAccuracyMetres) || region.maximumAccuracyMetres < 0)
+                    errors.Add("Invalid accuracy limit: " + region.name);
                 if (RegionLevels.Rank(region.level) < 0) errors.Add("Unknown region level: " + region.name);
                 if (region.boundary == RegionBoundary.Circle
                     && (!region.centre.IsValid || !GeoGeometry.Finite(region.radiusKilometres) || region.radiusKilometres <= 0))

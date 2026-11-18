@@ -15,9 +15,10 @@ MonoBehaviour:
   regionId: demo-3
   displayName: DemoCampus
   level: 3
-  parent: {fileID: 11400000, guid: 52e977dfcf8341a7aae9e236995cc5a9, type: 2}
+  parent: {fileID: 11400000, guid: 27d8b2fbbf004e81a9527543c288fda8, type: 2}
   contentIds:
   - demo-content-3
+  maximumAccuracyMetres: 0
   libraryRegionId: 
   regionColor: {r: 0.9, g: 0.342, b: 0.8304666, a: 1}
   boundary: 2

@@ -12,7 +12,7 @@ The demo is read-only in the tool. To use its base, select an editable catalogue
 | 40.4168 | -3.7038 | Europe, Spain | 2 |
 | 0 | 0 | None | 0 |
 
-These expectations use geometry matching without location rules. With the default rules, Precise permission includes the custom zone; Approximate permission returns only Administrative Area and its ancestors.
+These expectations use geometry matching without location rules. With the default accuracy rules, 100 m includes the custom zone and 2000 m permits Administrative Area and its ancestors, independently of permission mode.
 
 Portugal contains the OpenStreetMap administrative boundary from relation `295480`; Spain uses relation `1311341`. Both include territorial waters. Europe uses an OSM-derived coastline outline from OpenPlanetData, generalized for continental overview. Porto District uses relation `3459013`; Porto uses municipality relation `3372453`. The municipality's seven civil parishes are included as Subdivision assets. Campus is a synthetic polygon, not an administrative boundary. Each region has a demonstration content ID.
 

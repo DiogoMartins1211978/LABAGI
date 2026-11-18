@@ -18,7 +18,7 @@ namespace Tools.Georeferencing
         public static event System.Action<RegionResult> Resolved;
 
         public static RegionResult Resolve(RegionCatalog catalog) => Position.HasValue
-            ? RegionResolver.Resolve(catalog, Position.Value, Origin, Precision) : MissingPosition();
+            ? RegionResolver.Resolve(catalog, Position.Value, Origin, Precision, AccuracyMetres) : MissingPosition();
 
         static RegionResult MissingPosition()
         {
@@ -30,6 +30,25 @@ namespace Tools.Georeferencing
         [SerializeField] private string acquisitionStatus = "Not Started";
         LocationSource source;
         static StartupLocation instance;
+        float refinementSeconds = 5;
+        float targetAccuracyMetres = 100;
+        double firstCandidateSeconds;
+        Candidate? best;
+
+        struct Candidate
+        {
+            public GeoPoint point;
+            public double accuracy, timestamp;
+            public LocationOrigin origin;
+            public LocationPrecision precision;
+            public string provider;
+        }
+
+        static bool IsFresh(Candidate sample)
+        {
+            double age = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0 - sample.timestamp;
+            return age >= -5 && age <= 30;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetSession()
@@ -56,6 +75,11 @@ namespace Tools.Georeferencing
             var owner = new GameObject("Startup Location");
             DontDestroyOnLoad(owner);
             instance = owner.AddComponent<StartupLocation>();
+            if (settings != null)
+            {
+                instance.refinementSeconds = GeoGeometry.Finite(settings.refinementSeconds) ? Mathf.Max(0, settings.refinementSeconds) : 5;
+                instance.targetAccuracyMetres = GeoGeometry.Finite(settings.targetAccuracyMetres) ? Mathf.Max(0, settings.targetAccuracyMetres) : 100;
+            }
             Debug.Log("[Location] Startup capture created.", instance);
         }
 
@@ -66,10 +90,15 @@ namespace Tools.Georeferencing
             Debug.Log("[Location] Requesting startup position.", this);
             source.StartLocation();
 
-            // Give permission and GPS initialization time without blocking the menu.
-            while (!Position.HasValue && source.IsRunning && source.ActiveSeconds < 45)
+            // Prefer a better fix briefly without blocking menus or counting paused time.
+            while (source.IsRunning && source.ActiveSeconds < 45)
             {
-                string nextStatus = source.IsPaused ? "Waiting For Application To Resume" : source.Status;
+                if (best.HasValue && !IsFresh(best.Value)) best = null;
+                if (best.HasValue && (source.ActiveSeconds - firstCandidateSeconds >= refinementSeconds
+                    || (LocationRules.HasUsableAccuracy(best.Value.accuracy, best.Value.origin)
+                        && best.Value.accuracy <= targetAccuracyMetres))) break;
+                string nextStatus = source.IsPaused ? "Waiting For Application To Resume"
+                    : best.HasValue ? "Refining Startup Position" : source.Status;
                 if (nextStatus != acquisitionStatus)
                 {
                     Status = acquisitionStatus = nextStatus;
@@ -77,38 +106,49 @@ namespace Tools.Georeferencing
                 }
                 yield return null;
             }
-
-            if (!Position.HasValue)
-            {
-                Status = acquisitionStatus = source.IsRunning ? "Timed Out: " + source.Status : source.Status;
-                Current = MissingPosition();
-                Debug.LogWarning("[Location] Startup location unavailable: " + Status, this);
-            }
+            string finalStatus = source.IsRunning ? "Timed Out: " + source.Status : source.Status;
             source.PositionReceived -= Capture;
             source.StopLocation();
+            if (best.HasValue && IsFresh(best.Value))
+                FinishCapture(best.Value);
+            else
+            {
+                Status = acquisitionStatus = finalStatus;
+                Current = MissingPosition();
+                Debug.LogWarning("[Location] Startup location unavailable: " + Status, this);
+                Resolved?.Invoke(Current);
+            }
         }
 
         void Capture(GeoPoint position, double accuracy, double timestamp)
         {
-            if (Position.HasValue) return;
-            Position = position;
-            AccuracyMetres = accuracy;
-            TimestampUtcSeconds = timestamp;
-            Origin = source.Origin;
-            Precision = source.Precision;
-            string provider = source.Status;
-            Status = acquisitionStatus = "Captured: " + provider;
-            // Stop at the first sample. Keep the snapshot when providers clear their state.
-            source.StopLocation();
-            // Preserve the supplied precision and decimal points when copying coordinates.
+            bool usable = LocationRules.HasUsableAccuracy(accuracy, source.Origin);
+            if (best.HasValue && IsFresh(best.Value))
+            {
+                bool previousUsable = LocationRules.HasUsableAccuracy(best.Value.accuracy, best.Value.origin);
+                if (previousUsable && (!usable || accuracy >= best.Value.accuracy)) return;
+            }
+            else firstCandidateSeconds = source.ActiveSeconds;
+            best = new Candidate { point = position, accuracy = accuracy, timestamp = timestamp,
+                origin = source.Origin, precision = source.Precision, provider = source.Status };
+        }
+
+        void FinishCapture(Candidate sample)
+        {
+            Position = sample.point;
+            AccuracyMetres = sample.accuracy;
+            TimestampUtcSeconds = sample.timestamp;
+            Origin = sample.origin;
+            Precision = sample.precision;
+            Status = acquisitionStatus = "Captured: " + sample.provider;
             Debug.Log(System.FormattableString.Invariant(
-                $"[Location] Startup Location: {position.latitude:R}, {position.longitude:R}; Accuracy {accuracy:R} m; Provider: {provider}; Origin: {Origin}; Permission: {Precision}."), this);
+                $"[Location] Startup Location: {sample.point.latitude:R}, {sample.point.longitude:R}; Accuracy {sample.accuracy:R} m; Provider: {sample.provider}; Origin: {Origin}; Permission: {Precision}."), this);
             ApplyCatalog();
         }
 
         void ApplyCatalog()
         {
-            // The source and permission mode filter regions before their content IDs are combined.
+            // Reported accuracy filters regions before their content IDs are combined.
             Current = Resolve(Catalog);
             if (!Current.IsValid)
                 Debug.LogWarning("[Location] Catalogue resolution failed: " + string.Join("; ", Current.Errors), this);

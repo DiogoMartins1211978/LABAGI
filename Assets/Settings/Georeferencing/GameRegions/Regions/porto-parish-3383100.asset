@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoPortoParish3383100
-  m_EditorClassIdentifier:
-  regionId: demo-porto-parish-3383100
-  libraryRegionId: osm:relation:3383100
-  displayName: "Bonfim"
+  m_Name: porto-parish-3383100
+  m_EditorClassIdentifier: 
+  regionId: porto-parish-3383100
+  displayName: Bonfim
   level: 5
   parent: {fileID: 11400000, guid: 33ef366617ac49af92300f541c77f623, type: 2}
   contentIds:
   - demo-content-parish-3383100
-  regionColor: {r: 0.36575543965499796, g: 0.9, b: 0.342, a: 1}
+  maximumAccuracyMetres: 0
+  libraryRegionId: osm:relation:3383100
+  regionColor: {r: 0.36575544, g: 0.9, b: 0.342, a: 1}
   boundary: 2
   centre:
     latitude: 41.178
@@ -261,5 +262,6 @@ MonoBehaviour:
       - latitude: 41.139832
         longitude: -8.597029
     holes: []
-  dataSource: "OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3383100"
-  description: "Civil Parish; OSM administrative level 8."
+  description: Civil Parish; OSM administrative level 8.
+  dataSource: OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3383100
+  legacyRadiusMetres: -1

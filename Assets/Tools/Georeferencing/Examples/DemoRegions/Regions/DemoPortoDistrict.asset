@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPortoDistrict
   m_EditorClassIdentifier:
   regionId: demo-porto-district
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:3459013
   displayName: "Porto District"
   level: 4

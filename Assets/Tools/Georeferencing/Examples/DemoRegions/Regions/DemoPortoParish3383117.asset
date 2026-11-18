@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPortoParish3383117
   m_EditorClassIdentifier:
   regionId: demo-porto-parish-3383117
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:3383117
   displayName: "Campanh\u00e3"
   level: 5

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPortoParish3382093
   m_EditorClassIdentifier:
   regionId: demo-porto-parish-3382093
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:3382093
   displayName: "Aldoar, Foz do Douro e Nevogilde"
   level: 5

@@ -10,14 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoCampus
+  m_Name: porto-campus
   m_EditorClassIdentifier: 
-  regionId: demo-3
-  displayName: DemoCampus
+  regionId: porto-campus
+  displayName: Campus
   level: 3
-  parent: {fileID: 11400000, guid: 33ef366617ac49af92300f541c77f623, type: 2}
+  parent: {fileID: 11400000, guid: 9ef932965be643d4b6d59fa575f60b7a, type: 2}
   contentIds:
   - demo-content-3
+  maximumAccuracyMetres: 0
   libraryRegionId: 
   regionColor: {r: 0.9, g: 0.342, b: 0.8304666, a: 1}
   boundary: 2

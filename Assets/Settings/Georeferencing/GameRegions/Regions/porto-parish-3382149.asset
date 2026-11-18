@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoPortoParish3382149
-  m_EditorClassIdentifier:
-  regionId: demo-porto-parish-3382149
-  libraryRegionId: osm:relation:3382149
-  displayName: "Cedofeita, Santo Ildefonso, S\u00e9, Miragaia, S\u00e3o Nicolau e Vit\u00f3ria"
+  m_Name: porto-parish-3382149
+  m_EditorClassIdentifier: 
+  regionId: porto-parish-3382149
+  displayName: "Cedofeita, Santo Ildefonso, S\xE9, Miragaia, S\xE3o Nicolau e Vit\xF3ria"
   level: 5
   parent: {fileID: 11400000, guid: 33ef366617ac49af92300f541c77f623, type: 2}
   contentIds:
   - demo-content-parish-3382149
-  regionColor: {r: 0.342, g: 0.6913998509849999, b: 0.9, a: 1}
+  maximumAccuracyMetres: 0
+  libraryRegionId: osm:relation:3382149
+  regionColor: {r: 0.342, g: 0.6913999, b: 0.9, a: 1}
   boundary: 2
   centre:
     latitude: 41.178
@@ -305,5 +306,6 @@ MonoBehaviour:
       - latitude: 41.1590028
         longitude: -8.6356466
     holes: []
-  dataSource: "OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3382149"
-  description: "Civil Parish; OSM administrative level 8."
+  description: Civil Parish; OSM administrative level 8.
+  dataSource: OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3382149
+  legacyRadiusMetres: -1

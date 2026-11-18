@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoPortoParish3384814
-  m_EditorClassIdentifier:
-  regionId: demo-porto-parish-3384814
-  libraryRegionId: osm:relation:3384814
-  displayName: "Paranhos"
+  m_Name: porto-parish-3384814
+  m_EditorClassIdentifier: 
+  regionId: porto-parish-3384814
+  displayName: Paranhos
   level: 5
   parent: {fileID: 11400000, guid: 33ef366617ac49af92300f541c77f623, type: 2}
   contentIds:
   - demo-content-parish-3384814
-  regionColor: {r: 0.7829557376850012, g: 0.342, b: 0.9, a: 1}
+  maximumAccuracyMetres: 0
+  libraryRegionId: osm:relation:3384814
+  regionColor: {r: 0.78295577, g: 0.342, b: 0.9, a: 1}
   boundary: 2
   centre:
     latitude: 41.178
@@ -377,5 +378,6 @@ MonoBehaviour:
       - latitude: 41.1813614
         longitude: -8.5841105
     holes: []
-  dataSource: "OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3384814"
-  description: "Civil Parish; OSM administrative level 8."
+  description: Civil Parish; OSM administrative level 8.
+  dataSource: OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3384814
+  legacyRadiusMetres: -1

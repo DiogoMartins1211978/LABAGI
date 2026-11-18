@@ -23,6 +23,7 @@ namespace Tools.Georeferencing.Editor
         [SerializeField] bool applyLocationRules;
         [SerializeField] LocationOrigin testOrigin = LocationOrigin.IPAddress;
         [SerializeField] LocationPrecision testPrecision = LocationPrecision.Unknown;
+        [SerializeField] double testAccuracyMetres = 100;
         RegionMap map;
         VisualElement regionList, inspector;
         Label status, result;
@@ -31,9 +32,35 @@ namespace Tools.Georeferencing.Editor
         ContentRegion lastListClick;
         double lastListClickTime = -1;
         bool showSelectionResult;
+        bool pendingRegionFrame;
 
         [MenuItem("Tools/Georeferencing")]
         public static void Open() => GetWindow<GeoreferencingWindow>("Georeferencing");
+
+        public static void ShowRegion(RegionCatalog source, ContentRegion region)
+        {
+            if (source == null || region == null || source.regions == null || !source.regions.Contains(region)) return;
+            var window = GetWindow<GeoreferencingWindow>("Georeferencing");
+            window.catalog = source;
+            window.selected = region;
+            window.pendingRegionFrame = true;
+            window.Show();
+            window.Focus();
+            window.rootVisualElement.schedule.Execute(window.ApplyPendingRegion).StartingIn(20);
+        }
+
+        void ApplyPendingRegion()
+        {
+            // Opening another tool can finish before its viewport is laid out. GeometryChanged retries once ready.
+            if (!pendingRegionFrame || map == null || !(map.contentRect.width > 0) || !(map.contentRect.height > 0)) return;
+            pendingRegionFrame = false;
+            map.Catalog = catalog;
+            map.InvalidateGeometry();
+            rootVisualElement.Q<ObjectField>("catalog").SetValueWithoutNotify(catalog);
+            RefreshList();
+            Select(selected, true);
+            ActivateRegion(selected, true);
+        }
 
         public void CreateGUI()
         {
@@ -66,6 +93,9 @@ namespace Tools.Georeferencing.Editor
             var rulesToggle = rootVisualElement.Q<Toggle>("applyLocationRules");
             rulesToggle.SetValueWithoutNotify(applyLocationRules);
             rulesToggle.RegisterValueChangedCallback(evt => { applyLocationRules = evt.newValue; UpdateResult(); });
+            var accuracyField = rootVisualElement.Q<DoubleField>("testAccuracy");
+            accuracyField.SetValueWithoutNotify(testAccuracyMetres);
+            accuracyField.RegisterValueChangedCallback(evt => { testAccuracyMetres = evt.newValue; UpdateResult(); });
             var originField = rootVisualElement.Q<EnumField>("testOrigin");
             originField.Init(testOrigin);
             originField.RegisterValueChangedCallback(evt => { testOrigin = (LocationOrigin)evt.newValue; UpdateResult(); });
@@ -75,6 +105,7 @@ namespace Tools.Georeferencing.Editor
 
             map = new RegionMap { Catalog = catalog, Selected = selected, Centre = viewCentre,
                 Zoom = viewZoom, Status = message => status.text = message };
+            map.RegisterCallback<GeometryChangedEvent>(_ => ApplyPendingRegion());
             rootVisualElement.Q("mapHost").Insert(0, map);
             map.Clicked = (point, clicks) =>
             {
@@ -306,8 +337,14 @@ namespace Tools.Georeferencing.Editor
             else
             {
                 var serialized = new SerializedObject(selected);
-                foreach (string property in new[] { "regionId", "displayName", "level", "parent", "regionColor", "contentIds", "boundary", "centre", "radiusKilometres", "polygons", "description", "dataSource" })
+                foreach (string property in new[] { "regionId", "displayName", "level", "parent", "regionColor", "contentIds", "maximumAccuracyMetres", "boundary", "centre", "radiusKilometres", "polygons", "description", "dataSource" })
                 {
+                    if (property == "contentIds")
+                    {
+                        var regionForContent = selected;
+                        inspector.Add(new Button(() => Tools.Content.Editor.ContentBrowserWindow.ChooseForRegion(catalog, regionForContent))
+                        { text = "Choose Content", tooltip = "Browse Content Thumbnails And Assign IDs To This Region" });
+                    }
                     if (property == "level")
                     {
                         // Show geographic order while keeping the old serialized enum values.
@@ -508,10 +545,11 @@ namespace Tools.Georeferencing.Editor
             string ruleInfo = "";
             if (applyLocationRules)
             {
-                resolved = RegionResolver.ApplyLocationRules(catalog, resolved, testOrigin, testPrecision);
+                resolved = RegionResolver.ApplyLocationRules(catalog, resolved, testOrigin, testPrecision, testAccuracyMetres);
                 ruleInfo = catalog?.locationRules == null ? "Location Rules: Not Assigned (Unfiltered)\n"
-                    : catalog.locationRules.TryGetMinimumLevel(testOrigin, testPrecision, out var level)
-                        ? $"Source: {testOrigin}; Minimum Level: {level}\n" : $"Source: {testOrigin}; Disabled\n";
+                    : catalog.locationRules.TryGetMinimumLevel(testOrigin, testPrecision, testAccuracyMetres, out var level)
+                        ? $"Accuracy: {testAccuracyMetres} m; Default Minimum Level: {level} (Region Overrides Apply)\n"
+                        : $"Source: {testOrigin}; No Eligible Level\n";
             }
             result.text = resolved.IsValid
                 ? ruleInfo + "Regions: " + string.Join(", ", resolved.Regions.Select(region => region.displayName))

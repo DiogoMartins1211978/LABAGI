@@ -12,6 +12,8 @@ Create geographic regions and find the content IDs available at a position. Open
 
 Click the map to see matching **Regions** and **Content**. Editing Latitude or Longitude updates the test marker and matching content immediately; **Centre Map** moves the view to that position. Invalid coordinates hide the marker and leave the map centre unchanged. Latitude accepts -90 to 90 degrees; longitude accepts -180 to 180. The map loads automatically; drag to pan, use the wheel to zoom and use its top-right refresh button if needed. Coordinate matching also works without map access.
 
+**Choose Content** opens the [Content Browser](../Content/README.md) for an editable region. Link that content catalogue to the same geographic catalogue using the **Geographic Catalogue** field at the top of the browser. Browse or search, select a thumbnail and use **Add To Region** or **Remove From Region** to edit the entry's allowed region codes. Exclusions and dependencies are also configured in the content browser. Geographic assets are not changed by these assignments.
+
 The included [Demo Catalogue](Examples/README.md) returns Europe, Portugal, Porto District, Porto, Paranhos and Campus at `41.178, -8.608` when location rules are disabled. The [Region Library](../../../Tools/Georeferencing/RegionLibrary/README.md) contains additional boundaries and documents their sources. Library imports start with empty content lists.
 
 The bundled demo is a read-only template in the tool. Create or select another catalogue, then choose **Populate From Demo** to fill it with independent regions, parent links and location rules. For a non-empty catalogue, confirm replacement to restore that base. Repeating the operation reuses its owned region assets; assets referenced by other catalogues remain untouched. Region IDs and content IDs are copied from the template. Undo restores the previous catalogue state.
@@ -38,26 +40,30 @@ A region needs boundary data to match coordinates directly. Its name and level a
 
 ## Location Rules
 
-Each catalogue can reference a `LocationRules` asset. For an editable catalogue, **Location Rules**, below the map, opens it in the Inspector, creating one if missing. Rules can be shared between catalogues through the catalogue Inspector.
+Each catalogue references a `LocationRules` asset. Open **Location Rules** below the map to edit it. The demo and GameRegions use the same initial limits, stored in independent assets.
 
-A source's **Minimum Level** is the most specific level permitted; broader ancestors remain eligible. These are editable content policies, not accuracy guarantees.
+A coordinate must match the region's boundary. Reported horizontal accuracy then determines which matching regions can contribute content:
 
-| Source | Unknown Permission | Approximate Permission | Precise Permission |
-|---|---|---|---|
-| DeviceLocation, IPAddress, Cellular, Default, Obfuscated | Administrative Area | Administrative Area | Custom Zone |
-| WiFi | Locality | Administrative Area | Custom Zone |
-| Satellite, ConfigurationOverride, Simulated | Custom Zone | Administrative Area | Custom Zone |
-| Unknown | Disabled | Disabled | Disabled |
+| Level | Maximum Reported Accuracy |
+|---|---|
+| Custom Zone | 100 m |
+| Subdivision | 250 m |
+| Locality | 1000 m |
+| Administrative Area, Country, Continent | No cutoff |
 
-Each enabled source uses **Precise Minimum Level** for precise permission by default, including Cellular. Its **Use Precise Level** switch and precise level remain editable per source. Otherwise, **Minimum Level** applies. **Approximate Minimum Level** caps approximate samples at Administrative Area by default. Android reports `DeviceLocation` because Unity does not identify the underlying GPS, Wi-Fi or cellular provider; its permission mode selects the appropriate rule.
+The most specific accepted level is called **Minimum Level**; broader ancestors remain available. An accepted region also includes its ancestors. Accuracy is a provider estimate, so these limits define content policy rather than a guarantee of the device's true position.
 
-To preview filtering, enable **Apply Location Rules** below the map and choose **Source** and **Permission**. Only permitted regions contribute content IDs. Missing, duplicate or disabled source rules return no eligible content. A catalogue without a rules asset performs unfiltered matching.
+A region's **Maximum Accuracy Metres** overrides its level's limit. Zero uses the catalogue default. For example, a zone can require 25 m, 50 m or 100 m. The reported coordinate must still be inside its boundary; accuracy does not expand a boundary or require an uncertainty circle to fit inside it.
+
+Usable accuracy takes priority over source/permission granularity: Windows Wi-Fi at 70 m can reach Custom Zone, while Android Precise at 2000 m reaches Administrative Area. Source enabled switches still apply; missing, duplicate or disabled sources remain unavailable. If accuracy is missing or zero for a system provider, source and permission levels provide the fallback. ConfigurationOverride and Simulated can intentionally use zero error. An explicit region accuracy requirement needs a usable measurement.
+
+To preview the result, enable **Apply Location Rules**, enter **Accuracy (m)**, and choose **Source** and **Permission**. The result lists eligible regions and content IDs; per-region overrides can differ from the default Minimum Level. Without a rules asset, matching remains geometric.
 
 ## Startup Location
 
-The game automatically creates **Startup Location**, requests one valid position and stops acquisition after capturing it. It waits up to 45 active seconds without blocking the menu; application pauses suspend that timeout. Scene changes preserve the snapshot. An unsuccessful attempt reports its status without automatically retrying.
+The game automatically creates **Startup Location** and retains the best fresh sample. After the first sample, it can refine for five active seconds, finishing early at 100 m or better; these values are configurable in `StartupLocationSettings`. It waits up to 45 active seconds without blocking the menu; application pauses suspend that timeout. Scene changes preserve the snapshot. An unsuccessful attempt reports its status without automatically retrying.
 
-After capturing a position, startup automatically resolves the configured catalogue with its source and permission rules. Read `StartupLocation.Current` for the permitted regions and content IDs, or subscribe to `StartupLocation.Resolved` before capture completes. `Catalog` identifies the configured asset; `Position`, `AccuracyMetres`, `Origin`, `Precision` and `Status` retain the raw snapshot.
+After capturing a position, startup automatically resolves the configured catalogue using accuracy, region overrides and source/permission fallbacks. Read `StartupLocation.Current` for the permitted regions and content IDs, or subscribe to `StartupLocation.Resolved` before the attempt completes. This event also reports failed attempts through an invalid result. `Catalog` identifies the configured asset; `Position`, `AccuracyMetres`, `Origin`, `Precision` and `Status` retain the raw snapshot.
 
 Messages prefixed `[Location]` report acquisition and the catalogue result. On Android, open **Tools > Android Logs** and follow the [capture workflow](../../../ANDROID.md#diagnose-and-iterate). To consume the stored result:
 
@@ -77,7 +83,7 @@ if (result.IsValid)
 }
 ```
 
-`ContentIds` is the integration point for gameplay. Capturing a position does not activate game content automatically.
+`RegionContentBridge` resolves the geographic catalogue linked by [Content Availability](../Content/README.md) using the same startup snapshot. Content entries apply their allowed and excluded region codes, then their required content. Gameplay queries that service for available IDs or assets; region matching does not instantiate content. These rules are stored in the content catalogue, separately from a region's optional standalone Content IDs.
 
 Before capture, or if acquisition fails, `Current.IsValid` is false. A valid result with no regions means the position matched no permitted region. `StartupLocation.Resolve(otherCatalog)` remains available for an additional query using the same snapshot.
 

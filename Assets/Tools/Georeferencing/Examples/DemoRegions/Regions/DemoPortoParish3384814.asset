@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPortoParish3384814
   m_EditorClassIdentifier:
   regionId: demo-porto-parish-3384814
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:3384814
   displayName: "Paranhos"
   level: 5

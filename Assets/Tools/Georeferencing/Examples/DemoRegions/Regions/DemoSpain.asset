@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoSpain
   m_EditorClassIdentifier: 
   regionId: demo-spain
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:1311341
   displayName: DemoSpain
   level: 1

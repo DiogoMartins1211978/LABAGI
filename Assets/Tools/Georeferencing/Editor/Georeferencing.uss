@@ -34,6 +34,7 @@
 .location-test > .unity-toggle > .unity-base-field__label { align-self: center; -unity-text-align: middle-left; }
 .location-test > .unity-toggle > .unity-base-field__input { align-self: center; }
 .location-test .unity-enum-field { min-width: 170px; flex-grow: 1; }
+.location-test .unity-double-field { min-width: 170px; flex-grow: 1; }
 .inspector-panel { width: 320px; min-width: 320px; max-width: 320px; flex-shrink: 0; margin-left: 8px; overflow: hidden; }
 .inspector-panel > .unity-scroll-view { flex-grow: 1; }
 .inspector-panel .unity-scroll-view__content-container { min-width: 0; max-width: 100%; }

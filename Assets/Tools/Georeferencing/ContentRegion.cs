@@ -30,6 +30,8 @@ namespace Tools.Georeferencing
         public RegionLevel level;
         public ContentRegion parent;
         public List<string> contentIds = new List<string>();
+        [Min(0), Tooltip("Maximum reported accuracy in metres for this region. 0 uses its catalogue's level limit.")]
+        public float maximumAccuracyMetres;
         // Preserve source identity when library assets are cloned or receive new game IDs.
         [HideInInspector] public string libraryRegionId;
 

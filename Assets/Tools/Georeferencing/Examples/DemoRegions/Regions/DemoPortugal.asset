@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPortugal
   m_EditorClassIdentifier: 
   regionId: demo-1
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:295480
   displayName: DemoPortugal
   level: 1

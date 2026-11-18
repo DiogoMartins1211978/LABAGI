@@ -45,7 +45,7 @@ namespace Tools.Georeferencing
             TimestampUtcSeconds = utcSeconds;
             Origin = origin;
             Precision = precision;
-            var resolved = RegionResolver.Resolve(catalog, point, origin, precision);
+            var resolved = RegionResolver.Resolve(catalog, point, origin, precision, accuracyMetres);
             State = resolved.IsValid ? LocationState.Ready : LocationState.Invalid;
             Current = resolved;
             Changed?.Invoke(Current);

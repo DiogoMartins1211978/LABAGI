@@ -12,6 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4cb1419a3dc4c5eb1e3e4a7bfd06f1a, type: 3}
   m_Name: LocationRules
   m_EditorClassIdentifier:
+  accuracyLimits:
+  - level: 0
+    maximumMetres: 0
+  - level: 1
+    maximumMetres: 0
+  - level: 4
+    maximumMetres: 0
+  - level: 2
+    maximumMetres: 1000
+  - level: 5
+    maximumMetres: 250
+  - level: 3
+    maximumMetres: 100
   sources:
   - source: 0
     enabled: 0

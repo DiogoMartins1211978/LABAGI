@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d24d2489e3404b65a99dc1c4ed4661a1, type: 3}
+  m_Name: ContentCatalog
+  m_EditorClassIdentifier: 
+  regionCatalog: {fileID: 11400000, guid: 64549eaf66744d6aa6399f8491423aa7, type: 2}
+  entries:
+  - id: card.ability
+    category: cards
+    asset: {fileID: 11400000, guid: 55484fa6e8300704cb155cc18f3c046c, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.attack
+    category: cards
+    asset: {fileID: 11400000, guid: 5581c7cdc03d11144ac4cb97ef27debd, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.control
+    category: cards
+    asset: {fileID: 11400000, guid: 9950d436b576ecf4497f02a4ebbba73d, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.defence
+    category: cards
+    asset: {fileID: 11400000, guid: 69aaf5b550c28b3409ec2ec4b6f3d372, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.doubleattack
+    category: cards
+    asset: {fileID: 11400000, guid: 479900938ed93694d886490a9a5b2af5, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: Room_Start
+    category: rooms
+    asset: {fileID: 3254160609925099903, guid: 1b5705f924042e5498a10f8eccab9c59, type: 3}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: Room_Pillar
+    category: rooms
+    asset: {fileID: 510530326847458478, guid: ca5cec610d2aa57479a44c4ef63b6682, type: 3}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: Room_Crate
+    category: rooms
+    asset: {fileID: 1979060882751285474, guid: 9305e1eeb7666644884ecee61a276985, type: 3}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: Room_Exit
+    category: rooms
+    asset: {fileID: 210042922301311582, guid: 53d28037671c7b646900e7cc4fa4770c, type: 3}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: Room_Standard
+    category: rooms
+    asset: {fileID: 3254160609925099903, guid: 5326542a6a56bba4eb9016573a8974af, type: 3}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: SnakeEnemy
+    category: enemies
+    asset: {fileID: 3336003750909610905, guid: a07321ae221df394396e02fb6f26a7d9, type: 3}
+    requiresRegion: 1
+    allowedRegionIds:
+    - europe
+    - portugal-porto
+    excludedRegionIds:
+    - portugal
+    requiredIds:
+    - card.attack
+    - card.ability
+  - id: map.default
+    category: maps
+    asset: {fileID: 4900000, guid: 5d10a7972e8cacc488e4b7be4b056517, type: 3}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds:
+    - Room_Crate
+    - Room_Exit
+    - Room_Pillar
+    - Room_Standard
+    - Room_Start
+    - SnakeEnemy

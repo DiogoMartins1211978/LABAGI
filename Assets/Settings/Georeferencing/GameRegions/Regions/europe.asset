@@ -10,15 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoEurope
+  m_Name: europe
   m_EditorClassIdentifier: 
-  regionId: demo-0
-  libraryRegionId: geo:continent:europe
-  displayName: DemoEurope
+  regionId: europe
+  displayName: Europe
   level: 0
   parent: {fileID: 0}
   contentIds:
   - demo-content-0
+  maximumAccuracyMetres: 0
+  libraryRegionId: geo:continent:europe
   regionColor: {r: 1, g: 0.83026105, b: 0.07075471, a: 1}
   boundary: 2
   centre:

@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoPortoDistrict
-  m_EditorClassIdentifier:
-  regionId: demo-porto-district
-  libraryRegionId: osm:relation:3459013
-  displayName: "Porto District"
+  m_Name: portugal-porto-district
+  m_EditorClassIdentifier: 
+  regionId: portugal-porto-district
+  displayName: Porto District
   level: 4
   parent: {fileID: 11400000, guid: 205415078acd4d39a663ebdff2e5a4e2, type: 2}
   contentIds:
   - demo-content-porto-district
-  regionColor: {r: 0.9, g: 0.6438889716750011, b: 0.342, a: 1}
+  maximumAccuracyMetres: 0
+  libraryRegionId: osm:relation:3459013
+  regionColor: {r: 0.9, g: 0.64388895, b: 0.342, a: 1}
   boundary: 2
   centre:
     latitude: 41.178
@@ -13455,5 +13456,6 @@ MonoBehaviour:
       - latitude: 41.3440026
         longitude: -8.5398968
     holes: []
-  dataSource: "OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3459013"
-  description: "District; OSM administrative level 6."
+  description: District; OSM administrative level 6.
+  dataSource: OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3459013
+  legacyRadiusMetres: -1

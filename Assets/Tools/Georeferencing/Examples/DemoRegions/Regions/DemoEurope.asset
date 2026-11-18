@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoEurope
   m_EditorClassIdentifier: 
   regionId: demo-0
+  maximumAccuracyMetres: 0
   libraryRegionId: geo:continent:europe
   displayName: DemoEurope
   level: 0

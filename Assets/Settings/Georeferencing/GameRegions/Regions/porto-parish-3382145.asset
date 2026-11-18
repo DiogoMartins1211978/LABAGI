@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoPortoParish3382145
-  m_EditorClassIdentifier:
-  regionId: demo-porto-parish-3382145
-  libraryRegionId: osm:relation:3382145
-  displayName: "Lordelo do Ouro e Massarelos"
+  m_Name: porto-parish-3382145
+  m_EditorClassIdentifier: 
+  regionId: porto-parish-3382145
+  displayName: Lordelo do Ouro e Massarelos
   level: 5
   parent: {fileID: 11400000, guid: 33ef366617ac49af92300f541c77f623, type: 2}
   contentIds:
   - demo-content-parish-3382145
-  regionColor: {r: 0.8542220566499978, g: 0.9, b: 0.342, a: 1}
+  maximumAccuracyMetres: 0
+  libraryRegionId: osm:relation:3382145
+  regionColor: {r: 0.85422206, g: 0.9, b: 0.342, a: 1}
   boundary: 2
   centre:
     latitude: 41.178
@@ -273,5 +274,6 @@ MonoBehaviour:
       - latitude: 41.1448211
         longitude: -8.6520036
     holes: []
-  dataSource: "OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3382145"
-  description: "Civil Parish; OSM administrative level 8."
+  description: Civil Parish; OSM administrative level 8.
+  dataSource: OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright; relation 3382145
+  legacyRadiusMetres: -1

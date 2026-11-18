@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPorto
   m_EditorClassIdentifier:
   regionId: demo-2
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:3372453
   displayName: "Porto"
   level: 2

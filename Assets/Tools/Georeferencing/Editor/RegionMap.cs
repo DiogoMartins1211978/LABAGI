@@ -20,6 +20,10 @@ namespace Tools.Georeferencing.Editor
         public readonly List<GeoPoint> Draft = new List<GeoPoint>();
         public bool DrawPolygon;
         public Action<GeoPoint, int> Clicked;
+        public Action<GeoPoint, int, int> PointerClicked;
+        public Func<ContentRegion, bool> RegionVisible;
+        public Func<ContentRegion, Color> RegionColor;
+        public bool ShowTestPoint = true;
         public Action<string> Status;
 
         readonly Dictionary<(int x, int y, int z), Texture2D> tiles = new Dictionary<(int, int, int), Texture2D>();
@@ -36,7 +40,9 @@ namespace Tools.Georeferencing.Editor
         Vector2 pointerDown, lastPointer;
         Vector2 lastClickPosition;
         double lastClickTime = -1;
+        int lastClickButton = -1;
         bool dragging, moved, failed;
+        int dragButton;
         IVisualElementScheduledItem pendingLoad;
 
         public RegionMap()
@@ -46,7 +52,8 @@ namespace Tools.Georeferencing.Editor
             RegisterCallback<GeometryChangedEvent>(_ => ScheduleLoad());
             RegisterCallback<PointerDownEvent>(evt =>
             {
-                if (evt.button != 0) return;
+                if (evt.button != 0 && (evt.button != 1 || PointerClicked == null)) return;
+                dragButton = evt.button;
                 pointerDown = lastPointer = evt.localPosition;
                 dragging = true;
                 moved = false;
@@ -68,22 +75,26 @@ namespace Tools.Georeferencing.Editor
             });
             RegisterCallback<PointerUpEvent>(evt =>
             {
-                if (evt.button != 0 || !dragging) return;
+                if (evt.button != dragButton || !dragging) return;
                 dragging = false;
                 this.ReleasePointer(evt.pointerId);
                 if (moved || !OnWorld(evt.localPosition)) { lastClickTime = -1; return; }
                 var point = FromScreen(evt.localPosition);
-                if (DrawPolygon) { Draft.Add(point); lastClickTime = -1; }
+                if (DrawPolygon && evt.button == 0) { Draft.Add(point); lastClickTime = -1; }
                 else
                 {
                     // Count completed clicks locally; pointer capture can reset native click counts.
-                    double now = EditorApplication.timeSinceStartup;
-                    Vector2 position = evt.localPosition;
-                    int clicks = now - lastClickTime <= .5 && Vector2.Distance(position, lastClickPosition) <= 5 ? 2 : 1;
-                    lastClickTime = clicks == 2 ? -1 : now;
-                    lastClickPosition = position;
-                    TestPoint = point;
-                    Clicked?.Invoke(point, clicks);
+                    int clicks = CountClick(evt.localPosition, evt.button, EditorApplication.timeSinceStartup);
+                    if (evt.button == 0)
+                    {
+                        TestPoint = point;
+                        Clicked?.Invoke(point, clicks);
+                    }
+                    if (PointerClicked != null)
+                    {
+                        PointerClicked(point, evt.button, clicks);
+                        evt.StopPropagation();
+                    }
                 }
                 MarkDirtyRepaint();
             });
@@ -108,6 +119,16 @@ namespace Tools.Georeferencing.Editor
             ConstrainView();
             MarkDirtyRepaint();
             ScheduleLoad();
+        }
+
+        int CountClick(Vector2 position, int button, double now)
+        {
+            int count = button == lastClickButton && now - lastClickTime <= .5
+                && Vector2.Distance(position, lastClickPosition) <= 5 ? 2 : 1;
+            lastClickTime = count == 2 ? -1 : now;
+            lastClickButton = button;
+            lastClickPosition = position;
+            return count;
         }
 
         void ScheduleLoad()
@@ -169,8 +190,11 @@ namespace Tools.Georeferencing.Editor
         public void FitCatalog()
         {
             if (Catalog == null) return;
-            FitPoints(Catalog.regions.Where(region => region != null).SelectMany(BoundaryPoints).ToList());
+            FitRegions(Catalog.regions);
         }
+
+        public void FitRegions(IEnumerable<ContentRegion> regions) =>
+            FitPoints(regions.Where(region => region != null).SelectMany(BoundaryPoints).ToList());
 
         void FitPoints(List<GeoPoint> points)
         {
@@ -339,7 +363,7 @@ namespace Tools.Georeferencing.Editor
             var painter = context.painter2D;
             if (Catalog != null)
             {
-                var regions = Catalog.regions.Where(item => item != null).Distinct()
+                var regions = Catalog.regions.Where(item => item != null && (RegionVisible == null || RegionVisible(item))).Distinct()
                     .OrderBy(item => RegionLevels.Rank(item.level)).ToList();
                 // Draw each region once, with selected descendants above the other boundaries.
                 var highlighted = new HashSet<ContentRegion>(regions.Where(region => region == Selected
@@ -358,7 +382,7 @@ namespace Tools.Georeferencing.Editor
                 if (index == 0) painter.MoveTo(Screen(Draft[index]));
                 else painter.LineTo(Screen(Draft[index]));
             painter.Stroke();
-            if (TestPoint.IsValid)
+            if (ShowTestPoint && TestPoint.IsValid)
             {
                 Vector2 test = Screen(TestPoint);
                 painter.BeginPath();
@@ -393,7 +417,7 @@ namespace Tools.Georeferencing.Editor
 
         void DrawRegion(Painter2D painter, ContentRegion region, bool selected)
         {
-            Color color = RegionPalette.DisplayColor(region);
+            Color color = RegionColor != null ? RegionColor(region) : RegionPalette.DisplayColor(region);
             painter.fillColor = new Color(color.r, color.g, color.b, selected ? .28f : .12f);
             painter.strokeColor = selected ? Color.white : new Color(color.r, color.g, color.b, .85f);
             painter.lineWidth = selected ? 3 : 1.5f;

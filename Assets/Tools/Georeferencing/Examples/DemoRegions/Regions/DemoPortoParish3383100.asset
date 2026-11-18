@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPortoParish3383100
   m_EditorClassIdentifier:
   regionId: demo-porto-parish-3383100
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:3383100
   displayName: "Bonfim"
   level: 5

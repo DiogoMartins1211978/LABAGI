@@ -10,15 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fc3686688c227845a7ce82856e3c4c7, type: 3}
-  m_Name: DemoSpain
+  m_Name: spain
   m_EditorClassIdentifier: 
-  regionId: demo-spain
-  libraryRegionId: osm:relation:1311341
-  displayName: DemoSpain
+  regionId: spain
+  displayName: Spain
   level: 1
   parent: {fileID: 11400000, guid: 1476dc242f234fd1bd935366408774b9, type: 2}
   contentIds:
   - demo-content-spain
+  maximumAccuracyMetres: 0
+  libraryRegionId: osm:relation:1311341
   regionColor: {r: 0.9019608, g: 0.34117645, b: 0.40073302, a: 1}
   boundary: 2
   centre:

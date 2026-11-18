@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DemoPortoParish3372413
   m_EditorClassIdentifier:
   regionId: demo-porto-parish-3372413
+  maximumAccuracyMetres: 0
   libraryRegionId: osm:relation:3372413
   displayName: "Ramalde"
   level: 5
