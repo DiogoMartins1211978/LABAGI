@@ -29,6 +29,9 @@ public class PauseMenuController : MonoBehaviour
     CursorLockMode previousCursorLock;
     bool previousCursorVisible;
     GameObject previousSelection;
+    GameObject activeOverlay;
+
+    public bool IsShowingOverlay(GameObject overlay) => ownsPause && overlay != null && activeOverlay == overlay;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetSession()
@@ -67,7 +70,7 @@ public class PauseMenuController : MonoBehaviour
             // Do not reopen while the Resume press is still being released.
             if (!BlocksGameplayInput && (escape || start)) Pause();
         }
-        else if (ownsPause && pausePanel.activeInHierarchy && (escape || start || back))
+        else if (ownsPause && activeOverlay == pausePanel && pausePanel.activeInHierarchy && (escape || start || back))
         {
             // Submenus handle Back themselves while PausePanel is hidden.
             Resume();
@@ -77,16 +80,29 @@ public class PauseMenuController : MonoBehaviour
     public void Pause()
     {
         if (IsPaused || changingScene || pausePanel == null || resumeButton == null) return;
+        TryOpenOverlay(pausePanel, resumeButton);
+    }
+
+    // A book or other gameplay overlay can borrow the same pause state without
+    // showing PausePanel or changing combat/deckbuilding modes.
+    public bool TryOpenOverlay(GameObject overlay, Selectable firstSelected = null)
+    {
+        if (!isActiveAndEnabled || BlocksGameplayInput || changingScene || overlay == null) return false;
+        if (transform.IsChildOf(overlay.transform))
+        {
+            Debug.LogError("The pause controller must remain outside the overlay it controls.", this);
+            return false;
+        }
         // The deckbuilder hides its entire Canvas outside deckbuilding mode.
         // A pause panel under that Canvas would stop the game without appearing.
-        Canvas canvas = pausePanel.GetComponentInParent<Canvas>(true);
-        Transform parent = pausePanel.transform.parent;
+        Canvas canvas = overlay.GetComponentInParent<Canvas>(true);
+        Transform parent = overlay.transform.parent;
         if (canvas == null || !canvas.isActiveAndEnabled ||
             (parent != null && !parent.gameObject.activeInHierarchy))
         {
-            Debug.LogError("PausePanel must be under an enabled, always-active Canvas. "
-                + "Use a separate PauseCanvas instead of the deckbuilder UI Canvas.", this);
-            return;
+            Debug.LogError("The overlay must be under an enabled, always-active Canvas. "
+                + "Hide its child panel, not the Canvas, and keep it outside the deckbuilder UI.", this);
+            return false;
         }
         previousTimeScale = Time.timeScale;
         previousCursorLock = Cursor.lockState;
@@ -95,22 +111,32 @@ public class PauseMenuController : MonoBehaviour
             ? EventSystem.current.currentSelectedGameObject : null;
 
         ownsPause = IsPaused = true;
+        activeOverlay = overlay;
         openedFrame = Time.frameCount;
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        pausePanel.transform.SetAsLastSibling();
-        pausePanel.SetActive(true);
-        StartCoroutine(SelectResumeNextFrame());
+        overlay.transform.SetAsLastSibling();
+        overlay.SetActive(true);
+        StartCoroutine(SelectOverlayNextFrame(overlay, firstSelected));
+        return true;
     }
 
-    IEnumerator SelectResumeNextFrame()
+    IEnumerator SelectOverlayNextFrame(GameObject overlay, Selectable firstSelected)
     {
         // yield null still progresses while timeScale is zero.
         yield return null;
-        if (!ownsPause || !pausePanel.activeInHierarchy || EventSystem.current == null) yield break;
+        if (!IsShowingOverlay(overlay) || !overlay.activeInHierarchy || EventSystem.current == null) yield break;
         EventSystem.current.SetSelectedGameObject(null);
-        resumeButton.Select();
+        if (firstSelected != null && firstSelected.IsActive() && firstSelected.IsInteractable())
+            firstSelected.Select();
+    }
+
+    public void CloseOverlay(GameObject overlay)
+    {
+        // Only the owner can release this pause. Closing the book must never
+        // accidentally resume a pause/options menu that is open instead.
+        if (IsShowingOverlay(overlay)) Resume();
     }
 
     public void Resume()
@@ -121,7 +147,7 @@ public class PauseMenuController : MonoBehaviour
         waitingForRelease = true;
         blockThroughFrame = Time.frameCount + 1;
         RestoreState();
-        pausePanel.SetActive(false);
+        HideActiveOverlay();
         if (EventSystem.current != null)
         {
             EventSystem.current.SetSelectedGameObject(null);
@@ -143,6 +169,7 @@ public class PauseMenuController : MonoBehaviour
         changingScene = true;
         StopAllCoroutines();
         RestoreState();
+        HideActiveOverlay();
         waitingForRelease = false;
         blockThroughFrame = -1;
         Time.timeScale = 1f;
@@ -158,6 +185,13 @@ public class PauseMenuController : MonoBehaviour
         Cursor.lockState = previousCursorLock;
         Cursor.visible = previousCursorVisible;
         ownsPause = IsPaused = false;
+    }
+
+    void HideActiveOverlay()
+    {
+        GameObject overlay = activeOverlay;
+        activeOverlay = null;
+        if (overlay != null) overlay.SetActive(false);
     }
 
     static bool AnyGameplayControlHeld()
@@ -184,6 +218,6 @@ public class PauseMenuController : MonoBehaviour
         RestoreState();
         waitingForRelease = false;
         blockThroughFrame = Time.frameCount;
-        if (pausePanel != null) pausePanel.SetActive(false);
+        HideActiveOverlay();
     }
 }
