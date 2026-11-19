@@ -11,6 +11,8 @@ namespace Tools.Georeferencing
         {
             StartupLocation.Resolved -= Publish;
             StartupLocation.Resolved += Publish;
+            StartupLocation.Refreshing -= ContentAvailability.BeginRegionRefresh;
+            StartupLocation.Refreshing += ContentAvailability.BeginRegionRefresh;
         }
 
         static void Publish(RegionResult result)

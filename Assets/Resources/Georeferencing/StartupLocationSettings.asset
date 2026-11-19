@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: StartupLocationSettings
   m_EditorClassIdentifier:
   catalog: {fileID: 11400000, guid: 64549eaf66744d6aa6399f8491423aa7, type: 2}
+  mainMenuScene: Main Menu
   refinementSeconds: 5
   targetAccuracyMetres: 100

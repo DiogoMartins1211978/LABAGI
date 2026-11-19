@@ -86,7 +86,7 @@ MonoBehaviour:
     requiredIds: []
   - id: SnakeEnemy
     category: enemies
-    asset: {fileID: 3336003750909610905, guid: a07321ae221df394396e02fb6f26a7d9, type: 3}
+    asset: {fileID: 919132149155446097, guid: 7af8d47011b06d44db671beae136b215, type: 3}
     requiresRegion: 1
     allowedRegionIds:
     - europe

@@ -19,6 +19,16 @@ namespace Tools.Content
         public static RegionCatalog RegionCatalog => GetCatalog()?.regionCatalog;
         public static event Action Changed;
 
+        public static void BeginRegionRefresh()
+        {
+            bool changed = IsReady || matchedRegions.Count > 0;
+            resolvedCatalog = null;
+            matchedRegions.Clear();
+            matchedRegionIds = Array.Empty<string>();
+            IsReady = false;
+            if (changed) Changed?.Invoke();
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetSession()
         {

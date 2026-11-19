@@ -50,7 +50,7 @@ Android Logcat 1.4.7 is included as a project dependency. Open **Tools > Android
 3. Search for `[Location]` to follow startup acquisition in updated builds. Older builds use `Startup Location:` or `Startup location unavailable:`. Remove the search to inspect other systems; native Sherpa messages use the `sherpa-onnx` tag.
 4. Export the messages to `Logs/Android/` when sharing a reproduction. The window's export controls choose which captured messages to save; opening the window does not create a project log file automatically.
 
-Location requires both an app permission and Android's device-wide Location switch. Approximate permission is supported. A startup attempt runs once per app launch, so relaunch after changing permissions or the Location switch. New builds log creation, state changes and the final sample or failure with the `[Location]` prefix.
+Location requires both an app permission and Android's device-wide Location switch. Approximate permission is supported. The game captures location at startup and whenever the Main Menu scene becomes active. Return to the menu after changing permissions or the Location switch; relaunch to test the initial permission prompt. Menu revisits do not repeat a refused permission request. Messages with the `[Location]` prefix report creation, acquisition state and the final sample or failure.
 
 Reproduce failures in the installed app and inspect Logcat before rebuilding. Include the `sherpa-onnx` tag alongside `Unity`, since native model-loading errors do not necessarily appear in Unity's own log. Logs saved under `Logs/` remain outside version control.
 

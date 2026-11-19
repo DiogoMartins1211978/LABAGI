@@ -9,6 +9,8 @@ namespace Tools.Georeferencing
 
         [Tooltip("Catalogue resolved after the startup position is captured. Its location rules are applied automatically.")]
         public RegionCatalog catalog;
+        [Tooltip("Refresh location when this scene becomes active. The initial startup capture is always performed.")]
+        public string mainMenuScene = "Main Menu";
         [Min(0), Tooltip("Keep the best fresh sample for up to this many active seconds after the first sample.")]
         public float refinementSeconds = 5;
         [Min(0), Tooltip("Finish early when a sample reaches this reported accuracy in metres.")]

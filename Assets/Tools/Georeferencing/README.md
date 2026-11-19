@@ -59,11 +59,13 @@ Usable accuracy takes priority over source/permission granularity: Windows Wi-Fi
 
 To preview the result, enable **Apply Location Rules**, enter **Accuracy (m)**, and choose **Source** and **Permission**. The result lists eligible regions and content IDs; per-region overrides can differ from the default Minimum Level. Without a rules asset, matching remains geometric.
 
-## Startup Location
+## Startup And Main Menu
 
-The game automatically creates **Startup Location** and retains the best fresh sample. After the first sample, it can refine for five active seconds, finishing early at 100 m or better; these values are configurable in `StartupLocationSettings`. It waits up to 45 active seconds without blocking the menu; application pauses suspend that timeout. Scene changes preserve the snapshot. An unsuccessful attempt reports its status without automatically retrying.
+The game automatically creates **Startup Location** and captures a position at startup and whenever the Main Menu scene becomes active. `StartupLocationSettings.mainMenuScene` selects that scene; the shared settings use `Main Menu`. No scene component or menu-button wiring is required. An in-flight attempt is reused instead of starting another one.
 
-After capturing a position, startup automatically resolves the configured catalogue using accuracy, region overrides and source/permission fallbacks. Read `StartupLocation.Current` for the permitted regions and content IDs, or subscribe to `StartupLocation.Resolved` before the attempt completes. This event also reports failed attempts through an invalid result. `Catalog` identifies the configured asset; `Position`, `AccuracyMetres`, `Origin`, `Precision` and `Status` retain the raw snapshot.
+Each attempt retains the best fresh sample. After the first sample, it can refine for five active seconds, finishing early at 100 m or better; these values are configurable in `StartupLocationSettings`. It waits up to 45 active seconds without blocking the menu; application pauses suspend that timeout. The snapshot is reused during gameplay and cleared when a new menu capture begins. An unsuccessful attempt reports its status and can retry on the next menu visit.
+
+After capturing a position, the service automatically resolves the configured catalogue using accuracy, region overrides and source/permission fallbacks. Read `StartupLocation.Current` for the permitted regions and content IDs, or subscribe to `StartupLocation.Resolved`. This event runs after each attempt, including failures through an invalid result. `StartupLocation.Refreshing` announces a new attempt; Content Availability clears its previous geographic matches until resolution finishes. `Catalog` identifies the configured asset; `Position`, `AccuracyMetres`, `Origin`, `Precision` and `Status` retain the latest snapshot.
 
 Messages prefixed `[Location]` report acquisition and the catalogue result. On Android, open **Tools > Android Logs** and follow the [capture workflow](../../../ANDROID.md#diagnose-and-iterate). To consume the stored result:
 
@@ -85,11 +87,11 @@ if (result.IsValid)
 
 `RegionContentBridge` resolves the geographic catalogue linked by [Content Availability](../Content/README.md) using the same startup snapshot. Content entries apply their allowed and excluded region codes, then their required content. Gameplay queries that service for available IDs or assets; region matching does not instantiate content. These rules are stored in the content catalogue, separately from a region's optional standalone Content IDs.
 
-Before capture, or if acquisition fails, `Current.IsValid` is false. A valid result with no regions means the position matched no permitted region. `StartupLocation.Resolve(otherCatalog)` remains available for an additional query using the same snapshot.
+Before capture, during a refresh, or if acquisition fails, `Current.IsValid` is false. A valid result with no regions means the position matched no permitted region. `StartupLocation.Resolve(otherCatalog)` remains available for an additional query using the same snapshot.
 
 Windows uses the system Geolocator. Enable location services and desktop-app access in Windows settings. Its reported source can be IPAddress, WiFi or another system provider. IP-derived positions can be several kilometres away; reported accuracy is provider metadata, not a measured error. Requests for higher accuracy cannot guarantee a better fix.
 
-Android requests foreground location permission and reads Unity's location service. The user can choose approximate or precise access. Precise permission allows finer acquisition but does not guarantee GPS accuracy. Project-wide build configuration and USB setup are documented in [Android](../../../ANDROID.md).
+Android requests foreground location permission on the initial attempt and reads Unity's location service. The user can choose approximate or precise access. Menu revisits use the current permission without prompting again after a refusal; permission granted later in Android settings is recognised on the next visit. Precise permission allows finer acquisition but does not guarantee GPS accuracy. Project-wide build configuration and USB setup are documented in [Android](../../../ANDROID.md).
 
 ## Override The Position
 
@@ -104,9 +106,9 @@ Android requests foreground location permission and reads Unity's location servi
 }
 ```
 
-An enabled override replaces system acquisition and uses the `ConfigurationOverride` rule. Set `enabled` to `false` or remove the file to restore system location. Restart the app after editing, or use **Reload Location Configuration** while the source is running. Invalid enabled configuration reports an error. The live file stays outside the repository.
+An enabled override replaces system acquisition and uses the `ConfigurationOverride` rule. Set `enabled` to `false` or remove the file to restore system location. Each startup or Main Menu attempt reads the file again; use **Reload Location Configuration** for a manually running source. Invalid enabled configuration reports an error. The live file stays outside the repository.
 
-On Android, copy it to the app's `Application.persistentDataPath`, normally `/sdcard/Android/data/<application-id>/files/location.json`. Use the identifier in Player Settings and edit the template before copying it. Test precise access, approximate access, denied permission, disabled location services and the override separately on an installed APK. Restart the app for each startup acquisition test; Unity Remote does not run the Android provider.
+On Android, copy it to the app's `Application.persistentDataPath`, normally `/sdcard/Android/data/<application-id>/files/location.json`. Use the identifier in Player Settings and edit the template before copying it. Test precise access, approximate access, denied permission, disabled location services and the override separately on an installed APK. Return to the Main Menu to request a new capture; relaunch when testing the initial permission prompt. Unity Remote does not run the Android provider.
 
 ## Other Runtime Uses
 

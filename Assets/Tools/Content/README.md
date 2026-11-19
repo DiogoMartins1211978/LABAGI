@@ -64,7 +64,7 @@ if (ContentAvailability.TryGet<GameObject>("SnakeEnemy", out var prefab))
 string reason = ContentAvailability.GetUnavailableReason("map.default");
 ```
 
-After the startup attempt, `RegionContentBridge` resolves the content catalogue's linked geographic catalogue using the captured position and accuracy. `MatchedRegionIds` exposes accepted region codes. `IsReady` becomes true even if location fails. Entries without geographic restrictions remain usable when their requirements are satisfied. Subscribe to `Changed` to refresh pools; unsubscribe when the consumer is disabled. Data lasts for the current session.
+After each startup or Main Menu capture, `RegionContentBridge` resolves the content catalogue's linked geographic catalogue using the captured position and accuracy. `MatchedRegionIds` exposes accepted region codes. A new attempt clears the previous matches and sets `IsReady` to false; it becomes true when the attempt finishes, even if location fails. Entries without geographic restrictions remain usable when their requirements are satisfied. Subscribe to `Changed` to refresh pools; unsubscribe when the consumer is disabled. Data lasts for the current session.
 
 Another provider can call `ContentAvailability.SetRegions(geographicCatalog, matchedRegionCodes)`. A different catalogue cannot grant access to restricted entries. Unknown content IDs and incompatible asset types return no asset. Invalid catalogues return no available content and report validation errors.
 
