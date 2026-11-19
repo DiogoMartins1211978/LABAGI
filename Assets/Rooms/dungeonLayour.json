@@ -10,7 +10,7 @@
             "id": "R02",
             "from": "R01",
             "dir": "N",
-            "enemy": "SnakeEnemy"
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R03",
@@ -22,7 +22,7 @@
             "id": "R04",
             "from": "R03",
             "dir": "E",
-            "enemy": "SnakeEnemy"
+            "enemy": "WolfEnemy"
         },
         {
             "id": "R05",
