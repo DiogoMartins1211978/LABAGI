@@ -215,7 +215,7 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 5624530025576144023}
   lidarMeshCollider: {fileID: 5535177912697698965}
   focusPoint: {fileID: 0}
-  focusHeight: 1.2
+  focusHeight: 0
   animator: {fileID: 860143020531556917}
   attackDuration: 1
 --- !u!114 &9073329793513095681

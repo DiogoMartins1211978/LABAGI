@@ -27,7 +27,7 @@ public class Enemy : MonoBehaviour
 
     [Header("Combat camera")]
     public Transform focusPoint;
-    public float focusHeight = 1.2f;
+    public float focusHeight = 0f;
 
     [Header("Combat Animation")]
     public Animator animator;

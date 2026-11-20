@@ -1663,6 +1663,8 @@ MonoBehaviour:
   useViewConeDetection: 1
   focusTurnDuration: 0.6
   releaseTurnDuration: 0.5
+  focusOffset: {x: 0, y: 0.3, z: 0}
+  combatCameraTurnSpeed: 8
 --- !u!1 &282480426
 GameObject:
   m_ObjectHideFlags: 0
@@ -6931,7 +6933,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 191
+    m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -6940,7 +6942,7 @@ Camera:
   m_AllowMSAA: 1
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
-  m_OcclusionCulling: 1
+  m_OcclusionCulling: 0
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
 --- !u!114 &906570678
@@ -6986,6 +6988,8 @@ MonoBehaviour:
   sensitivity: 0.2
   keyboardLookSpeed: 90
   maxVerticalAngle: 20
+  focusOffset: {x: 0, y: 0.3, z: 0}
+  combatCameraTurnSpeed: 8
 --- !u!1 &909561958
 GameObject:
   m_ObjectHideFlags: 0

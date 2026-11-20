@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.VFX;
 using Random = UnityEngine.Random;
 
@@ -55,12 +54,12 @@ public class LiDARScanner : MonoBehaviour
     [Header("Scan area")]
     [SerializeField] private Camera _camera;
 
-
     [Header("Distance & Density Falloff")]
     [SerializeField] private float _distanceThinningStart = 8f;
 
     [Header("Focus")]
     [SerializeField] private Transform _lookSource;
+    [SerializeField] private float _cameraRotationThresholdDegrees = 0.1f;
 
     [Header("Scan speed")]
     [SerializeField] private float _scanInterval = 0.1f;
@@ -83,6 +82,9 @@ public class LiDARScanner : MonoBehaviour
     private float _currentScanRadius = 0f;
     private float _scanTimer;
     private string _lastState;
+
+    private Quaternion _lastCameraRotation;
+    private bool _hasLastCameraRotation;
 
     private void Start()
     {
@@ -123,15 +125,7 @@ public class LiDARScanner : MonoBehaviour
         UpdatePulse();
         UpdateEnemyFocus();
 
-        Mouse mouse = Mouse.current;
-
-        if (mouse == null)
-            return;
-
-        Vector2 mouseDelta = mouse.delta.ReadValue();
-        bool mouseMoved = mouseDelta.sqrMagnitude > 0.25f;
-
-        if (mouseMoved)
+        if (HasCameraRotated())
         {
             _currentScanRadius = _initialScanRadius;
         }
@@ -151,6 +145,39 @@ public class LiDARScanner : MonoBehaviour
             _scanTimer = 0f;
             Scan();
         }
+    }
+
+    private bool HasCameraRotated()
+    {
+        Transform rotationTransform = GetRotationTransform();
+        if (rotationTransform == null)
+            return false;
+
+        Quaternion currentRotation = rotationTransform.rotation;
+
+        if (!_hasLastCameraRotation)
+        {
+            _lastCameraRotation = currentRotation;
+            _hasLastCameraRotation = true;
+            return false;
+        }
+
+        float angleDelta = Quaternion.Angle(_lastCameraRotation, currentRotation);
+        _lastCameraRotation = currentRotation;
+
+        return angleDelta > _cameraRotationThresholdDegrees;
+    }
+
+    private Transform GetRotationTransform()
+    {
+        Camera cam = ResolveCamera();
+        if (cam != null)
+            return cam.transform;
+
+        if (_lookSource != null)
+            return _lookSource;
+
+        return _castPoint;
     }
 
     private void LateUpdate()
@@ -315,6 +342,7 @@ public class LiDARScanner : MonoBehaviour
     {
         _scanTimer = 0f;
         _currentScanRadius = _initialScanRadius;
+        _hasLastCameraRotation = false;
     }
 
     private void UpdateEnemyFocus()
@@ -435,7 +463,6 @@ public class LiDARScanner : MonoBehaviour
                 continue;
             }
 
-
             RoomNode hitRoom = hit.collider.GetComponentInParent<RoomNode>();
 
             if (hitRoom != _activeRoom) continue;
@@ -444,7 +471,7 @@ public class LiDARScanner : MonoBehaviour
 
             if (hit.distance > _distanceThinningStart)
             {
-                captureProbability = Mathf.Clamp01( _distanceThinningStart / hit.distance );
+                captureProbability = Mathf.Clamp01(_distanceThinningStart / hit.distance);
             }
 
             if (Random.value > captureProbability) continue;
@@ -702,6 +729,7 @@ public class LiDARScanner : MonoBehaviour
 
         roomData.PositionsTexture.Apply();
         roomData.NormalsTexture.Apply();
+        roomData.SizesTexture.Apply();
         roomData.LastAppliedCount = newCount;
     }
 
