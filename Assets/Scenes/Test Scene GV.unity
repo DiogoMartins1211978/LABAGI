@@ -1658,8 +1658,7 @@ MonoBehaviour:
   cardSystem: {fileID: 269744960}
   cameraControlScripts:
   - {fileID: 906570675}
-  disableDuringCombat:
-  - {fileID: 1063468866}
+  disableDuringCombat: []
   deactivateDuringCombat: []
   useViewConeDetection: 1
   focusTurnDuration: 0.6
@@ -6985,6 +6984,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraController
   sensitivity: 0.2
+  keyboardLookSpeed: 90
   maxVerticalAngle: 20
 --- !u!1 &909561958
 GameObject:
@@ -9295,14 +9295,12 @@ MonoBehaviour:
   _pointsPerScan: 40
   resolution: 256
   _camera: {fileID: 906570677}
-  _viewCoverage: 1
   _distanceThinningStart: 5
   _lookSource: {fileID: 906570674}
   _scanInterval: 0.1
   _debug: 1
   _initialScanRadius: 0.05
   _focusExpansionSpeed: 0.05
-  _focusTolerance: 0.9
   _minimumPointSpacing: 0.04
   _pulseOrigin: {fileID: 604149153}
   _pulseRange: 12
@@ -12020,6 +12018,7 @@ MonoBehaviour:
   ambientSlider: {fileID: 1742234596}
   enemiesSlider: {fileID: 533438315}
   cardsSlider: {fileID: 2042855785}
+  menuSfxSlider: {fileID: 0}
 --- !u!114 &1407930059
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -15,11 +15,24 @@ public class LiDARScanner : MonoBehaviour
         public readonly List<Vector3> Normals = new();
         public readonly Dictionary<Vector3Int, List<Vector3>> SpatialCells = new();
         public int LastAppliedCount;
+        public Texture2D SizesTexture;
+
+        public readonly List<float> PointSizes = new();
+
+        public readonly List<EnemyPointAttachment> EnemyAttachments = new();
+    }
+
+    private class EnemyPointAttachment
+    {
+        public Enemy Enemy;
+        public Enemy.SurfaceAttachment Surface;
+        public int PointIndex;
     }
 
     private readonly Dictionary<RoomNode, RoomScanData> _roomScans = new();
 
     private RoomNode _activeRoom;
+    private Enemy _focusedEnemy;
 
     private const string NORMALS_TEXTURE_NAME = "NormalsTexture";
     private const string TEXTURE_NAME = "PositionsTexture";
@@ -42,8 +55,6 @@ public class LiDARScanner : MonoBehaviour
     [Header("Scan area")]
     [SerializeField] private Camera _camera;
 
-    [Range(0.05f, 1f)]
-    [SerializeField] private float _viewCoverage = 1f;
 
     [Header("Distance & Density Falloff")]
     [SerializeField] private float _distanceThinningStart = 8f;
@@ -60,7 +71,6 @@ public class LiDARScanner : MonoBehaviour
     [Header("Focus Scan")]
     [SerializeField] private float _initialScanRadius = 0.05f;
     [SerializeField] private float _focusExpansionSpeed = 0.35f;
-    [SerializeField] private float _focusTolerance = 0.8f;
     [SerializeField] private float _minimumPointSpacing = 0.04f;
 
     [Header("Point Pulse")]
@@ -111,6 +121,7 @@ public class LiDARScanner : MonoBehaviour
             return;
 
         UpdatePulse();
+        UpdateEnemyFocus();
 
         Mouse mouse = Mouse.current;
 
@@ -142,6 +153,58 @@ public class LiDARScanner : MonoBehaviour
         }
     }
 
+    private void LateUpdate()
+    {
+        foreach (var entry in _roomScans)
+        {
+            RoomScanData roomData = entry.Value;
+
+            if (roomData.EnemyAttachments.Count == 0)
+                continue;
+
+            bool changed = false;
+
+            foreach (EnemyPointAttachment attachment in roomData.EnemyAttachments)
+            {
+                if (attachment.Enemy == null)
+                    continue;
+
+                if (!attachment.Enemy.GetAnimatedSurfacePoint(
+                    attachment.Surface,
+                    out Vector3 position,
+                    out Vector3 normal))
+                    continue;
+
+                int index = attachment.PointIndex;
+                int x = index % resolution;
+                int y = index / resolution;
+
+                roomData.Positions[index] = position;
+                roomData.Normals[index] = normal;
+
+                roomData.PositionsTexture.SetPixel(
+                    x, y,
+                    new Color(position.x, position.y, position.z, 1f)
+                );
+
+                Vector3 encodedNormal = normal * 0.5f + Vector3.one * 0.5f;
+
+                roomData.NormalsTexture.SetPixel(
+                    x, y,
+                    new Color(encodedNormal.x, encodedNormal.y, encodedNormal.z, 1f)
+                );
+
+                changed = true;
+            }
+
+            if (changed)
+            {
+                roomData.PositionsTexture.Apply();
+                roomData.NormalsTexture.Apply();
+            }
+        }
+    }
+
     private void OnDestroy()
     {
         if (_playerMover != null)
@@ -157,6 +220,9 @@ public class LiDARScanner : MonoBehaviour
 
             if (roomData.NormalsTexture != null)
                 Destroy(roomData.NormalsTexture);
+
+            if (roomData.SizesTexture != null)
+                Destroy(roomData.SizesTexture);
         }
     }
 
@@ -251,6 +317,48 @@ public class LiDARScanner : MonoBehaviour
         _currentScanRadius = _initialScanRadius;
     }
 
+    private void UpdateEnemyFocus()
+    {
+        Camera cam = ResolveCamera();
+
+        if (cam == null)
+            return;
+
+        Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+        Enemy target = null;
+
+        if (Physics.Raycast(
+            ray,
+            out RaycastHit hit,
+            Mathf.Infinity,
+            ~0,
+            QueryTriggerInteraction.Ignore))
+        {
+            target = hit.collider.GetComponentInParent<Enemy>();
+        }
+
+        if (target != null &&
+            !target.Resolved &&
+            !target.Discovered &&
+            (target.Room == null || target.Room == _activeRoom) &&
+            target.IsSeenBy(cam.transform))
+        {
+            if (_focusedEnemy != null && _focusedEnemy != target)
+                _focusedEnemy.UpdateGaze(false, Time.deltaTime);
+
+            _focusedEnemy = target;
+            _focusedEnemy.UpdateGaze(true, Time.deltaTime);
+        }
+        else
+        {
+            if (_focusedEnemy != null)
+                _focusedEnemy.UpdateGaze(false, Time.deltaTime);
+
+            _focusedEnemy = null;
+        }
+    }
+
     private void Scan()
     {
         Camera cam = ResolveCamera();
@@ -295,25 +403,51 @@ public class LiDARScanner : MonoBehaviour
 
             Ray ray = cam.ViewportPointToRay(viewport);
 
-            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity))
+            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, ~0, QueryTriggerInteraction.Ignore))
                 continue;
+
+            Enemy enemy = hit.collider.GetComponentInParent<Enemy>();
+
+            if (enemy != null)
+            {
+                RoomNode enemyRoom = enemy.Room != null
+                    ? enemy.Room
+                    : hit.collider.GetComponentInParent<RoomNode>();
+
+                if (enemyRoom != _activeRoom) continue;
+
+                Enemy.SurfaceAttachment attachment = enemy.CreateSurfaceAttachment(hit);
+
+                if (AddEnemyScanPoint(
+                    _activeRoom,
+                    enemy,
+                    attachment,
+                    hit.point,
+                    hit.normal))
+                {
+                    if (!enemy.Discovered)
+                        enemy.RegisterScanPoint();
+
+                    hits++;
+                    roomChanged = true;
+                }
+
+                continue;
+            }
+
 
             RoomNode hitRoom = hit.collider.GetComponentInParent<RoomNode>();
 
-            if (hitRoom != _activeRoom)
-                continue;
+            if (hitRoom != _activeRoom) continue;
 
             float captureProbability = 1f;
 
             if (hit.distance > _distanceThinningStart)
             {
-                captureProbability = Mathf.Clamp01(
-                    _distanceThinningStart / hit.distance
-                );
+                captureProbability = Mathf.Clamp01( _distanceThinningStart / hit.distance );
             }
 
-            if (Random.value > captureProbability)
-                continue;
+            if (Random.value > captureProbability) continue;
 
             if (AddScanPoint(_activeRoom, hit.point, hit.normal))
             {
@@ -322,10 +456,48 @@ public class LiDARScanner : MonoBehaviour
             }
         }
 
-        if (roomChanged)
-            ApplyRoomTextures(_activeRoom);
+        if (roomChanged) ApplyRoomTextures(_activeRoom);
 
         SetState(hits > 0 ? "Scanning" : "No valid scan hits in this room.");
+    }
+
+    private bool AddEnemyScanPoint(RoomNode room, Enemy enemy, Enemy.SurfaceAttachment attachment, Vector3 position, Vector3 normal)
+    {
+        if (room == null || enemy == null || resolution <= 0)
+            return false;
+
+        RoomScanData roomData = GetOrCreateRoomScan(room);
+
+        if (roomData.Positions.Count >= resolution * resolution)
+            return false;
+
+        if (IsTooClose(roomData, position))
+            return false;
+
+        int pointIndex = roomData.Positions.Count;
+
+        roomData.Positions.Add(position);
+        roomData.Normals.Add(normal.normalized);
+        roomData.PointSizes.Add(0.35f);
+
+        roomData.EnemyAttachments.Add(new EnemyPointAttachment
+        {
+            Enemy = enemy,
+            Surface = attachment,
+            PointIndex = pointIndex
+        });
+
+        Vector3Int cell = GetCell(position);
+
+        if (!roomData.SpatialCells.TryGetValue(cell, out List<Vector3> cellPoints))
+        {
+            cellPoints = new List<Vector3>(4);
+            roomData.SpatialCells.Add(cell, cellPoints);
+        }
+
+        cellPoints.Add(position);
+
+        return true;
     }
 
     private Vector3Int GetCell(Vector3 position)
@@ -417,6 +589,26 @@ public class LiDARScanner : MonoBehaviour
         normalsTexture.SetPixels(normPixels);
         normalsTexture.Apply();
 
+        Texture2D sizesTexture = new Texture2D(
+            resolution,
+            resolution,
+            TextureFormat.RGBAFloat,
+            false,
+            true
+        );
+
+        sizesTexture.name = $"{room.name}_Sizes";
+        sizesTexture.filterMode = FilterMode.Point;
+        sizesTexture.wrapMode = TextureWrapMode.Clamp;
+
+        Color[] sizePixels = new Color[totalPixels];
+
+        for (int i = 0; i < totalPixels; i++)
+            sizePixels[i] = Color.white;
+
+        sizesTexture.SetPixels(sizePixels);
+        sizesTexture.Apply();
+
         if (vfx.HasInt(RESOLUTION_PARAMETER_NAME))
             vfx.SetInt(RESOLUTION_PARAMETER_NAME, resolution);
 
@@ -426,6 +618,9 @@ public class LiDARScanner : MonoBehaviour
         if (vfx.HasTexture(NORMALS_TEXTURE_NAME))
             vfx.SetTexture(NORMALS_TEXTURE_NAME, normalsTexture);
 
+        if (vfx.HasTexture("SizesTexture"))
+            vfx.SetTexture("SizesTexture", sizesTexture);
+
         vfx.Play();
 
         RoomScanData roomData = new RoomScanData
@@ -433,6 +628,7 @@ public class LiDARScanner : MonoBehaviour
             VFX = vfx,
             PositionsTexture = positionsTexture,
             NormalsTexture = normalsTexture,
+            SizesTexture = sizesTexture,
             LastAppliedCount = 0
         };
 
@@ -454,12 +650,12 @@ public class LiDARScanner : MonoBehaviour
             return false;
         }
 
-
         if (IsTooClose(roomData, position))
             return false;
 
         roomData.Positions.Add(position);
         roomData.Normals.Add(normal.normalized);
+        roomData.PointSizes.Add(1f);
 
         Vector3Int cell = GetCell(position);
         if (!roomData.SpatialCells.TryGetValue(cell, out List<Vector3> cellPoints))
@@ -477,7 +673,7 @@ public class LiDARScanner : MonoBehaviour
         if (room == null || !_roomScans.TryGetValue(room, out RoomScanData roomData))
             return;
 
-        if (roomData.VFX == null || roomData.PositionsTexture == null || roomData.NormalsTexture == null)
+        if (roomData.VFX == null || roomData.PositionsTexture == null || roomData.NormalsTexture == null || roomData.SizesTexture == null)
             return;
 
         int newCount = roomData.Positions.Count;
@@ -495,6 +691,13 @@ public class LiDARScanner : MonoBehaviour
             Vector3 normal = roomData.Normals[i];
             Vector3 encodedNormal = normal * 0.5f + Vector3.one * 0.5f;
             roomData.NormalsTexture.SetPixel(x, y, new Color(encodedNormal.x, encodedNormal.y, encodedNormal.z, 1f));
+
+            float pointSize = roomData.PointSizes[i];
+            roomData.SizesTexture.SetPixel(
+                x,
+                y,
+                new Color(pointSize, 0f, 0f, 1f)
+            );
         }
 
         roomData.PositionsTexture.Apply();

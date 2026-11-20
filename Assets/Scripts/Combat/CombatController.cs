@@ -33,6 +33,10 @@ public class CombatController : MonoBehaviour
     public float focusTurnDuration = 0.6f;
     public float releaseTurnDuration = 0.5f;
 
+    [Header("Combat Camera")]
+    [SerializeField] private Vector3 focusOffset = new Vector3(0f, 0.3f, 0f);
+    [SerializeField] private float combatCameraTurnSpeed = 8f;
+
     public State CurrentState { get; private set; } = State.Exploring;
     public bool InCombat => CurrentState != State.Exploring;
     public Enemy ActiveEnemy => activeEnemy;
@@ -94,6 +98,35 @@ public class CombatController : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    void Update()
+    {
+        if (PauseMenuController.BlocksGameplayInput)
+            return;
+
+        if (CurrentState != State.Exploring || activeEnemy == null)
+            return;
+
+        if (player.IsMoving)
+            return;
+    }
+
+    void LateUpdate()
+    {
+        if (CurrentState != State.Combat || !trackEnemy || activeEnemy == null)
+            return;
+
+        if (PauseMenuController.BlocksGameplayInput)
+            return;
+
+        Quaternion targetRotation = FocusRotation(activeEnemy);
+
+        cameraTransform.rotation = Quaternion.Slerp(
+            cameraTransform.rotation,
+            targetRotation,
+            combatCameraTurnSpeed * Time.deltaTime
+        );
+    }
+
     void HandleRoomEntered(RoomNode room)
     {
         player.BlockLeaving = false;
@@ -103,8 +136,9 @@ public class CombatController : MonoBehaviour
 
         Enemy enemy = room != null ? room.enemy : null;
         if (enemy == null || enemy.Resolved || !enemy.isActiveAndEnabled) return;
-
         activeEnemy = enemy;
+        activeEnemy.Room = room;
+
         player.BlockLeaving = lockMovementInEnemyRooms;
         Debug.Log($"[CombatController] Enemy room detected. " +$"Enemy: {activeEnemy.name} | " +$"BlockLeaving: {player.BlockLeaving}");
     }
@@ -118,28 +152,52 @@ public class CombatController : MonoBehaviour
             BeginCombat(CombatStart.Ambushed);
     }
 
-    void Update()
-    {
-        if (PauseMenuController.BlocksGameplayInput) return;
-        if (CurrentState != State.Exploring || activeEnemy == null) return;
-        if (player.IsMoving || player.CurrentRoom != activeEnemy.Room) return;
-
-        if (useViewConeDetection && activeEnemy.IsSeenBy(cameraTransform))
-            BeginCombat(CombatStart.PlayerSpotted);
-    }
-
-    void LateUpdate()
-    {
-        if (PauseMenuController.BlocksGameplayInput) return;
-        if (CurrentState == State.Combat && trackEnemy && activeEnemy != null)
-            cameraTransform.rotation = FocusRotation(activeEnemy);
-    }
-
     public void NotifyEnemySpotted(Enemy enemy)
     {
-        if (PauseMenuController.BlocksGameplayInput) return;
-        if (CurrentState == State.Exploring && enemy != null && enemy == activeEnemy)
-            BeginCombat(CombatStart.PlayerSpotted);
+        Debug.Log(
+            $"[CombatController] NotifyEnemySpotted received. " +
+            $"Enemy: {(enemy != null ? enemy.name : "NULL")} | " +
+            $"ActiveEnemy: {(activeEnemy != null ? activeEnemy.name : "NULL")} | " +
+            $"State: {CurrentState} | " +
+            $"Paused: {PauseMenuController.BlocksGameplayInput}"
+        );
+
+        if (PauseMenuController.BlocksGameplayInput)
+        {
+            Debug.LogWarning("[CombatController] Cannot start combat: gameplay input is blocked.");
+            return;
+        }
+
+        if (CurrentState != State.Exploring)
+        {
+            Debug.LogWarning("[CombatController] Cannot start combat: not exploring.");
+            return;
+        }
+
+        if (enemy == null || enemy != activeEnemy)
+        {
+            Debug.LogWarning("[CombatController] Cannot start combat: discovered enemy is not the active enemy.");
+            return;
+        }
+
+        if (!enemy.Discovered)
+        {
+            Debug.LogWarning("[CombatController] Cannot start combat: enemy is not discovered.");
+            return;
+        }
+
+        if (player.CurrentRoom != activeEnemy.Room)
+        {
+            Debug.LogWarning(
+                $"[CombatController] Cannot start combat: room mismatch. " +
+                $"Player: {player.CurrentRoom?.name ?? "NULL"} | " +
+                $"Enemy: {activeEnemy.Room?.name ?? "NULL"}"
+            );
+            return;
+        }
+
+        Debug.Log($"[CombatController] Starting combat with discovered enemy: {enemy.name}");
+        BeginCombat(CombatStart.PlayerSpotted);
     }
 
     void BeginCombat(CombatStart how)
@@ -354,8 +412,13 @@ public class CombatController : MonoBehaviour
 
     Quaternion FocusRotation(Enemy enemy)
     {
-        Vector3 dir = enemy.FocusPosition - cameraTransform.position;
-        return dir.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(dir) : cameraTransform.rotation;
+        Vector3 targetPosition = enemy.FocusPosition + focusOffset;
+        Vector3 direction = targetPosition - cameraTransform.position;
+
+        if (direction.sqrMagnitude < 0.0001f)
+            return cameraTransform.rotation;
+
+        return Quaternion.LookRotation(direction, Vector3.up);
     }
 
     IEnumerator TurnCameraTo(Quaternion target, float duration)
