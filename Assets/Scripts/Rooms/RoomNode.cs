@@ -74,4 +74,14 @@ public class RoomNode : MonoBehaviour
         if (other != null)
             Gizmos.DrawLine(AnchorPosition + Vector3.up * 0.1f, other.AnchorPosition + Vector3.up * 0.1f);
     }
+
+    public void SetRoomVisible(bool visible)
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+
+        foreach (Renderer renderer in renderers)
+        {
+            renderer.enabled = visible;
+        }
+    }
 }

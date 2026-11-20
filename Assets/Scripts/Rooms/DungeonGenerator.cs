@@ -58,10 +58,18 @@ public class DungeonGenerator : MonoBehaviour
     private readonly Dictionary<string, RoomNode> _nodesById = new Dictionary<string, RoomNode>();
     private readonly Dictionary<Vector2Int, RoomNode> _nodesByGrid = new Dictionary<Vector2Int, RoomNode>();
 
+    private PlayerNodeMover _playerMover;
+
     private void Awake()
     {
         BuildPrefabLookup();
         GenerateDungeon();
+    }
+
+    private void OnDestroy()
+    {
+        if (_playerMover != null)
+            _playerMover.RoomEntered -= OnRoomEntered;
     }
 
     private void BuildPrefabLookup()
@@ -83,6 +91,12 @@ public class DungeonGenerator : MonoBehaviour
 
     private void ClearDungeon()
     {
+        if (_playerMover != null)
+        {
+            _playerMover.RoomEntered -= OnRoomEntered;
+            _playerMover = null;
+        }
+
         foreach (var node in _nodesById.Values)
         {
             if (node != null) Destroy(node.gameObject);
@@ -112,7 +126,7 @@ public class DungeonGenerator : MonoBehaviour
         var gridCoords = new Dictionary<string, Vector2Int>();
         RoomNode firstNode = null;
 
-       List<RoomEntry> pending = new List<RoomEntry>(data.rooms);
+        List<RoomEntry> pending = new List<RoomEntry>(data.rooms);
         while (pending.Count > 0)
         {
             var deferred = new List<RoomEntry>();
@@ -152,15 +166,43 @@ public class DungeonGenerator : MonoBehaviour
 
         if (startNode == null) return;
 
-        PlayerNodeMover playerMover = FindAnyObjectByType<PlayerNodeMover>();
-        if (playerMover != null)
+        _playerMover = FindAnyObjectByType<PlayerNodeMover>();
+
+        if (_playerMover != null)
         {
-            playerMover.InitializePlayer(startNode);
+            _playerMover.RoomEntered -= OnRoomEntered;
+            _playerMover.RoomEntered += OnRoomEntered;
+
+            _playerMover.InitializePlayer(startNode);
         }
         else
         {
             Debug.LogWarning("[DungeonGenerator] No PlayerNodeMover found in the scene.");
         }
+    }
+
+    private void UpdateRoomVisibility(RoomNode activeRoom)
+    {
+        foreach (RoomNode room in _nodesById.Values)
+        {
+            if (room == null)
+                continue;
+
+            bool isActiveRoom = room == activeRoom;
+
+            bool isAdjacentRoom =
+                room == activeRoom.forward ||
+                room == activeRoom.back ||
+                room == activeRoom.left ||
+                room == activeRoom.right;
+
+            room.SetRoomVisible(isActiveRoom || isAdjacentRoom);
+        }
+    }
+
+    private void OnRoomEntered(RoomNode activeRoom)
+    {
+        UpdateRoomVisibility(activeRoom);
     }
 
     private Vector2 ResolveCellSize(DungeonData data)
