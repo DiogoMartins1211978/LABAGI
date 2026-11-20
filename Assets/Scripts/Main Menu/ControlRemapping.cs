@@ -174,6 +174,7 @@ public class ControlRemapping : MonoBehaviour
 
         if (keyboard.escapeKey.wasPressedThisFrame)
         {
+            MenuSfx.Back();
             FinishCapture("Binding change cancelled.");
             return;
         }

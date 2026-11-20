@@ -11,6 +11,7 @@ public class AudioSettings : MonoBehaviour
     [SerializeField] Slider ambientSlider;
     [SerializeField] Slider enemiesSlider;
     [SerializeField] Slider cardsSlider;
+    [SerializeField] Slider menuSfxSlider;
 
     void Start()
     {
@@ -19,6 +20,11 @@ public class AudioSettings : MonoBehaviour
         Connect(ambientSlider, "AmbientVolume");
         Connect(enemiesSlider, "EnemiesVolume");
         Connect(cardsSlider, "CardsVolume");
+        if (menuSfxSlider != null)
+        {
+            menuSfxSlider.SetValueWithoutNotify(Mathf.Clamp01(PlayerPrefs.GetFloat("Audio.MenuSfxVolume", 1f)));
+            menuSfxSlider.onValueChanged.AddListener(MenuSfx.SetVolume);
+        }
     }
 
     void Connect(Slider slider, string parameter)
@@ -54,5 +60,10 @@ public class AudioSettings : MonoBehaviour
     void OnDisable()
     {
         PlayerPrefs.Save();
+    }
+
+    void OnDestroy()
+    {
+        if (menuSfxSlider != null) menuSfxSlider.onValueChanged.RemoveListener(MenuSfx.SetVolume);
     }
 }

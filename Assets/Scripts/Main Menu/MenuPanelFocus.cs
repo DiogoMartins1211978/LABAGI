@@ -76,6 +76,7 @@ public class MenuPanelFocus : MonoBehaviour
 
         // Prevent one press from closing multiple panels.
         lastBackFrame = Time.frameCount;
+        MenuSfx.Back();
         backButton.onClick.Invoke();
     }
 

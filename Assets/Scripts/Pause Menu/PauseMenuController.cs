@@ -142,6 +142,7 @@ public class PauseMenuController : MonoBehaviour
     public void Resume()
     {
         if (!ownsPause || changingScene) return;
+        MenuSfx.Back();
         StopAllCoroutines();
         // Keep gameplay blocked until the UI's activating press is released.
         waitingForRelease = true;
