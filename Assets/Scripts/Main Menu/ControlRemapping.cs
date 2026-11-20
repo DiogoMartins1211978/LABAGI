@@ -32,10 +32,10 @@ public class ControlRemapping : MonoBehaviour
 
     [SerializeField] BindingRow[] bindings =
     {
-        new BindingRow("Forward", "Player/Move", "<Keyboard>/upArrow"),
-        new BindingRow("Backward", "Player/Move", "<Keyboard>/downArrow"),
-        new BindingRow("Left", "Player/Move", "<Keyboard>/leftArrow"),
-        new BindingRow("Right", "Player/Move", "<Keyboard>/rightArrow")
+        new BindingRow("Forward", "Player/Move", "<Keyboard>/w"),
+        new BindingRow("Backward", "Player/Move", "<Keyboard>/s"),
+        new BindingRow("Left", "Player/Move", "<Keyboard>/a"),
+        new BindingRow("Right", "Player/Move", "<Keyboard>/d")
     };
     [SerializeField] Button restoreDefaultsButton;
     [SerializeField] TMP_Text statusLabel;
@@ -198,12 +198,31 @@ public class ControlRemapping : MonoBehaviour
 
     bool IsUsed(string path)
     {
-        // Check the Player map only; menu navigation is kept separate.
+        // Only actions active in the same gameplay context conflict. Template
+        // actions without gameplay handlers do not reserve keys.
         foreach (var action in capturing.action.actionMap.actions)
+        {
+            if ((Contexts(action.name) & Contexts(capturing.action.name)) == 0) continue;
             foreach (var binding in action.bindings)
                 if (!binding.isComposite && string.Equals(binding.effectivePath, path, StringComparison.OrdinalIgnoreCase))
                     return true;
+        }
         return false;
+    }
+
+    static int Contexts(string action)
+    {
+        switch (action)
+        {
+            case "Move": case "KeyboardLook": return 1; // Exploration
+            case "Previous": case "Next": case "Interact": return 2 | 4;
+            case "SelectSlot1": case "SelectSlot2":
+            case "SelectSlot3": case "SelectSlot4": return 2; // Combat
+            case "Remove": return 4; // Deck builder
+            case "ToggleDeck": return 1 | 4;
+            case "ToggleBestiary": return 1 | 2 | 4;
+            default: return 0;
+        }
     }
 
     void FinishCapture(string message)

@@ -7,6 +7,11 @@ public class CameraController : MonoBehaviour
     [Tooltip("Mouse look sensitivity")]
     public float sensitivity = 0.2f;
 
+    [Tooltip("Keyboard camera rotation in degrees per second")]
+    public float keyboardLookSpeed = 90f;
+
+    private InputAction keyboardLook;
+
     [Tooltip("Maximum vertical angle (45 degrees up and 45 degrees down)")]
     public float maxVerticalAngle = 20f;
 
@@ -15,6 +20,8 @@ public class CameraController : MonoBehaviour
 
     void Start()
     {
+        keyboardLook = InputSystem.actions?.FindAction("Player/KeyboardLook");
+        keyboardLook?.Enable();
         Vector3 angles = transform.localEulerAngles;
         horizontalRotation = angles.y;
         verticalRotation = angles.x;
@@ -23,9 +30,10 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         if (PauseMenuController.BlocksGameplayInput) return;
-        if (Mouse.current == null) return;
-
-        Vector2 mouseDelta = Mouse.current.delta.ReadValue() * sensitivity;
+        Vector2 mouseDelta = Mouse.current != null
+            ? Mouse.current.delta.ReadValue() * sensitivity : Vector2.zero;
+        Vector2 keyDelta = keyboardLook != null ? keyboardLook.ReadValue<Vector2>() : Vector2.zero;
+        mouseDelta += keyDelta * keyboardLookSpeed * Time.deltaTime;
 
         horizontalRotation += mouseDelta.x;
         verticalRotation -= mouseDelta.y;

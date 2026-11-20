@@ -155,10 +155,10 @@ public class PlayerNodeMover : MonoBehaviour
         // action is missing, so keyboard shortcuts cannot bypass saved remaps.
         if (moveAction == null && Keyboard.current != null)
         {
-            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) input.y += 1f;
-            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) input.y -= 1f;
-            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) input.x -= 1f;
-            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) input.x += 1f;
+            if (Keyboard.current.wKey.isPressed) input.y += 1f;
+            if (Keyboard.current.sKey.isPressed) input.y -= 1f;
+            if (Keyboard.current.aKey.isPressed) input.x -= 1f;
+            if (Keyboard.current.dKey.isPressed) input.x += 1f;
         }
 
         return input;

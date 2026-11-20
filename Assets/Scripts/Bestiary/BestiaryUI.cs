@@ -21,6 +21,9 @@ public class BestiaryUI : MonoBehaviour
     [SerializeField] TMP_Text regionText;
     [SerializeField] TMP_Text descriptionText;
     [SerializeField] MenuNarration narration;
+    [Header("Book navigation")]
+    [Tooltip("Optional visible Close button. Its On Click should call BestiaryController.Close.")]
+    [SerializeField] Button closeButton;
 
     readonly List<BestiaryEntryButton> rows = new List<BestiaryEntryButton>();
     BestiaryEntry selectedEntry;
@@ -28,6 +31,7 @@ public class BestiaryUI : MonoBehaviour
     float[] originalFontSizes;
     Coroutine pendingFocus;
     bool subscribed;
+    GameObject lastFocusedObject;
 
     void Awake()
     {
@@ -35,6 +39,11 @@ public class BestiaryUI : MonoBehaviour
         staticTexts = GetComponentsInChildren<TMP_Text>(true);
         originalFontSizes = new float[staticTexts.Length];
         for (int i = 0; i < staticTexts.Length; i++) originalFontSizes[i] = staticTexts[i].fontSize;
+    }
+
+    void Update()
+    {
+        MenuPanelFocus.HandleAlternateSubmit(transform);
     }
 
     void OnEnable()
@@ -88,9 +97,21 @@ public class BestiaryUI : MonoBehaviour
         for (int i = 0; i < rows.Count; i++)
         {
             var navigation = new Navigation { mode = Navigation.Mode.Explicit };
-            navigation.selectOnUp = rows[(i + rows.Count - 1) % rows.Count].Button;
-            navigation.selectOnDown = rows[(i + 1) % rows.Count].Button;
+            navigation.selectOnUp = i == 0 && CanSelectClose()
+                ? closeButton : rows[(i + rows.Count - 1) % rows.Count].Button;
+            navigation.selectOnDown = i == rows.Count - 1 && CanSelectClose()
+                ? closeButton : rows[(i + 1) % rows.Count].Button;
             rows[i].Button.navigation = navigation;
+        }
+        if (closeButton != null)
+        {
+            var navigation = new Navigation { mode = Navigation.Mode.Explicit };
+            if (rows.Count > 0)
+            {
+                navigation.selectOnUp = rows[rows.Count - 1].Button;
+                navigation.selectOnDown = rows[0].Button;
+            }
+            closeButton.navigation = navigation;
         }
 
         BestiaryEntryButton selectedRow = rows.Find(row => row.Entry == selectedEntry);
@@ -98,6 +119,7 @@ public class BestiaryUI : MonoBehaviour
         if (selectedRow == null)
         {
             ShowEntry(null);
+            if (CanSelectClose()) pendingFocus = StartCoroutine(FocusAfterOpening(closeButton));
             return;
         }
         ShowEntry(selectedRow.Entry);
@@ -175,11 +197,22 @@ public class BestiaryUI : MonoBehaviour
         if (narration != null) narration.Speak(text);
     }
 
+    bool CanSelectClose() => closeButton != null && closeButton.IsActive() && closeButton.IsInteractable();
+
+    void LateUpdate()
+    {
+        var current = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+        if (current == lastFocusedObject) return;
+        lastFocusedObject = current;
+        if (closeButton != null && current == closeButton.gameObject) Say("Close bestiary.");
+    }
+
     void OnDisable()
     {
         if (subscribed && discovery != null) discovery.Changed -= Rebuild;
         subscribed = false;
         StopAllCoroutines();
         pendingFocus = null;
+        lastFocusedObject = null;
     }
 }

@@ -15,6 +15,7 @@ public class MenuPanelFocus : MonoBehaviour
     Selectable lastSelected;
     TMP_InputField editingInputLastFrame;
     static int lastBackFrame = -1;
+    static int lastSubmitFrame = -1;
 
     void OnEnable()
     {
@@ -48,6 +49,8 @@ public class MenuPanelFocus : MonoBehaviour
 
         if (HandleTabNavigation())
             return;
+
+        HandleAlternateSubmit(transform);
 
         bool backPressed =
             (Keyboard.current != null &&
@@ -83,6 +86,25 @@ public class MenuPanelFocus : MonoBehaviour
         var input = selected != null ? selected.GetComponent<TMP_InputField>() : null;
         // TMP can process Escape before this script's next Update.
         editingInputLastFrame = input != null && input.isFocused ? input : null;
+    }
+
+    // E submits menus without becoming a Submit binding that interrupts typing.
+    public static void HandleAlternateSubmit(Transform panel)
+    {
+        var keyboard = Keyboard.current;
+        var events = EventSystem.current;
+        if (keyboard == null || events == null || !keyboard.eKey.wasPressedThisFrame
+            || keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame
+            || ControlRemapping.BlocksMenuBack || PauseMenuController.OpenedThisFrame
+            || lastSubmitFrame == Time.frameCount) return;
+        var selected = events.currentSelectedGameObject;
+        if (selected == null || !selected.transform.IsChildOf(panel)
+            || selected.GetComponent<TMP_InputField>() != null
+            || selected.GetComponent<InputField>() != null) return;
+        var control = selected.GetComponent<Selectable>();
+        if (control == null || !control.IsActive() || !control.IsInteractable()) return;
+        lastSubmitFrame = Time.frameCount;
+        ExecuteEvents.Execute(selected, new BaseEventData(events), ExecuteEvents.submitHandler);
     }
 
     bool HandleTabNavigation()
