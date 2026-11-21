@@ -10,6 +10,8 @@ public class BestiaryEntryButton : MonoBehaviour, ISelectHandler
     [SerializeField] Image silhouetteImage;
     [Tooltip("Optional generic icon shared by all undiscovered enemies.")]
     [SerializeField] Sprite unknownPlaceholder;
+    [SerializeField] Sprite filledFrame;
+    [SerializeField] Sprite emptyFrame;
 
     Button button;
     BestiaryUI owner;
@@ -36,7 +38,21 @@ public class BestiaryEntryButton : MonoBehaviour, ISelectHandler
     {
         owner = view;
         entry = data;
-        Sprite icon = discovered ? data.silhouette : unknownPlaceholder;
+        button.interactable = data != null && discovered;
+        if (filledFrame != null && emptyFrame != null)
+        {
+            var frame = GetComponent<Image>();
+            frame.sprite = data != null && discovered ? filledFrame : emptyFrame;
+            frame.color = data != null && discovered ? Color.white : new Color(.32f,.32f,.32f);
+            if (entryLabel != null) entryLabel.color = data != null && discovered ? Color.white : new Color(.12f,.14f,.17f);
+        }
+        if (data == null)
+        {
+            if (entryLabel != null) entryLabel.enabled = false;
+            if (silhouetteImage != null) silhouetteImage.enabled = false;
+            return;
+        }
+        Sprite icon = discovered ? (data.portrait != null ? data.portrait : data.silhouette) : unknownPlaceholder;
         bool hasIcon = silhouetteImage != null && icon != null;
         if (entryLabel != null)
         {
@@ -66,7 +82,7 @@ public class BestiaryEntryButton : MonoBehaviour, ISelectHandler
 
     void Activate()
     {
-        if (owner == null || entry == null) return;
+        if (owner == null || entry == null || !button.interactable) return;
         owner.ShowEntry(entry);
         owner.ReadSelectedEntry();
     }

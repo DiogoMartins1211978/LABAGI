@@ -1,0 +1,5 @@
+Book Rig (Full) by nyxzimus
+https://blendswap.com/blend/16962
+License: CC-BY (as listed on the source page).
+Adapted for Echoes Below: removed authoring helpers; sampled cover/page deformation into blend shapes; exported to FBX.
+Original source files remain outside Assets. The imported clean blend is a converted working copy.

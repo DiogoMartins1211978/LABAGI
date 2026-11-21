@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Keep this on the always-active BestiaryManager, so encounters are recorded
+// Keep this on the always-active BestiaryManager, so victories are recorded
 // while the book is closed. UI can query Entries and IsDiscovered later.
 [DisallowMultipleComponent]
 public class BestiaryDiscovery : MonoBehaviour
@@ -47,18 +47,17 @@ public class BestiaryDiscovery : MonoBehaviour
             Debug.LogWarning("Bestiary Discovery: assign a Combat Controller to record encounters.", this);
             return;
         }
-        if (subscribedController != null) subscribedController.CombatStarted -= OnCombatStarted;
+        if (subscribedController != null) subscribedController.CombatEnded -= OnCombatEnded;
         subscribedController = combatController;
-        subscribedController.CombatStarted += OnCombatStarted;
-
-        // Covers enabling the tracker when an encounter is already in progress.
-        if (subscribedController.CurrentState != CombatController.State.Exploring)
-            RegisterEncounter(subscribedController.ActiveEnemy);
+        subscribedController.CombatEnded += OnCombatEnded;
     }
 
-    void OnCombatStarted(Enemy enemy, CombatStart how) => RegisterEncounter(enemy);
+    void OnCombatEnded(Enemy enemy, bool defeated)
+    {
+        if (defeated) RegisterDefeat(enemy);
+    }
 
-    public bool RegisterEncounter(Enemy enemy)
+    public bool RegisterDefeat(Enemy enemy)
     {
         if (enemy == null) return false;
         var identity = enemy.GetComponent<BestiaryIdentity>();
@@ -125,7 +124,7 @@ public class BestiaryDiscovery : MonoBehaviour
 
     void OnDisable()
     {
-        if (subscribedController != null) subscribedController.CombatStarted -= OnCombatStarted;
+        if (subscribedController != null) subscribedController.CombatEnded -= OnCombatEnded;
         subscribedController = null;
     }
 

@@ -58,6 +58,8 @@ public class CardSystem : MonoBehaviour
 
     readonly List<CombatManager> browsable = new List<CombatManager>();
     int browseIndex;
+    bool bookDeckOpen;
+    public void SetBookDeckOpen(bool open) => bookDeckOpen = open && CurrentMode != Mode.Combat;
 
     InputAction prev, next, confirm, remove, toggle;
     InputAction slot1, slot2, slot3, slot4;
@@ -134,6 +136,7 @@ public class CardSystem : MonoBehaviour
 
     public void EnterCombat()
     {
+        bookDeckOpen = false;
         CurrentMode = Mode.Combat;
         hand.Clear();
         queue.Clear();
@@ -325,7 +328,7 @@ public class CardSystem : MonoBehaviour
 
     public void AddToDeck(CombatManager card)
     {
-        if (PauseMenuController.BlocksGameplayInput) return;
+        if (PauseMenuController.BlocksGameplayInput && !bookDeckOpen) return;
         if (card == null) return;
         if (deck.Count >= deckSize) { Debug.Log($"[Cards] Deck full."); return; }
         if (Count(deck, card) >= Count(collection, card)) { Debug.Log($"[Cards] Don't own more copies."); return; }
@@ -337,7 +340,7 @@ public class CardSystem : MonoBehaviour
 
     public void RemoveFromDeck(CombatManager card)
     {
-        if (PauseMenuController.BlocksGameplayInput) return;
+        if (PauseMenuController.BlocksGameplayInput && !bookDeckOpen) return;
         if (card == null) return;
         if (deck.Remove(card)) LogBuilder($"Removed {card.displayName}");
         else Debug.Log($"[Cards] Not in deck.");
