@@ -33,6 +33,13 @@ public class Enemy : MonoBehaviour
     public Animator animator;
     public float attackDuration = 1.5f;
 
+    [Header("Audio")]
+    public AudioSource presenceAudioSource;
+    public AudioSource attackAudioSource;
+
+    public AudioClip presenceAudioClip;
+    public AudioClip attackAudioClip;
+
     private Action attackFinished;
     private Coroutine attackCoroutine;
 
@@ -90,6 +97,23 @@ public class Enemy : MonoBehaviour
         Physics.SyncTransforms();
 
         Debug.Log($"[Enemy] {name}: LiDAR MeshCollider initialized.");
+
+        InitializeAudio();
+    }
+
+    private void InitializeAudio()
+    {
+        if (presenceAudioSource != null)
+        {
+            presenceAudioSource.clip = presenceAudioClip;
+            presenceAudioSource.loop = true;
+            presenceAudioSource.playOnAwake = false;
+        }
+
+        if (attackAudioSource != null)
+        {
+            attackAudioSource.playOnAwake = false;
+        }
     }
 
 
@@ -232,6 +256,8 @@ public class Enemy : MonoBehaviour
 
         attackFinished = onFinished;
 
+        PlayAttackAudio();
+
         animator.SetBool("isAttacking", true);
 
         if (attackCoroutine != null)
@@ -350,6 +376,32 @@ public class Enemy : MonoBehaviour
             .normalized;
 
         return true;
+    }
+
+    public void StartPresenceAudio()
+    {
+        if (presenceAudioSource == null || presenceAudioClip == null)
+            return;
+
+        if (!presenceAudioSource.isPlaying)
+            presenceAudioSource.Play();
+    }
+
+    public void StopPresenceAudio()
+    {
+        if (presenceAudioSource == null)
+            return;
+
+        if (presenceAudioSource.isPlaying)
+            presenceAudioSource.Stop();
+    }
+
+    public void PlayAttackAudio()
+    {
+        if (attackAudioSource == null || attackAudioClip == null)
+            return;
+
+        attackAudioSource.PlayOneShot(attackAudioClip);
     }
 
     private void OnDestroy()
