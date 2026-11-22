@@ -7,20 +7,37 @@ public partial class LiDARScanner
     public List<SaveGameData.SavedRoomScan> CaptureRoomScans(DungeonGenerator dungeon)
     {
         EnsurePersistenceReady();
+
         var result = new List<SaveGameData.SavedRoomScan>();
         int total = 0;
+
         foreach (var pair in _roomScans)
         {
             string id = dungeon.GetRoomId(pair.Key);
-            if (id == null) throw new InvalidOperationException("A scanned room is missing its dungeon ID.");
+
+            if (id == null)
+                throw new InvalidOperationException("A scanned room is missing its dungeon ID.");
+
             var data = pair.Value;
-            var moving = new HashSet<int>();
-            foreach (var attachment in data.EnemyAttachments) moving.Add(attachment.PointIndex);
+
+            // Identify animated enemy points, which cannot be restored
+            // from static position and normal data alone.
+            var animatedPoints = new HashSet<int>();
+
+            foreach (var attachment in data.SurfaceAttachments)
+            {
+                if (attachment.IsAnimatedEnemy)
+                    animatedPoints.Add(attachment.PointIndex);
+            }
+
             var points = new List<LidarScanCodec.Point>();
+
             for (int i = 0; i < data.Positions.Count; i++)
             {
-                // Enemy dots require mesh/animation attachments, not static world positions.
-                if (moving.Contains(i)) continue;
+                // Animated enemy points require mesh attachments.
+                if (animatedPoints.Contains(i))
+                    continue;
+
                 points.Add(new LidarScanCodec.Point
                 {
                     position = pair.Key.transform.InverseTransformPoint(data.Positions[i]),
@@ -28,12 +45,24 @@ public partial class LiDARScanner
                     size = data.PointSizes[i]
                 });
             }
+
             total += points.Count;
-            if (total > LidarScanCodec.MaxPoints) throw new InvalidOperationException("LiDAR save exceeds the total point limit.");
+
+            if (total > LidarScanCodec.MaxPoints)
+                throw new InvalidOperationException("LiDAR save exceeds the total point limit.");
+
             if (points.Count > 0)
-                result.Add(new SaveGameData.SavedRoomScan { roomId = id, points = LidarScanCodec.Encode(points) });
+            {
+                result.Add(new SaveGameData.SavedRoomScan
+                {
+                    roomId = id,
+                    points = LidarScanCodec.Encode(points)
+                });
+            }
         }
+
         result.Sort((a, b) => string.CompareOrdinal(a.roomId, b.roomId));
+
         return result;
     }
 

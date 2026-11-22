@@ -492,16 +492,21 @@ public partial class LiDARScanner : MonoBehaviour
                     ? enemy.Room
                     : hit.collider.GetComponentInParent<RoomNode>();
 
-                if (enemyRoom != _activeRoom) continue;
+                if (enemyRoom != _activeRoom)
+                    continue;
 
-                Enemy.SurfaceAttachment attachment = enemy.CreateSurfaceAttachment(hit);
+                if (!enemy.TryGetLidarSurfaceHit(ray, out RaycastHit enemyHit))
+                    continue;
+
+                Enemy.SurfaceAttachment attachment =
+                    enemy.CreateSurfaceAttachment(enemyHit);
 
                 if (AddEnemyScanPoint(
                     _activeRoom,
                     enemy,
                     attachment,
-                    hit.point,
-                    hit.normal))
+                    enemyHit.point,
+                    enemyHit.normal))
                 {
                     if (!enemy.Discovered)
                         enemy.RegisterScanPoint();
