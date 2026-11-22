@@ -18,14 +18,18 @@ public class LiDARScanner : MonoBehaviour
 
         public readonly List<float> PointSizes = new();
 
-        public readonly List<EnemyPointAttachment> EnemyAttachments = new();
+        public readonly List<SurfacePointAttachment> SurfaceAttachments = new();
     }
 
-    private class EnemyPointAttachment
+    private class SurfacePointAttachment
     {
-        public Enemy Enemy;
-        public Enemy.SurfaceAttachment Surface;
+        public Transform Surface;
+        public Vector3 LocalPosition;
+        public Vector3 LocalNormal;
         public int PointIndex;
+        public Enemy Enemy;
+        public Enemy.SurfaceAttachment EnemySurface;
+        public bool IsAnimatedEnemy;
     }
 
     private readonly Dictionary<RoomNode, RoomScanData> _roomScans = new();
@@ -48,6 +52,7 @@ public class LiDARScanner : MonoBehaviour
     [SerializeField] private Transform _castPoint;
 
     [Header("Scan settings")]
+    [SerializeField] private LayerMask ignoredObjectLayers;
     [SerializeField] private int _pointsPerScan = 40;
     [SerializeField] private int resolution = 256;
 
@@ -85,6 +90,9 @@ public class LiDARScanner : MonoBehaviour
 
     private Quaternion _lastCameraRotation;
     private bool _hasLastCameraRotation;
+
+
+    private const float SURFACE_OFFSET = 0.02f;
 
     private void Start()
     {
@@ -182,43 +190,85 @@ public class LiDARScanner : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (resolution <= 0)
+            return;
+
         foreach (var entry in _roomScans)
         {
             RoomScanData roomData = entry.Value;
 
-            if (roomData.EnemyAttachments.Count == 0)
+            if (roomData.SurfaceAttachments.Count == 0)
                 continue;
 
             bool changed = false;
 
-            foreach (EnemyPointAttachment attachment in roomData.EnemyAttachments)
+            foreach (SurfacePointAttachment attachment in roomData.SurfaceAttachments)
             {
-                if (attachment.Enemy == null)
-                    continue;
+                Vector3 position;
+                Vector3 normal;
 
-                if (!attachment.Enemy.GetAnimatedSurfacePoint(
-                    attachment.Surface,
-                    out Vector3 position,
-                    out Vector3 normal))
-                    continue;
+                if (attachment.IsAnimatedEnemy)
+                {
+                    if (attachment.Enemy == null ||
+                        !attachment.Enemy.GetAnimatedSurfacePoint(
+                            attachment.EnemySurface,
+                            out position,
+                            out normal))
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (attachment.Surface == null)
+                        continue;
+
+                    position = attachment.Surface.TransformPoint(
+                        attachment.LocalPosition
+                    );
+
+                    normal = attachment.Surface.TransformDirection(
+                        attachment.LocalNormal
+                    ).normalized;
+                }
+
+                normal.Normalize();
 
                 int index = attachment.PointIndex;
+
+                if (index < 0 || index >= roomData.Positions.Count)
+                    continue;
+
                 int x = index % resolution;
                 int y = index / resolution;
 
-                roomData.Positions[index] = position;
+                Vector3 offsetPosition = position + normal * SURFACE_OFFSET;
+
+                roomData.Positions[index] = offsetPosition;
                 roomData.Normals[index] = normal;
 
                 roomData.PositionsTexture.SetPixel(
-                    x, y,
-                    new Color(position.x, position.y, position.z, 1f)
+                    x,
+                    y,
+                    new Color(
+                        offsetPosition.x,
+                        offsetPosition.y,
+                        offsetPosition.z,
+                        1f
+                    )
                 );
 
                 Vector3 encodedNormal = normal * 0.5f + Vector3.one * 0.5f;
 
                 roomData.NormalsTexture.SetPixel(
-                    x, y,
-                    new Color(encodedNormal.x, encodedNormal.y, encodedNormal.z, 1f)
+                    x,
+                    y,
+                    new Color(
+                        encodedNormal.x,
+                        encodedNormal.y,
+                        encodedNormal.z,
+                        1f
+                    )
                 );
 
                 changed = true;
@@ -431,7 +481,7 @@ public class LiDARScanner : MonoBehaviour
 
             Ray ray = cam.ViewportPointToRay(viewport);
 
-            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, ~0, QueryTriggerInteraction.Ignore))
+            if (!TryGetValidScanHit(ray, out RaycastHit hit))
                 continue;
 
             Enemy enemy = hit.collider.GetComponentInParent<Enemy>();
@@ -476,7 +526,7 @@ public class LiDARScanner : MonoBehaviour
 
             if (Random.value > captureProbability) continue;
 
-            if (AddScanPoint(_activeRoom, hit.point, hit.normal))
+            if (AddScanPoint(_activeRoom, hit.point, hit.normal, hit.collider.transform))
             {
                 hits++;
                 roomChanged = true;
@@ -503,14 +553,17 @@ public class LiDARScanner : MonoBehaviour
 
         int pointIndex = roomData.Positions.Count;
 
-        roomData.Positions.Add(position);
-        roomData.Normals.Add(normal.normalized);
-        roomData.PointSizes.Add(0.35f);
+        normal.Normalize();
 
-        roomData.EnemyAttachments.Add(new EnemyPointAttachment
+        roomData.Positions.Add(position + normal * SURFACE_OFFSET);
+        roomData.Normals.Add(normal);
+        roomData.PointSizes.Add(1f);
+
+        roomData.SurfaceAttachments.Add(new SurfacePointAttachment
         {
             Enemy = enemy,
-            Surface = attachment,
+            EnemySurface = attachment,
+            IsAnimatedEnemy = true,
             PointIndex = pointIndex
         });
 
@@ -663,9 +716,9 @@ public class LiDARScanner : MonoBehaviour
         return roomData;
     }
 
-    private bool AddScanPoint(RoomNode room, Vector3 position, Vector3 normal)
+    private bool AddScanPoint(RoomNode room, Vector3 position, Vector3 normal, Transform surface)
     {
-        if (room == null || resolution <= 0)
+        if (room == null || surface == null || resolution <= 0)
             return false;
 
         int maxPointsPerRoom = resolution * resolution;
@@ -680,16 +733,31 @@ public class LiDARScanner : MonoBehaviour
         if (IsTooClose(roomData, position))
             return false;
 
-        roomData.Positions.Add(position);
-        roomData.Normals.Add(normal.normalized);
+        normal.Normalize();
+
+        int pointIndex = roomData.Positions.Count;
+
+        roomData.Positions.Add(position + normal * SURFACE_OFFSET);
+        roomData.Normals.Add(normal);
         roomData.PointSizes.Add(1f);
 
+        roomData.SurfaceAttachments.Add(new SurfacePointAttachment
+        {
+            Surface = surface,
+            LocalPosition = surface.InverseTransformPoint(position),
+            LocalNormal = surface.InverseTransformDirection(normal).normalized,
+            IsAnimatedEnemy = false,
+            PointIndex = pointIndex
+        });
+
         Vector3Int cell = GetCell(position);
+
         if (!roomData.SpatialCells.TryGetValue(cell, out List<Vector3> cellPoints))
         {
             cellPoints = new List<Vector3>(4);
             roomData.SpatialCells.Add(cell, cellPoints);
         }
+
         cellPoints.Add(position);
 
         return true;
@@ -738,5 +806,44 @@ public class LiDARScanner : MonoBehaviour
         if (!_debug || state == _lastState) return;
         _lastState = state;
         Debug.Log($"[LiDAR] {state}");
+    }
+
+    private bool HasIgnoredLayerInObject(Transform objectRoot)
+    {
+        if (objectRoot == null)
+            return false;
+
+        foreach (Transform child in objectRoot.GetComponentsInChildren<Transform>(true))
+        {
+            if ((ignoredObjectLayers.value & (1 << child.gameObject.layer)) != 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool TryGetValidScanHit(Ray ray, out RaycastHit validHit)
+    {
+        validHit = default;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            ray,
+            Mathf.Infinity,
+            ~0,
+            QueryTriggerInteraction.Ignore
+        );
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (HasIgnoredLayerInObject(hit.collider.transform))
+                continue;
+
+            validHit = hit;
+            return true;
+        }
+
+        return false;
     }
 }

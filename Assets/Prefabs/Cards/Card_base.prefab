@@ -237,6 +237,7 @@ GameObject:
   - component: {fileID: 8301616616909600855}
   - component: {fileID: 1548273081794107269}
   - component: {fileID: 225865957988871837}
+  - component: {fileID: 3812099876094771421}
   m_Layer: 3
   m_Name: Card_base
   m_TagString: Untagged
@@ -255,7 +256,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.07993, y: 0.65134, z: 3.123}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5483314807475051770}
   - {fileID: 8468011039880520567}
@@ -273,8 +274,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f718e008dc6835d43ae3802ff53b4086, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardView
-  frontRenderer: {fileID: 7340589518714186298}
-  backRenderer: {fileID: 694880977383984457}
+  iconRenderer: {fileID: 0}
 --- !u!65 &225865957988871837
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -296,6 +296,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.25, y: 0.35, z: 0.01}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3812099876094771421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7248326805494854242}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3545cabb44f9f440a624b7cb75dea02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RewardFloatAnimation
+  floatHeight: 0.08
+  floatSpeed: 2
+  rotationAngle: 8
+  rotationSpeed: 1.5
 --- !u!1 &8569753886024568203
 GameObject:
   m_ObjectHideFlags: 0

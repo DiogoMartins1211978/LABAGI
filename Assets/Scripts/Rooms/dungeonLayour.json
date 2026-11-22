@@ -10,7 +10,8 @@
             "id": "R02",
             "from": "R01",
             "dir": "N",
-            "enemy": "SnakeEnemy"
+            "enemy": "",
+            "hasTreasure": true
         },
         {
             "id": "R03",

@@ -1527,6 +1527,7 @@ GameObject:
   - component: {fileID: 269744962}
   - component: {fileID: 269744963}
   - component: {fileID: 269744964}
+  - component: {fileID: 269744965}
   m_Layer: 0
   m_Name: Controllers
   m_TagString: Untagged
@@ -1641,6 +1642,14 @@ MonoBehaviour:
   _enemyWallMargin: 1
   _enemyMinDistanceFromPlayer: 3
   _startRoomId: R01
+  _treasurePrefabs:
+  - {fileID: 1010231716324333484, guid: 9669da3db0d212f4fa1bbfcef6a26c55, type: 3}
+  - {fileID: 416098980753446828, guid: a3d69740b8c4ecb4e8baee36821c5f09, type: 3}
+  _treasureWallMargin: 1.5
+  _treasureDoorWidth: 2.5
+  _treasureDoorDepth: 2.5
+  _treasureClearance: 0.75
+  _treasureSpawnAttempts: 50
 --- !u!114 &269744964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1665,6 +1674,40 @@ MonoBehaviour:
   releaseTurnDuration: 0.5
   focusOffset: {x: 0, y: 0.3, z: 0}
   combatCameraTurnSpeed: 8
+--- !u!114 &269744965
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 269744959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df26420db3d8b6547b85de9c0e849156, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RewardController
+  combatController: {fileID: 269744964}
+  player: {fileID: 604149155}
+  cardSystem: {fileID: 269744960}
+  mainCamera: {fileID: 906570677}
+  detectionDistance: 5
+  gazeRequiredDuration: 1
+  detectionMask:
+    serializedVersion: 2
+    m_Bits: 256
+  focusAimHeight: 0.65
+  rewardHeight: 1
+  rewardSeparation: 1
+  rewardRiseDuration: 0.7
+  rewardClearance: 0.5
+  rewardRiseStartOffset: 0.35
+  selectedScaleMultiplier: 1.15
+  selectionAnimationSpeed: 8
+  previousAction: Previous
+  nextAction: Next
+  interactAction: Interact
+  mouseSelectionThreshold: 15
+  highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &282480426
 GameObject:
   m_ObjectHideFlags: 0
@@ -9296,11 +9339,15 @@ MonoBehaviour:
   _vfxPrefab: {fileID: 555992855401902851, guid: 976dfd154c5a87d4e8dfaf700b2ee96b, type: 3}
   _vfxContainer: {fileID: 1713592174}
   _castPoint: {fileID: 1063468865}
+  ignoredObjectLayers:
+    serializedVersion: 2
+    m_Bits: 424
   _pointsPerScan: 40
   resolution: 256
   _camera: {fileID: 906570677}
   _distanceThinningStart: 5
   _lookSource: {fileID: 906570674}
+  _cameraRotationThresholdDegrees: 0.1
   _scanInterval: 0.1
   _debug: 1
   _initialScanRadius: 0.05

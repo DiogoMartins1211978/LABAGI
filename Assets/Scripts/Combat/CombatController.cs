@@ -308,7 +308,7 @@ public class CombatController : MonoBehaviour
     private readonly System.Collections.Generic.List<MonoBehaviour> stoppedScripts = new System.Collections.Generic.List<MonoBehaviour>();
     private readonly System.Collections.Generic.List<GameObject> stoppedObjects = new System.Collections.Generic.List<GameObject>();
 
-    void StopCombatSuppressedThings()
+    public void StopCombatSuppressedThings()
     {
         stoppedScripts.Clear();
         stoppedObjects.Clear();
@@ -339,7 +339,7 @@ public class CombatController : MonoBehaviour
         }
     }
 
-    void RestoreCombatSuppressedThings()
+    public void RestoreCombatSuppressedThings()
     {
         foreach (MonoBehaviour script in stoppedScripts)
             if (script != null) script.enabled = true;
@@ -351,7 +351,7 @@ public class CombatController : MonoBehaviour
         stoppedObjects.Clear();
     }
 
-    void SetCameraControlEnabled(bool value)
+    public void SetCameraControlEnabled(bool value)
     {
         if (cameraControlScripts == null) return;
 
@@ -421,7 +421,7 @@ public class CombatController : MonoBehaviour
         return Quaternion.LookRotation(direction, Vector3.up);
     }
 
-    IEnumerator TurnCameraTo(Quaternion target, float duration)
+    public IEnumerator TurnCameraTo(Quaternion target, float duration)
     {
         Quaternion start = cameraTransform.rotation;
         float t = 0f;

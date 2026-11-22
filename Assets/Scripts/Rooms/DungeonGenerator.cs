@@ -28,6 +28,7 @@ public class DungeonGenerator : MonoBehaviour
         public string dir;
         public string prefab;
         public string enemy;
+        public bool hasTreasure;
     }
 
     [Serializable]
@@ -52,6 +53,18 @@ public class DungeonGenerator : MonoBehaviour
     [SerializeField] private float _enemyMinDistanceFromPlayer = 3f;
     [Tooltip("Room the player starts in. If not found, the first placed room is used.")]
     [SerializeField] private string _startRoomId = "R01";
+
+    [Header("Treasure")]
+    [SerializeField] private List<GameObject> _treasurePrefabs = new List<GameObject>();
+
+    [Header("Treasure placement")]
+    [SerializeField] private float _treasureWallMargin = 1f;
+    [SerializeField] private float _treasureDoorWidth = 2.5f;
+    [SerializeField] private float _treasureDoorDepth = 2.5f;
+    [SerializeField] private float _treasureClearance = 0.75f;
+    [SerializeField] private int _treasureSpawnAttempts = 50;
+
+    [SerializeField] private float _treasureCenterExclusionRadius = 3f;
 
     private readonly Dictionary<string, GameObject> _prefabLookup = new Dictionary<string, GameObject>();
     private readonly Dictionary<string, GameObject> _enemyLookup = new Dictionary<string, GameObject>();
@@ -87,7 +100,8 @@ public class DungeonGenerator : MonoBehaviour
             if (!string.IsNullOrEmpty(mapping.key) && mapping.prefab != null)
                 _enemyLookup[mapping.key] = mapping.prefab;
         }
-    }
+
+}
 
     private void ClearDungeon()
     {
@@ -155,6 +169,15 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         StitchAllAdjacentRooms();
+        
+        foreach (RoomEntry entry in data.rooms)
+        {
+            if (!entry.hasTreasure)
+                continue;
+
+            if (_nodesById.TryGetValue(entry.id, out RoomNode room))
+                SpawnTreasure(room);
+        }
 
         RoomNode startNode = null;
         if (!_nodesById.TryGetValue(_startRoomId, out startNode))
@@ -325,6 +348,117 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         return room.transform.TransformPoint(local);
+    }
+
+    private void SpawnTreasure(RoomNode room)
+    {
+        if (_treasurePrefabs == null || _treasurePrefabs.Count == 0)
+        {
+            Debug.LogWarning("[DungeonGenerator] No treasure prefabs assigned.");
+            return;
+        }
+
+        List<GameObject> validPrefabs = _treasurePrefabs.FindAll(prefab => prefab != null);
+
+        if (validPrefabs.Count == 0)
+        {
+            Debug.LogWarning("[DungeonGenerator] Treasure prefab list contains no valid prefabs.");
+            return;
+        }
+
+        GameObject selectedPrefab = validPrefabs[
+            UnityEngine.Random.Range(0, validPrefabs.Count)
+        ];
+
+        if (!TryGetTreasurePosition(room, out Vector3 position))
+        {
+            Debug.LogWarning(
+                $"[DungeonGenerator] Could not find a valid treasure position in room '{room.name}'."
+            );
+            return;
+        }
+
+        Vector3 directionToCenter = room.transform.position - position;
+        directionToCenter.y = 0f;
+
+        Quaternion chestRotation = directionToCenter.sqrMagnitude > 0.001f
+            ? Quaternion.LookRotation(directionToCenter.normalized, Vector3.up)
+            : room.transform.rotation;
+
+        GameObject treasure = Instantiate(
+            selectedPrefab,
+            position,
+            chestRotation,
+            room.transform
+        );
+
+        treasure.name = $"{room.name}_Treasure_{selectedPrefab.name}";
+    }
+
+    private bool TryGetTreasurePosition(RoomNode room, out Vector3 worldPosition)
+    {
+        float halfW = room.width * 0.5f - _treasureWallMargin;
+        float halfD = room.depth * 0.5f - _treasureWallMargin;
+
+        worldPosition = Vector3.zero;
+
+        if (halfW <= 0f || halfD <= 0f)
+            return false;
+
+        float doorHalfWidth = _treasureDoorWidth * 0.5f + _treasureClearance;
+        float exclusionRadiusSqr = _treasureCenterExclusionRadius * _treasureCenterExclusionRadius;
+
+        for (int i = 0; i < _treasureSpawnAttempts; i++)
+        {
+            Vector3 localPosition = new Vector3(
+                UnityEngine.Random.Range(-halfW, halfW),
+                0f,
+                UnityEngine.Random.Range(-halfD, halfD)
+            );
+
+            if (localPosition.sqrMagnitude < exclusionRadiusSqr)
+                continue;
+
+            if (IsNearDoorway(room, localPosition, doorHalfWidth))
+                continue;
+
+            worldPosition = room.transform.TransformPoint(localPosition);
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsNearDoorway(RoomNode room, Vector3 localPosition, float doorHalfWidth)
+    {
+        float halfW = room.width * 0.5f;
+        float halfD = room.depth * 0.5f;
+
+        // Forward doorway (+Z)
+        if (room.forward != null &&
+            Mathf.Abs(localPosition.x) < doorHalfWidth &&
+            localPosition.z > halfD - _treasureDoorDepth)
+            return true;
+
+        // Back doorway (-Z)
+        if (room.back != null &&
+            Mathf.Abs(localPosition.x) < doorHalfWidth &&
+            localPosition.z < -halfD + _treasureDoorDepth)
+            return true;
+
+        // Right doorway (+X)
+        if (room.right != null &&
+            Mathf.Abs(localPosition.z) < doorHalfWidth &&
+            localPosition.x > halfW - _treasureDoorDepth)
+            return true;
+
+        // Left doorway (-X)
+        if (room.left != null &&
+            Mathf.Abs(localPosition.z) < doorHalfWidth &&
+            localPosition.x < -halfW + _treasureDoorDepth)
+            return true;
+
+        return false;
     }
 
     private void StitchAllAdjacentRooms()
