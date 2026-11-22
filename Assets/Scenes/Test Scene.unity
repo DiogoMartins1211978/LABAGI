@@ -2637,6 +2637,7 @@ MonoBehaviour:
   look: {fileID: 906570679}
   combat: {fileID: 269744964}
   cardCatalog: {fileID: 11400000, guid: b00fe2cf949c48bf9a7649627d3cfc25, type: 2}
+  bestiary: {fileID: 0}
   debugSlot: 1
 --- !u!4 &249347229
 Transform:
@@ -24914,7 +24915,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Your current run will end.
+  m_text: Progress since your last save will be lost.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: d6552a89dafa14a4c8b54124a83ca326, type: 2}
   m_sharedMaterial: {fileID: -1770584720821389314, guid: ed1aec6cd3c77a54ba09d79dde638572, type: 2}

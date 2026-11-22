@@ -11,22 +11,13 @@ public class BestiaryDiscovery : MonoBehaviour
     [Tooltip("Optional; the scene's combat controller is found automatically.")]
     [SerializeField] CombatController combatController;
 
-    const string SaveKey = "Bestiary.DiscoveredEnemies.v1";
     readonly HashSet<string> discoveredIds = new HashSet<string>(StringComparer.Ordinal);
     CombatController subscribedController;
     bool started;
 
-    [Serializable]
-    class SaveData
-    {
-        public List<string> ids = new List<string>();
-    }
-
     public IReadOnlyList<BestiaryEntry> Entries => entries;
     public event Action<BestiaryEntry> EntryDiscovered;
     public event Action Changed;
-
-    void Awake() => Load();
 
     void Start()
     {
@@ -76,35 +67,54 @@ public class BestiaryDiscovery : MonoBehaviour
             return false;
         }
         if (!discoveredIds.Add(entry.enemyId)) return false;
-        Save();
         Debug.Log("[Bestiary] Discovered: " + (string.IsNullOrEmpty(entry.displayName) ? entry.enemyId : entry.displayName), this);
         EntryDiscovered?.Invoke(entry);
         Changed?.Invoke();
         return true;
     }
 
-    void Load()
-    {
-        if (!PlayerPrefs.HasKey(SaveKey)) return;
-        try
-        {
-            var data = JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveKey));
-            if (data == null || data.ids == null) return;
-            foreach (string id in data.ids)
-                if (!string.IsNullOrWhiteSpace(id)) discoveredIds.Add(id);
-        }
-        catch (Exception exception)
-        {
-            Debug.LogWarning("Could not load bestiary discoveries: " + exception.Message, this);
-        }
-    }
-
-    void Save()
+    // Snapshots belong to SaveGameSession's active slot. Never read or overwrite
+    // the legacy shared PlayerPrefs key: its discoveries cannot be attributed to a slot.
+    public List<string> CaptureDiscoveries()
     {
         var ids = new List<string>(discoveredIds);
         ids.Sort(StringComparer.Ordinal);
-        PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(new SaveData { ids = ids }));
-        PlayerPrefs.Save();
+        return ids;
+    }
+
+    public void RestoreDiscoveries(IEnumerable<string> ids)
+    {
+        if (ids == null) throw new ArgumentNullException(nameof(ids));
+        var restored = new HashSet<string>(StringComparer.Ordinal);
+        foreach (string id in ids)
+        {
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Bestiary IDs cannot be blank.", nameof(ids));
+            restored.Add(id);
+        }
+        discoveredIds.Clear();
+        discoveredIds.UnionWith(restored);
+        // Refresh the book without replaying individual discovery notifications.
+        Changed?.Invoke();
+    }
+
+    [ContextMenu("Debug/Discover First Enemy (Play Mode)")]
+    void DiscoverFirstEnemy()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("Enter Play Mode before testing bestiary discoveries.", this);
+            return;
+        }
+        foreach (var entry in entries)
+        {
+            if (entry == null || string.IsNullOrWhiteSpace(entry.enemyId)) continue;
+            if (Discover(entry))
+                Debug.Log("[Bestiary] Test discovery added to the current run. Use Save Game to keep it.", this);
+            else
+                Debug.Log("[Bestiary] The first configured enemy is already discovered in this run.", this);
+            return;
+        }
+        Debug.LogWarning("Bestiary Discovery: configure an entry with an Enemy Id before testing.", this);
     }
 
     [ContextMenu("Debug/Reset Bestiary Discoveries (Play Mode)")]
@@ -116,10 +126,8 @@ public class BestiaryDiscovery : MonoBehaviour
             return;
         }
         discoveredIds.Clear();
-        PlayerPrefs.DeleteKey(SaveKey);
-        PlayerPrefs.Save();
         Changed?.Invoke();
-        Debug.Log("[Bestiary] Discovery progress reset.", this);
+        Debug.Log("[Bestiary] Current run discoveries reset. Use Save Game to keep this change.", this);
     }
 
     void OnDisable()

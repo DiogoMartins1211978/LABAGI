@@ -7,7 +7,7 @@ public sealed class SaveSlotFiles
 {
     readonly string directory;
     readonly Action<string, int> validate;
-    const int MaxBytes = 4 * 1024 * 1024;
+    const int MaxBytes = 64 * 1024 * 1024; // Compressed LiDAR snapshots can exceed 4 MB.
 
     public SaveSlotFiles(string directory, Action<string, int> validate)
     {

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.VFX;
 using Random = UnityEngine.Random;
 
-public class LiDARScanner : MonoBehaviour
+public partial class LiDARScanner : MonoBehaviour
 {
     private class RoomScanData
     {

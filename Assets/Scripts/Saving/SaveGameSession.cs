@@ -14,6 +14,8 @@ public sealed class SaveGameSession : MonoBehaviour
     [SerializeField] CameraController look;
     [SerializeField] CombatController combat;
     [SerializeField] ContentCatalog cardCatalog;
+    [SerializeField] BestiaryDiscovery bestiary;
+    [SerializeField] LiDARScanner lidar;
     [SerializeField, Range(1, 3)] int debugSlot = 1;
 
     public string LastError { get; private set; }
@@ -39,6 +41,7 @@ public sealed class SaveGameSession : MonoBehaviour
                 if (loaded != null) Restore(loaded);
                 else
                 {
+                    bestiary.RestoreDiscoveries(Array.Empty<string>());
                     var initial = Capture(SaveGames.PendingSlot);
                     SaveGames.Files.Write(initial.slot, JsonUtility.ToJson(initial, true), SaveGames.OverwritePending);
                 }
@@ -63,8 +66,10 @@ public sealed class SaveGameSession : MonoBehaviour
         if (look == null) look = FindAnyObjectByType<CameraController>();
         if (combat == null) combat = FindAnyObjectByType<CombatController>();
         if (cardCatalog == null) cardCatalog = Resources.Load<ContentCatalog>(ContentCatalog.ResourcePath);
-        if (dungeon == null || player == null || cards == null || look == null || combat == null || cardCatalog == null)
-            throw new InvalidOperationException("Assign Dungeon, Player, Cards, Look, Combat and Card Catalog on SaveGameSession.");
+        if (bestiary == null) bestiary = FindAnyObjectByType<BestiaryDiscovery>();
+        if (lidar == null) lidar = FindAnyObjectByType<LiDARScanner>();
+        if (dungeon == null || player == null || cards == null || look == null || combat == null || cardCatalog == null || bestiary == null || lidar == null)
+            throw new InvalidOperationException("Assign Dungeon, Player, Cards, Look, Combat, Card Catalog, Bestiary and LiDAR on SaveGameSession.");
         foreach (var entry in cardCatalog.entries)
         {
             if (!(entry.asset is CombatManager card)) continue;
@@ -89,7 +94,9 @@ public sealed class SaveGameSession : MonoBehaviour
             roomId = dungeon.GetRoomId(player.CurrentRoom),
             cameraLocalRotation = look.transform.localRotation,
             collection = Encode(cards.collection),
-            deck = Encode(cards.deck)
+            deck = Encode(cards.deck),
+            bestiaryIds = bestiary.CaptureDiscoveries(),
+            lidarRooms = lidar.CaptureRoomScans(dungeon)
         };
         foreach (var pair in dungeon.Rooms)
         {
@@ -134,6 +141,7 @@ public sealed class SaveGameSession : MonoBehaviour
 
     void Validate(SaveGameData data)
     {
+        lidar.ValidateRoomScans(data.lidarRooms, dungeon);
         if (data.layoutHash != dungeon.LayoutHash)
             throw new InvalidOperationException("The dungeon layout changed since this save was created.");
         if (data.scene != SceneManager.GetActiveScene().name || data.roomId == null || !dungeon.Rooms.ContainsKey(data.roomId))
@@ -171,6 +179,18 @@ public sealed class SaveGameSession : MonoBehaviour
     {
         // Resolve and validate everything before changing live gameplay.
         Validate(data);
+        var discoveries = new List<string>(data.bestiaryIds);
+        if (data.version == 1)
+        {
+            foreach (var saved in data.enemies)
+            {
+                if (!saved.defeated) continue;
+                var identity = dungeon.Rooms[saved.roomId].enemy.GetComponent<BestiaryIdentity>();
+                if (identity != null && identity.entry != null && !string.IsNullOrWhiteSpace(identity.entry.enemyId))
+                    discoveries.Add(identity.entry.enemyId);
+            }
+        }
+        bestiary.RestoreDiscoveries(discoveries);
         cards.collection = Decode(data.collection);
         cards.deck = Decode(data.deck);
         foreach (var saved in data.enemies)
@@ -183,6 +203,7 @@ public sealed class SaveGameSession : MonoBehaviour
         cards.EnterExploration();
         player.InitializePlayer(dungeon.Rooms[data.roomId]);
         look.RestoreSavedRotation(data.cameraLocalRotation);
+        lidar.RestoreRoomScans(data.lidarRooms, dungeon);
     }
 
     public bool TrySave(out string error)
