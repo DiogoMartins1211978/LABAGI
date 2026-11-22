@@ -1,11 +1,13 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MainMenuActions : MonoBehaviour
 {
     public void SinglePlayer()
     {
-        SceneManager.LoadScene("Test Scene");
+        var menu = GetComponent<SinglePlayerMenu>();
+        if (menu == null) menu = FindAnyObjectByType<SinglePlayerMenu>();
+        if (menu != null) menu.Open();
+        else Debug.LogError("Add and configure SinglePlayerMenu on MenuManager before opening Single Player.", this);
     }
 
     public void Exit()

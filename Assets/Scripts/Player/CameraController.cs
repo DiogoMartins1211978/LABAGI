@@ -46,4 +46,12 @@ public class CameraController : MonoBehaviour
 
         transform.localRotation = Quaternion.Euler(verticalRotation, horizontalRotation, 0f);
     }
+
+    public void RestoreSavedRotation(Quaternion rotation)
+    {
+        Vector3 angles = rotation.eulerAngles;
+        horizontalRotation = angles.y;
+        verticalRotation = Mathf.Clamp(Mathf.DeltaAngle(0f, angles.x), -maxVerticalAngle, maxVerticalAngle);
+        transform.localRotation = Quaternion.Euler(verticalRotation, horizontalRotation, 0f);
+    }
 }
