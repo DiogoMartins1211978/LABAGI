@@ -60,6 +60,24 @@ public class DungeonGenerator : MonoBehaviour
 
     private PlayerNodeMover _playerMover;
 
+    public IReadOnlyDictionary<string, RoomNode> Rooms => _nodesById;
+    public string LayoutHash
+    {
+        get
+        {
+            if (_layoutJson == null) return "";
+            using (var hash = System.Security.Cryptography.SHA256.Create())
+                return BitConverter.ToString(hash.ComputeHash(System.Text.Encoding.UTF8.GetBytes(_layoutJson.text))).Replace("-", "");
+        }
+    }
+
+    public string GetRoomId(RoomNode room)
+    {
+        foreach (var pair in _nodesById)
+            if (pair.Value == room) return pair.Key;
+        return null;
+    }
+
     private void Awake()
     {
         BuildPrefabLookup();

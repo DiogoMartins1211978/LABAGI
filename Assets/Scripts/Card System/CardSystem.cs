@@ -59,6 +59,7 @@ public class CardSystem : MonoBehaviour
     readonly List<CombatManager> browsable = new List<CombatManager>();
     int browseIndex;
     bool bookDeckOpen;
+    public bool IsBookDeckOpen => bookDeckOpen;
     public void SetBookDeckOpen(bool open) => bookDeckOpen = open && CurrentMode != Mode.Combat;
 
     InputAction prev, next, confirm, remove, toggle;

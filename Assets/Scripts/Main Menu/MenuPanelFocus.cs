@@ -17,6 +17,15 @@ public class MenuPanelFocus : MonoBehaviour
     static int lastBackFrame = -1;
     static int lastSubmitFrame = -1;
 
+    public Button BackControl => backButton;
+
+    public void ConfigureNavigation(Selectable first, Selectable[] order, bool resetSelection = false)
+    {
+        firstSelected = first;
+        tabOrder = order;
+        if (resetSelection) lastSelected = first;
+    }
+
     void OnEnable()
     {
         StartCoroutine(RestoreSelection());
