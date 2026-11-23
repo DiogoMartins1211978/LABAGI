@@ -11,12 +11,12 @@ public class BestiaryDropSlot : MonoBehaviour, ISelectHandler, IPointerEnterHand
     [SerializeField] Sprite filledFrame;
     [SerializeField] Sprite emptyFrame;
     BestiaryDropCarousel owner;
-    CombatManager card;
+    CardData card;
     int index;
     Sprite generatedSprite;
     public Button Button { get; private set; }
     void Awake(){Button=GetComponent<Button>();Button.onClick.AddListener(Read);}
-    public void Bind(BestiaryDropCarousel carousel,CombatManager data,int slotIndex,float textScale,bool unknown = false)
+    public void Bind(BestiaryDropCarousel carousel, CardData data,int slotIndex,float textScale,bool unknown = false)
     {
         owner=carousel;card=data;index=slotIndex;Button.interactable=data!=null;
         var frame=GetComponent<Image>();

@@ -1,0 +1,23 @@
+attack
+Phantom Slash  ignores enemy shields
+Counterstance shields this turn attack and hits in the next one
+Crushing Blow an attack that incapacitates you for the next turn, but deals 1.5x the damage
+Venomous Blade  deals damage, aplies weak poison (less turns/damage)
+Blood Sacrifice loose life, deal 3x the damage
+
+defence
+Healing Light restores some health, not overhealth
+Stone Skin reduces damage in the following 3 turns
+Mirror Ward  reflect 50% of the enemy attack back to the enemy (defends as usuall)
+
+Control
+Frost Bind  Freeze enemy for one turn
+Disorientation  Reduce enemy damage on next attack by 75%
+Curse of Weakness  Enemy does less 25% damage for the next 4 turns
+Shackles  Enemy has a 75% chance to block the enemy "movement" the following 3 turns
+
+Ability
+Battle Focus  next turn, your attack does double damage
+Life Drain  the next attack you do will heal half of the damage dealt
+Empowerment  gain 15% damage resist and 15% damage (damage next turn)
+Arcane Theft  steal enemy shield for next turn, if no shield, deal a small amount of damage

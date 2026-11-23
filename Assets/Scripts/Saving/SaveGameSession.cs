@@ -23,8 +23,8 @@ public sealed class SaveGameSession : MonoBehaviour
     public event Action Saved;
     public event Action<string> Failed;
     bool ready;
-    readonly Dictionary<string, CombatManager> cardsById = new Dictionary<string, CombatManager>(StringComparer.Ordinal);
-    readonly Dictionary<CombatManager, string> idsByCard = new Dictionary<CombatManager, string>();
+    readonly Dictionary<string, CardData> cardsById = new Dictionary<string, CardData>(StringComparer.Ordinal);
+    readonly Dictionary<CardData, string> idsByCard = new Dictionary<CardData, string>();
 
     void Start()
     {
@@ -74,7 +74,7 @@ public sealed class SaveGameSession : MonoBehaviour
             throw new InvalidOperationException("Assign Dungeon, Player, Cards, Look, Combat, Card Catalog, Bestiary and LiDAR on SaveGameSession.");
         foreach (var entry in cardCatalog.entries)
         {
-            if (!(entry.asset is CombatManager card)) continue;
+            if (!(entry.asset is CardData card)) continue;
             if (string.IsNullOrWhiteSpace(entry.id) || cardsById.ContainsKey(entry.id) || idsByCard.ContainsKey(card))
                 throw new InvalidOperationException("Cards need unique permanent IDs in the content catalogue.");
             cardsById.Add(entry.id, card);
@@ -121,7 +121,7 @@ public sealed class SaveGameSession : MonoBehaviour
         return data;
     }
 
-    List<string> Encode(List<CombatManager> source)
+    List<string> Encode(List<CardData> source)
     {
         var result = new List<string>();
         foreach (var card in source)
@@ -174,9 +174,9 @@ public sealed class SaveGameSession : MonoBehaviour
         }
     }
 
-    List<CombatManager> Decode(List<string> source)
+    List<CardData> Decode(List<string> source)
     {
-        var result = new List<CombatManager>();
+        var result = new List<CardData>();
         if (source.Count > 4096) throw new FormatException("Too many cards in save.");
         foreach (string id in source)
         {

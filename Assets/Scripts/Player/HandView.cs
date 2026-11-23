@@ -91,7 +91,7 @@ public class HandView : MonoBehaviour
             return;
         }
 
-        IReadOnlyList<CombatManager> hand = cardSystem.Hand;
+        IReadOnlyList<CardData> hand = cardSystem.Hand;
 
         while (views.Count > hand.Count)
         {
@@ -109,7 +109,7 @@ public class HandView : MonoBehaviour
         }
     }
 
-    CardView Spawn(CombatManager data)
+    CardView Spawn(CardData data)
     {
         CardView view = data.CreateView(transform);
         if (view == null) return null;

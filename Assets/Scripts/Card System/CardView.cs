@@ -7,7 +7,7 @@ public class CardView : MonoBehaviour
     [Header("Faces")]
     public Renderer iconRenderer;
 
-    public CombatManager Data { get; private set; }
+    public CardData Data { get; private set; }
     public bool FaceUp { get; private set; } = true;
 
     public event Action<CardView> CardClicked;
@@ -17,7 +17,7 @@ public class CardView : MonoBehaviour
     static readonly int MainTexId = Shader.PropertyToID("_MainTex");
     MaterialPropertyBlock block;
 
-    public void Setup(CombatManager data)
+    public void Setup(CardData data)
     {
         Data = data;
 

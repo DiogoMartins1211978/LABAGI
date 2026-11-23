@@ -17,7 +17,7 @@ public class BestiaryDropCarousel : MonoBehaviour
 
     readonly List<BestiaryDropSlot> slots = new List<BestiaryDropSlot>();
     BestiaryEntry currentEntry;
-    CombatManager[] cards = Array.Empty<CombatManager>();
+    CardData[] cards = Array.Empty<CardData>();
     bool informationKnown;
     float textScale = 1;
     int firstVisible;
@@ -59,7 +59,7 @@ public class BestiaryDropCarousel : MonoBehaviour
         currentEntry = entry;
         informationKnown = available;
         textScale = scale;
-        cards = available && entry.possibleDrops != null ? entry.possibleDrops : Array.Empty<CombatManager>();
+        cards = available && entry.possibleDrops != null ? entry.possibleDrops : Array.Empty<CardData>();
         firstVisible = 0;
         while (slots.Count < visibleSlots)
         {
@@ -99,7 +99,7 @@ public class BestiaryDropCarousel : MonoBehaviour
         NavigationChanged?.Invoke();
     }
 
-    public void Describe(CombatManager card, int index, bool details = false)
+    public void Describe(CardData card, int index, bool details = false)
     {
         if (narration == null) return;
         narration.Speak(card == null ? "Drop information unavailable." : "Possible drop. " + card.displayName + ". " + (index + 1) + " of " + cards.Length + "." + (details ? " " + card.description : " Activate to read details."));

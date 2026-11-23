@@ -10,15 +10,15 @@ public class BookDeckSlot : MonoBehaviour, ISelectHandler, IPointerEnterHandler
     [SerializeField] TMP_Text cardName, quantity;
     [SerializeField] Sprite filledFrame, emptyFrame;
     BookDeckUI owner;
-    CombatManager card;
+    CardData card;
     bool inDeck;
     Sprite generated;
     float lastDescription = -10;
     public Button Button { get; private set; }
-    public CombatManager Card => card;
+    public CardData Card => card;
     void Awake() { Button = GetComponent<Button>(); Button.onClick.AddListener(Activate); }
 
-    public void Bind(BookDeckUI ui, CombatManager data, bool deck, int owned, float scale)
+    public void Bind(BookDeckUI ui, CardData data, bool deck, int owned, float scale)
     {
         owner = ui; card = data; inDeck = deck;
         Button.interactable = card != null && ui.CanEdit;

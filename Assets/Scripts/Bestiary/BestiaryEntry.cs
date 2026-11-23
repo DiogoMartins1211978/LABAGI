@@ -21,7 +21,7 @@ public class BestiaryEntry : ScriptableObject
     [Header("Possible drops (information only, not a gameplay drop table)")]
     [Tooltip("False means unknown. True with an empty list means this enemy drops no cards.")]
     public bool dropInformationKnown;
-    public CombatManager[] possibleDrops = new CombatManager[0];
+    public CardData[] possibleDrops = new CardData[0];
 
     [Header("Enemy regions (not the player's current GPS location)")]
     [Tooltip("Reference the existing georeferencing region assets. Empty means not yet assigned.")]

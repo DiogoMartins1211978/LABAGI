@@ -37,7 +37,7 @@ public class RewardChest : MonoBehaviour
     public Transform rewardSpawnPoint;
 
     [Header("Reward Data")]
-    public CombatManager cardReward;
+    public CardData cardReward;
     public GameObject cardVisualPrefab;
     public GameObject heartVisualPrefab;
 

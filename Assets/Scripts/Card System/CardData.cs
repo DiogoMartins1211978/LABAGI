@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Cards/Card", fileName = "NewCard")]
-public class CombatManager : ScriptableObject
+public class CardData : ScriptableObject
 {
     public string displayName = "New Card";
     [TextArea] public string description;

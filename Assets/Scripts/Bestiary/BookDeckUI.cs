@@ -68,7 +68,7 @@ public class BookDeckUI : MonoBehaviour
     }
     public void Refresh()
     {
-        var unique = new List<CombatManager>();
+        var unique = new List<CardData>();
         foreach (var card in cards.collection) if (card != null && !unique.Contains(card)) unique.Add(card);
         int leftCapacity = Capacity(collectionGrid), rightCapacity = Capacity(deckGrid);
         int leftPages = Mathf.Max(1, Mathf.CeilToInt(unique.Count / (float)leftCapacity));
@@ -124,7 +124,7 @@ public class BookDeckUI : MonoBehaviour
         if (current != null && current.IsActive() && current.IsInteractable()) yield break;
         controls.FirstOrDefault(b => b.IsActive() && b.IsInteractable())?.Select();
     }
-    public void Activate(CombatManager card, bool inDeck)
+    public void Activate(CardData card, bool inDeck)
     {
         if (!CanEdit) { Say("Deck editing is unavailable during combat."); return; }
         int before = cards.deck.Count;
@@ -132,7 +132,7 @@ public class BookDeckUI : MonoBehaviour
         if (cards.deck.Count != before) Say((inDeck ? "Removed " : "Added ") + card.displayName + ". Deck " + cards.deck.Count + " of " + cards.deckSize + ".");
         else Say(cards.deck.Count >= cards.deckSize ? "Deck full. Maximum " + cards.deckSize + " cards." : "No additional owned copies can be added. This card's limit is " + card.maxCopies + ".");
     }
-    public void Describe(CombatManager card, bool inDeck)
+    public void Describe(CardData card, bool inDeck)
     {
         Say((inDeck ? "Remove " : "Add ") + card.displayName + (inDeck ? " from the deck. " : " to the deck. ")
             + "Owned " + cards.collection.Count(c => c == card) + ". In deck " + cards.deck.Count(c => c == card) + ". " + card.description);
