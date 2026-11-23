@@ -20,29 +20,31 @@ public partial class LiDARScanner
 
             var data = pair.Value;
 
-            // Identify animated enemy points, which cannot be restored
-            // from static position and normal data alone.
-            var animatedPoints = new HashSet<int>();
+            var animatedPoints = new Dictionary<int, SurfacePointAttachment>();
 
             foreach (var attachment in data.SurfaceAttachments)
             {
                 if (attachment.IsAnimatedEnemy)
-                    animatedPoints.Add(attachment.PointIndex);
+                    animatedPoints.Add(attachment.PointIndex, attachment);
             }
 
             var points = new List<LidarScanCodec.Point>();
 
             for (int i = 0; i < data.Positions.Count; i++)
             {
-                // Animated enemy points require mesh attachments.
-                if (animatedPoints.Contains(i))
-                    continue;
+                animatedPoints.TryGetValue(i, out var attachment);
+                if (attachment != null && (attachment.Enemy == null || attachment.Enemy.Resolved)) continue;
+                if (attachment != null && attachment.Enemy != pair.Key.enemy)
+                    throw new InvalidOperationException("An enemy scan is attached to a different room's enemy.");
 
                 points.Add(new LidarScanCodec.Point
                 {
                     position = pair.Key.transform.InverseTransformPoint(data.Positions[i]),
                     normal = pair.Key.transform.InverseTransformDirection(data.Normals[i]),
-                    size = data.PointSizes[i]
+                    size = data.PointSizes[i],
+                    enemyPoint = attachment != null,
+                    triangleIndex = attachment != null ? attachment.EnemySurface.TriangleIndex : 0,
+                    barycentric = attachment != null ? attachment.EnemySurface.BarycentricCoordinate : Vector3.zero
                 });
             }
 
@@ -56,7 +58,8 @@ public partial class LiDARScanner
                 result.Add(new SaveGameData.SavedRoomScan
                 {
                     roomId = id,
-                    points = LidarScanCodec.Encode(points)
+                    points = LidarScanCodec.Encode(points),
+                    enemySurfaceSignature = points.Exists(point => point.enemyPoint) ? pair.Key.enemy.ScanSurfaceSignature : null
                 });
             }
         }
@@ -84,6 +87,16 @@ public partial class LiDARScanner
             if (scan == null || scan.roomId == null || !dungeon.Rooms.TryGetValue(scan.roomId, out var room)
                 || decoded.ContainsKey(room)) throw new FormatException("Saved LiDAR room is missing or duplicated.");
             var points = LidarScanCodec.Decode(scan.points, (int)Math.Min((long)resolution * resolution, LidarScanCodec.MaxPoints));
+            foreach (var point in points)
+            {
+                if (!point.enemyPoint) continue;
+                var enemy = room.enemy;
+                if (enemy == null || string.IsNullOrEmpty(scan.enemySurfaceSignature)
+                    || scan.enemySurfaceSignature != enemy.ScanSurfaceSignature)
+                    throw new FormatException("The saved enemy LiDAR mesh changed or is unavailable in room " + scan.roomId + ".");
+                if (point.triangleIndex >= enemy.ScanTriangleCount)
+                    throw new FormatException("Invalid saved enemy LiDAR surface in room " + scan.roomId + ".");
+            }
             total += points.Count;
             if (total > LidarScanCodec.MaxPoints) throw new FormatException("Too many saved LiDAR points.");
             decoded.Add(room, points);
@@ -112,8 +125,25 @@ public partial class LiDARScanner
             foreach (var point in pair.Value)
             {
                 Vector3 position = pair.Key.transform.TransformPoint(point.position);
+                Vector3 normal = pair.Key.transform.TransformDirection(point.normal).normalized;
+                if (point.enemyPoint)
+                {
+                    var enemy = pair.Key.enemy;
+                    if (enemy.Resolved) continue;
+                    var surface = new Enemy.SurfaceAttachment
+                        { TriangleIndex = point.triangleIndex, BarycentricCoordinate = point.barycentric };
+                    if (!enemy.GetAnimatedSurfacePoint(surface, out position, out normal))
+                        throw new InvalidOperationException("Could not restore an enemy scan surface.");
+                    normal.Normalize();
+                    position += normal * SURFACE_OFFSET;
+                    data.SurfaceAttachments.Add(new SurfacePointAttachment
+                    {
+                        Enemy = enemy, EnemySurface = surface, IsAnimatedEnemy = true,
+                        PointIndex = data.Positions.Count
+                    });
+                }
                 data.Positions.Add(position);
-                data.Normals.Add(pair.Key.transform.TransformDirection(point.normal).normalized);
+                data.Normals.Add(normal);
                 data.PointSizes.Add(point.size);
                 Vector3Int cell = GetCell(position);
                 if (!data.SpatialCells.TryGetValue(cell, out var positions))
@@ -128,6 +158,8 @@ public partial class LiDARScanner
         _activeRoom = _playerMover.CurrentRoom;
         ResetFocus();
         UpdateRoomVFXVisibility();
-        Debug.Log("[Save] Restored LiDAR scenery scans for " + decoded.Count + " rooms.", this);
+        int enemyPoints = 0;
+        foreach (var data in _roomScans.Values) enemyPoints += data.SurfaceAttachments.Count;
+        Debug.Log("[Save] Restored LiDAR scans for " + decoded.Count + " rooms, including " + enemyPoints + " enemy-attached points.", this);
     }
 }

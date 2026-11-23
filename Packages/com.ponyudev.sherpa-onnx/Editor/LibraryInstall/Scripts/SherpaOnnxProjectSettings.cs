@@ -1,0 +1,31 @@
+using PonyuDev.SherpaOnnx.Common;
+using UnityEditor;
+
+namespace PonyuDev.SherpaOnnx.Editor.LibraryInstall
+{
+    [FilePath("ProjectSettings/SherpaOnnxSettings.asset", FilePathAttribute.Location.ProjectFolder)]
+    internal sealed class SherpaOnnxProjectSettings : ScriptableSingleton<SherpaOnnxProjectSettings>
+    {
+        public string version = "1.13.0";
+        public string installedVersion = "";
+        public bool strictValidation = true;
+        public bool macPostprocess = true;
+        public bool debugLogEditor = true;
+        public bool debugLogRuntime = true;
+        public bool iosIncludeSimulator = false;
+        public bool iosIncludeMac = false;
+
+        internal void SaveSettings()
+        {
+            Save(true);
+        }
+
+        [InitializeOnLoadMethod]
+        private static void SyncLogSettings()
+        {
+            var s = instance;
+            SherpaOnnxLog.EditorEnabled = s.debugLogEditor;
+            SherpaOnnxLog.RuntimeEnabled = s.debugLogRuntime;
+        }
+    }
+}

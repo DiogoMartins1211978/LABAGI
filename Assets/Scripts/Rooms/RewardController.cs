@@ -63,6 +63,7 @@ public class RewardController : MonoBehaviour
     public Color highlightColor = Color.yellow;
 
     private RewardState state = RewardState.Exploring;
+    public bool IsInteracting => state != RewardState.Exploring;
     private RewardChest lookedAtChest;
     private RewardChest activeChest;
 

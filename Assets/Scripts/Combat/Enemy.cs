@@ -47,6 +47,7 @@ public class Enemy : MonoBehaviour
     private int lastBakeFrame = -1;
     private Vector3[] bakedVertices;
     private Vector3[] bakedNormals;
+    private int[] bakedTriangles;
 
     private float focusTimer;
     private int registeredScanPoints;
@@ -57,6 +58,41 @@ public class Enemy : MonoBehaviour
 
     public int RegisteredScanPoints => registeredScanPoints;
     public float FocusTimer => focusTimer;
+    public int ScanTriangleCount => bakedTriangles != null ? bakedTriangles.Length / 3 : 0;
+    string scanSurfaceSignature;
+
+    public string ScanSurfaceSignature
+    {
+        get
+        {
+            if (scanSurfaceSignature != null) return scanSurfaceSignature;
+            if (bakedMesh == null) return "";
+            // The baked mesh is CPU-readable even when the imported asset is not.
+            // Topology is stable across animation poses; baked vertex positions are not.
+            var mesh = bakedMesh;
+            using (var bytes = new System.IO.MemoryStream())
+            {
+                using (var writer = new System.IO.BinaryWriter(bytes, System.Text.Encoding.UTF8, true))
+                {
+                    writer.Write(mesh.vertexCount);
+                    foreach (int triangle in bakedTriangles) writer.Write(triangle);
+                }
+                using (var hash = System.Security.Cryptography.SHA256.Create())
+                    scanSurfaceSignature = BitConverter.ToString(hash.ComputeHash(bytes.ToArray())).Replace("-", "");
+            }
+            return scanSurfaceSignature;
+        }
+    }
+
+    public void RestoreScanProgress(int pointCount, float focusedSeconds, bool discovered)
+    {
+        registeredScanPoints = pointCount;
+        focusTimer = focusedSeconds;
+        Discovered = discovered;
+        if (discovered && skinnedMeshRenderer != null && discoveredMaterials != null && discoveredMaterials.Length > 0)
+            skinnedMeshRenderer.sharedMaterials = discoveredMaterials;
+        // Do not notify combat merely because a save is being restored.
+    }
 
     public Vector3 FocusPosition => focusPoint != null ? focusPoint.position : transform.position + Vector3.up * focusHeight;
 
@@ -305,6 +341,7 @@ public class Enemy : MonoBehaviour
 
         bakedVertices = bakedMesh.vertices;
         bakedNormals = bakedMesh.normals;
+        if (bakedTriangles == null) bakedTriangles = bakedMesh.triangles;
 
         lastBakeFrame = Time.frameCount;
     }
@@ -328,7 +365,8 @@ public class Enemy : MonoBehaviour
 
         BakeAnimatedMesh();
 
-        int[] triangles = bakedMesh.triangles;
+        int[] triangles = bakedTriangles;
+        if (attachment.TriangleIndex < 0 || attachment.TriangleIndex > (int.MaxValue - 2) / 3) return false;
         int triangleOffset = attachment.TriangleIndex * 3;
 
         if (triangleOffset + 2 >= triangles.Length)

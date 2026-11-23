@@ -1,0 +1,40 @@
+{
+  "name": "com.ponyudev.sherpa-onnx",
+  "displayName": "PonyuDev Sherpa-ONNX",
+  "version": "0.2.0",
+  "unity": "2022.3",
+  "description": "Unity integration for sherpa-onnx with editor installer for native libraries and models.",
+  "license": "Apache-2.0",
+  "keywords": [
+    "sherpa",
+    "onnx",
+    "speech",
+    "tts",
+    "stt",
+    "asr",
+    "vad"
+  ],
+  "author": {
+    "name": "Iurii Ponomarev",
+    "email": "ponyumopo@gmail.com",
+    "url": "https://github.com/Ponyu-dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ponyu-dev/Unity-Sherpa-ONNX.git"
+  },
+  "documentationUrl": "https://github.com/Ponyu-dev/Unity-Sherpa-ONNX#readme",
+  "changelogUrl": "https://github.com/Ponyu-dev/Unity-Sherpa-ONNX/blob/main/CHANGELOG.md",
+  "samples": [
+    {
+      "displayName": "Sherpa-ONNX Demo",
+      "description": "Single scene that hosts every TTS / ASR / VAD demo — top-level menu picks a module, each module has its own sub-menu of panels. Loads all services in parallel; microphone is opened lazily when a panel that needs capture binds.",
+      "path": "Samples~/Demo"
+    }
+  ],
+  "dependencies": {
+    "com.unity.sharp-zip-lib": "1.4.1",
+    "com.cysharp.unitask": "2.5.10"
+  },
+  "_fingerprint": "ebfccf15158d430f8ec15a17344f48ce632adc75"
+}

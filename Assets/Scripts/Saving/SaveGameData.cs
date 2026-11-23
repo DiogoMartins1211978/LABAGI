@@ -5,7 +5,7 @@ using UnityEngine;
 [Serializable]
 public sealed class SaveGameData
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 5;
     public int version = CurrentVersion;
     public int slot;
     public string savedUtc;
@@ -18,12 +18,25 @@ public sealed class SaveGameData
     public List<SavedEnemy> enemies = new List<SavedEnemy>();
     public List<string> bestiaryIds = new List<string>();
     public List<SavedRoomScan> lidarRooms = new List<SavedRoomScan>();
+    public List<SavedTreasure> treasures = new List<SavedTreasure>();
+
+    [Serializable]
+    public sealed class SavedTreasure
+    {
+        public string roomId;
+        public string prefabKey;
+        public Vector3 localPosition;
+        public Quaternion localRotation;
+        public string cardId;
+        public bool claimed;
+    }
 
     [Serializable]
     public sealed class SavedRoomScan
     {
         public string roomId;
         public string points;
+        public string enemySurfaceSignature;
     }
 
     [Serializable]
@@ -33,6 +46,9 @@ public sealed class SaveGameData
         public Vector3 localPosition;
         public Quaternion localRotation;
         public bool defeated;
+        public int registeredScanPoints;
+        public float scanFocusTime;
+        public bool discovered;
     }
 
     public static SaveGameData Parse(string json)
@@ -73,6 +89,24 @@ public sealed class SaveGameData
                 if (scan == null || string.IsNullOrWhiteSpace(scan.roomId) || !roomIds.Add(scan.roomId)
                     || string.IsNullOrWhiteSpace(scan.points)) throw new FormatException("Invalid saved LiDAR room.");
         }
+        if (data.version < 5) data.treasures = new List<SavedTreasure>();
+        else
+        {
+            if (!json.Contains("\"treasures\"") || data.treasures == null || data.treasures.Count > 4096)
+                throw new FormatException("Missing or invalid saved treasure data.");
+            var rooms = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var treasure in data.treasures)
+            {
+                if (treasure == null || string.IsNullOrWhiteSpace(treasure.roomId) || !rooms.Add(treasure.roomId)
+                    || string.IsNullOrWhiteSpace(treasure.prefabKey)) throw new FormatException("Invalid saved treasure.");
+                var p = treasure.localPosition; var q = treasure.localRotation;
+                float norm = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+                if (!Finite(p.x) || !Finite(p.y) || !Finite(p.z) || !Finite(norm) || Math.Abs(norm - 1f) > 0.01f)
+                    throw new FormatException("Invalid saved treasure placement.");
+            }
+        }
         return data;
     }
+
+    static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 }

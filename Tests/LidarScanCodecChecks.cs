@@ -67,6 +67,27 @@ static class LidarScanCodecChecks
             { new LidarScanCodec.Point { position = new Vector3(float.NaN, 0, 0), size = 1f } }), "NaN must be rejected.");
         Reject(() => LidarScanCodec.Encode(new List<LidarScanCodec.Point>
             { new LidarScanCodec.Point { size = -1f } }), "Invalid point sizes must be rejected.");
+        var attached = new LidarScanCodec.Point
+        {
+            position = new Vector3(1, 2, 3), normal = new Vector3(0, 1, 0), size = 1f,
+            enemyPoint = true, triangleIndex = 27, barycentric = new Vector3(0.25f, 0.5f, 0.25f)
+        };
+        var mixed = LidarScanCodec.Decode(LidarScanCodec.Encode(new List<LidarScanCodec.Point>
+            { attached, new LidarScanCodec.Point { size = 1f } }), 10);
+        Check(mixed[0].enemyPoint && mixed[0].triangleIndex == 27 && mixed[0].barycentric.x == 0.25f
+            && mixed[0].barycentric.y == 0.5f && mixed[0].barycentric.z == 0.25f,
+            "Enemy triangle and barycentric coordinates must round-trip exactly.");
+        Check(!mixed[1].enemyPoint, "Scenery and enemy points must remain distinguishable in one room.");
+        string legacy = Pack(w => { w.Write(0x3144494c); w.Write(1); for (int i = 0; i < 7; i++) w.Write(1f); });
+        var old = LidarScanCodec.Decode(legacy, 10);
+        Check(old.Count == 1 && !old[0].enemyPoint && old[0].size == 1f, "Existing LID1 scenery saves must remain loadable.");
+        attached.triangleIndex = -1;
+        Reject(() => LidarScanCodec.Encode(new List<LidarScanCodec.Point> { attached }), "Negative triangle indices must be rejected.");
+        attached.triangleIndex = 27; attached.barycentric = new Vector3(1, 1, 1);
+        Reject(() => LidarScanCodec.Encode(new List<LidarScanCodec.Point> { attached }), "Invalid barycentric sums must be rejected.");
+        Reject(() => LidarScanCodec.Decode(Pack(w =>
+            { w.Write(0x3244494c); w.Write(1); for (int i = 0; i < 7; i++) w.Write(1f); w.Write((byte)2); }), 10),
+            "Unknown attachment types must be rejected.");
         Console.WriteLine("PASS: " + checks + " LiDAR codec checks.");
     }
 }

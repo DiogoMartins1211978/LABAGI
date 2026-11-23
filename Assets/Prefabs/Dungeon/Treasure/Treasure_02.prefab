@@ -58,7 +58,7 @@ MonoBehaviour:
   openTrigger: Open
   focusPoint: {fileID: 2738880530107221567}
   rewardSpawnPoint: {fileID: 4681459541819958509}
-  cardReward: {fileID: 0}
+  cardReward: {fileID: 11400000, guid: 69aaf5b550c28b3409ec2ec4b6f3d372, type: 2}
   cardVisualPrefab: {fileID: 7248326805494854242, guid: ad29f4e4d542606409f162925174e745, type: 3}
   heartVisualPrefab: {fileID: 6236826684139987555, guid: 3283b4a4488f217469ac09fe67ff3123, type: 3}
   interactionCollider: {fileID: 5579370015938984247}

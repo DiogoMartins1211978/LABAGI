@@ -16,6 +16,7 @@ public sealed class SaveGameSession : MonoBehaviour
     [SerializeField] ContentCatalog cardCatalog;
     [SerializeField] BestiaryDiscovery bestiary;
     [SerializeField] LiDARScanner lidar;
+    [SerializeField] RewardController rewards;
     [SerializeField, Range(1, 3)] int debugSlot = 1;
 
     public string LastError { get; private set; }
@@ -68,6 +69,7 @@ public sealed class SaveGameSession : MonoBehaviour
         if (cardCatalog == null) cardCatalog = Resources.Load<ContentCatalog>(ContentCatalog.ResourcePath);
         if (bestiary == null) bestiary = FindAnyObjectByType<BestiaryDiscovery>();
         if (lidar == null) lidar = FindAnyObjectByType<LiDARScanner>();
+        if (rewards == null) rewards = FindAnyObjectByType<RewardController>();
         if (dungeon == null || player == null || cards == null || look == null || combat == null || cardCatalog == null || bestiary == null || lidar == null)
             throw new InvalidOperationException("Assign Dungeon, Player, Cards, Look, Combat, Card Catalog, Bestiary and LiDAR on SaveGameSession.");
         foreach (var entry in cardCatalog.entries)
@@ -83,7 +85,8 @@ public sealed class SaveGameSession : MonoBehaviour
     SaveGameData Capture(int slot)
     {
         if (player.CurrentRoom == null || player.IsMoving || player.InputLocked || combat.InCombat
-            || cards.CurrentMode != CardSystem.Mode.Exploration || cards.IsBookDeckOpen)
+            || cards.CurrentMode != CardSystem.Mode.Exploration || cards.IsBookDeckOpen
+            || (rewards != null && rewards.IsInteracting))
             throw new InvalidOperationException("Save while exploring, after movement or combat has finished. Close the deck editor first.");
         var data = new SaveGameData
         {
@@ -96,7 +99,8 @@ public sealed class SaveGameSession : MonoBehaviour
             collection = Encode(cards.collection),
             deck = Encode(cards.deck),
             bestiaryIds = bestiary.CaptureDiscoveries(),
-            lidarRooms = lidar.CaptureRoomScans(dungeon)
+            lidarRooms = lidar.CaptureRoomScans(dungeon),
+            treasures = CaptureTreasures()
         };
         foreach (var pair in dungeon.Rooms)
         {
@@ -107,7 +111,10 @@ public sealed class SaveGameSession : MonoBehaviour
                 roomId = pair.Key,
                 localPosition = enemy.transform.localPosition,
                 localRotation = enemy.transform.localRotation,
-                defeated = enemy.Resolved
+                defeated = enemy.Resolved,
+                registeredScanPoints = enemy.RegisteredScanPoints,
+                scanFocusTime = enemy.FocusTimer,
+                discovered = enemy.Discovered
             });
         }
         Validate(data);
@@ -126,6 +133,47 @@ public sealed class SaveGameSession : MonoBehaviour
         return result;
     }
 
+    List<SaveGameData.SavedTreasure> CaptureTreasures()
+    {
+        var result = new List<SaveGameData.SavedTreasure>();
+        foreach (var pair in dungeon.Treasures)
+        {
+            var instance = pair.Value;
+            string cardId = null;
+            if (instance.chest.cardReward != null && !idsByCard.TryGetValue(instance.chest.cardReward, out cardId))
+                throw new InvalidOperationException("Chest reward card needs a permanent content catalogue ID: " + instance.chest.cardReward.name);
+            result.Add(new SaveGameData.SavedTreasure
+            {
+                roomId = pair.Key, prefabKey = instance.prefabKey,
+                localPosition = instance.root.transform.localPosition,
+                localRotation = instance.root.transform.localRotation,
+                cardId = cardId, claimed = instance.chest.IsClaimed
+            });
+        }
+        result.Sort((a, b) => string.CompareOrdinal(a.roomId, b.roomId));
+        return result;
+    }
+
+    void ValidateTreasures(SaveGameData data)
+    {
+        if (data.version < 5) return;
+        if (data.treasures == null || data.treasures.Count != dungeon.Treasures.Count)
+            throw new FormatException("Saved treasure rooms could not be reconstructed.");
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var saved in data.treasures)
+        {
+            if (saved == null || saved.roomId == null || !seen.Add(saved.roomId)
+                || !dungeon.Treasures.TryGetValue(saved.roomId, out var instance)
+                || instance.prefabKey != saved.prefabKey || !dungeon.IsTreasurePrefabAvailable(saved.prefabKey))
+                throw new FormatException("Saved treasure prefab or room is missing or ambiguous.");
+            if (!Finite(saved.localPosition.x) || !Finite(saved.localPosition.y) || !Finite(saved.localPosition.z))
+                throw new FormatException("Invalid saved treasure position.");
+            CheckRotation(saved.localRotation);
+            if (!string.IsNullOrEmpty(saved.cardId) && !cardsById.ContainsKey(saved.cardId))
+                throw new FormatException("Saved reward card is missing from the catalogue: " + saved.cardId);
+        }
+    }
+
     List<CombatManager> Decode(List<string> source)
     {
         var result = new List<CombatManager>();
@@ -141,6 +189,7 @@ public sealed class SaveGameSession : MonoBehaviour
 
     void Validate(SaveGameData data)
     {
+        ValidateTreasures(data);
         lidar.ValidateRoomScans(data.lidarRooms, dungeon);
         if (data.layoutHash != dungeon.LayoutHash)
             throw new InvalidOperationException("The dungeon layout changed since this save was created.");
@@ -161,6 +210,9 @@ public sealed class SaveGameSession : MonoBehaviour
             if (!Finite(saved.localPosition.x) || !Finite(saved.localPosition.y) || !Finite(saved.localPosition.z))
                 throw new FormatException("Invalid saved enemy position.");
             CheckRotation(saved.localRotation);
+            if (saved.registeredScanPoints < 0 || saved.registeredScanPoints > LidarScanCodec.MaxPoints
+                || !Finite(saved.scanFocusTime) || saved.scanFocusTime < 0f)
+                throw new FormatException("Invalid saved enemy scan progress.");
         }
         foreach (var pair in dungeon.Rooms)
             if (pair.Value.enemy != null && !seen.Contains(pair.Key))
@@ -193,11 +245,23 @@ public sealed class SaveGameSession : MonoBehaviour
         bestiary.RestoreDiscoveries(discoveries);
         cards.collection = Decode(data.collection);
         cards.deck = Decode(data.deck);
+        if (data.version >= 5)
+        {
+            foreach (var saved in data.treasures)
+            {
+                var chest = dungeon.Treasures[saved.roomId].chest;
+                chest.cardReward = string.IsNullOrEmpty(saved.cardId) ? null : cardsById[saved.cardId];
+                chest.RestoreClaimedState(saved.claimed);
+            }
+        }
+        else Debug.LogWarning("[Save] This older slot has no chest history. Existing cards are restored, but chests begin unclaimed.", this);
         foreach (var saved in data.enemies)
         {
             var enemy = dungeon.Rooms[saved.roomId].enemy;
             enemy.transform.localPosition = saved.localPosition;
             enemy.transform.localRotation = saved.localRotation;
+            if (data.version >= 4)
+                enemy.RestoreScanProgress(saved.registeredScanPoints, saved.scanFocusTime, saved.discovered);
             if (saved.defeated) enemy.Resolve();
         }
         cards.EnterExploration();
@@ -233,6 +297,8 @@ public sealed class SaveGameSession : MonoBehaviour
             reason = "Cannot save during combat. Finish the battle first.";
         else if (player.IsMoving)
             reason = "Cannot save during movement. Resume and finish moving first.";
+        else if (rewards != null && rewards.IsInteracting)
+            reason = "Finish choosing your reward before saving.";
         else if (player.InputLocked || player.CurrentRoom == null)
             reason = "Cannot save during this transition. Resume and try again once you are exploring.";
         else if (cards.CurrentMode != CardSystem.Mode.Exploration || cards.IsBookDeckOpen)

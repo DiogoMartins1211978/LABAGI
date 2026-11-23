@@ -73,6 +73,17 @@ public class DungeonGenerator : MonoBehaviour
 
     private PlayerNodeMover _playerMover;
 
+    public sealed class TreasureInstance
+    {
+        public string prefabKey;
+        public GameObject root;
+        public RewardChest chest;
+    }
+    readonly Dictionary<string, TreasureInstance> treasures = new Dictionary<string, TreasureInstance>();
+    public IReadOnlyDictionary<string, TreasureInstance> Treasures => treasures;
+    public bool IsTreasurePrefabAvailable(string key)
+        => _treasurePrefabs.FindAll(prefab => prefab != null && prefab.name == key).Count == 1;
+
     public IReadOnlyDictionary<string, RoomNode> Rooms => _nodesById;
     public string LayoutHash
     {
@@ -123,6 +134,7 @@ public class DungeonGenerator : MonoBehaviour
 
     private void ClearDungeon()
     {
+        treasures.Clear();
         if (_playerMover != null)
         {
             _playerMover.RoomEntered -= OnRoomEntered;
@@ -370,6 +382,15 @@ public class DungeonGenerator : MonoBehaviour
 
     private void SpawnTreasure(RoomNode room)
     {
+        string roomId = GetRoomId(room);
+        var pending = SaveGames.LaunchPending ? SaveGames.PendingLoad : null;
+        SaveGameData.SavedTreasure saved = null;
+        if (pending != null && pending.version >= 5)
+        {
+            saved = pending.treasures.Find(item => item.roomId == roomId);
+            // Preserve rooms where no chest was generated in the saved run.
+            if (saved == null) return;
+        }
         if (_treasurePrefabs == null || _treasurePrefabs.Count == 0)
         {
             Debug.LogWarning("[DungeonGenerator] No treasure prefabs assigned.");
@@ -384,11 +405,22 @@ public class DungeonGenerator : MonoBehaviour
             return;
         }
 
-        GameObject selectedPrefab = validPrefabs[
-            UnityEngine.Random.Range(0, validPrefabs.Count)
-        ];
+        GameObject selectedPrefab;
+        if (saved != null)
+        {
+            var matches = validPrefabs.FindAll(prefab => prefab.name == saved.prefabKey);
+            if (matches.Count != 1)
+            {
+                Debug.LogError("[Save] Saved treasure prefab is missing or ambiguous: " + saved.prefabKey);
+                return;
+            }
+            selectedPrefab = matches[0];
+        }
+        else selectedPrefab = validPrefabs[UnityEngine.Random.Range(0, validPrefabs.Count)];
 
-        if (!TryGetTreasurePosition(room, out Vector3 position))
+        Vector3 position;
+        if (saved != null) position = room.transform.TransformPoint(saved.localPosition);
+        else if (!TryGetTreasurePosition(room, out position))
         {
             Debug.LogWarning(
                 $"[DungeonGenerator] Could not find a valid treasure position in room '{room.name}'."
@@ -402,6 +434,7 @@ public class DungeonGenerator : MonoBehaviour
         Quaternion chestRotation = directionToCenter.sqrMagnitude > 0.001f
             ? Quaternion.LookRotation(directionToCenter.normalized, Vector3.up)
             : room.transform.rotation;
+        if (saved != null) chestRotation = room.transform.rotation * saved.localRotation;
 
         GameObject treasure = Instantiate(
             selectedPrefab,
@@ -411,6 +444,13 @@ public class DungeonGenerator : MonoBehaviour
         );
 
         treasure.name = $"{room.name}_Treasure_{selectedPrefab.name}";
+        var chests = treasure.GetComponentsInChildren<RewardChest>(true);
+        if (chests.Length != 1)
+        {
+            Debug.LogError("[Save] Each treasure prefab must contain exactly one RewardChest: " + selectedPrefab.name);
+            return;
+        }
+        treasures.Add(roomId, new TreasureInstance { prefabKey = selectedPrefab.name, root = treasure, chest = chests[0] });
     }
 
     private bool TryGetTreasurePosition(RoomNode room, out Vector3 worldPosition)

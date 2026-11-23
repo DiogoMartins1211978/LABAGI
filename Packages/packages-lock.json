@@ -8,14 +8,13 @@
       "hash": "a77a1b4a89824fb6df293099de3060daf2a432c1"
     },
     "com.ponyudev.sherpa-onnx": {
-      "version": "https://github.com/Ponyu-dev/Unity-Sherpa-ONNX.git",
+      "version": "file:com.ponyudev.sherpa-onnx",
       "depth": 0,
-      "source": "git",
+      "source": "embedded",
       "dependencies": {
         "com.unity.sharp-zip-lib": "1.4.1",
         "com.cysharp.unitask": "2.5.10"
-      },
-      "hash": "ebfccf15158d430f8ec15a17344f48ce632adc75"
+      }
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

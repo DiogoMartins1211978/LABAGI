@@ -1,0 +1,1044 @@
+# ASR Runtime Usage Guide
+
+This guide covers how to use speech recognition at runtime in your Unity project.
+For model configuration and import, see [ASR Models Setup](asr-models-setup.md).
+
+## Architecture Overview
+
+The ASR system provides two modes — **offline** (file recognition) and **online** (streaming):
+
+```
+IAsrService (offline)
+    |
+    +-- AsrService (POCO, no MonoBehaviour)
+            |
+            +-- AsrEngine (native OfflineRecognizer pool)
+
+IOnlineAsrService (streaming)
+    |
+    +-- OnlineAsrService (POCO, no MonoBehaviour)
+            |
+            +-- OnlineAsrEngine (native OnlineRecognizer)
+
+MicrophoneSource (POCO, microphone capture with circular buffer)
+```
+
+| Approach | When to use |
+|----------|-------------|
+| `AsrOrchestrator` / `OnlineAsrOrchestrator` (MonoBehaviour) | Prototyping, no DI framework |
+| `AsrService` / `OnlineAsrService` + VContainer | Production with VContainer DI |
+| `AsrService` / `OnlineAsrService` + Zenject | Production with Zenject DI |
+| `AsrService` / `OnlineAsrService` manual | Custom lifecycle management |
+
+---
+
+## Quick Start — Offline (MonoBehaviour)
+
+### Using AsrOrchestrator
+
+The simplest way to recognize speech from an AudioClip. Add `AsrOrchestrator` to any GameObject:
+
+```csharp
+using UnityEngine;
+using PonyuDev.SherpaOnnx.Asr.Offline;
+
+public class AsrExample : MonoBehaviour
+{
+    [SerializeField] private AsrOrchestrator _orchestrator;
+    [SerializeField] private AudioClip _clip;
+
+    private void Start()
+    {
+        if (_orchestrator.IsInitialized)
+            Recognize();
+        else
+            _orchestrator.Initialized += Recognize;
+    }
+
+    private async void Recognize()
+    {
+        // Sync: extracts PCM and recognizes on the calling thread
+        AsrResult result = _orchestrator.RecognizeFromClip(_clip);
+        Debug.Log($"Recognized: {result?.Text}");
+
+        // Async: extraction on main thread, recognition on background
+        AsrResult asyncResult = await _orchestrator.RecognizeFromClipAsync(_clip);
+        Debug.Log($"Async: {asyncResult?.Text}");
+    }
+
+    private void OnDestroy()
+    {
+        _orchestrator.Initialized -= Recognize;
+    }
+}
+```
+
+`AsrOrchestrator` initializes asynchronously on `Awake`. On Android, this includes
+extracting model files from APK to `persistentDataPath`. Use `IsInitialized` or the
+`Initialized` event to wait for completion.
+
+### Manual AsrService (no Orchestrator)
+
+```csharp
+using UnityEngine;
+using PonyuDev.SherpaOnnx.Asr.Offline;
+using PonyuDev.SherpaOnnx.Asr.Offline.Engine;
+
+public class ManualAsrExample : MonoBehaviour
+{
+    [SerializeField] private AudioClip _clip;
+
+    private IAsrService _asr;
+
+    private async void Awake()
+    {
+        _asr = new AsrService();
+        await _asr.InitializeAsync();
+    }
+
+    public async void Recognize()
+    {
+        if (_asr == null || !_asr.IsReady || _clip == null)
+            return;
+
+        float[] samples = new float[_clip.samples * _clip.channels];
+        _clip.GetData(samples, 0);
+
+        AsrResult result = await _asr.RecognizeAsync(samples, _clip.frequency);
+        Debug.Log($"Result: {result?.Text}");
+    }
+
+    private void OnDestroy()
+    {
+        _asr?.Dispose();
+    }
+}
+```
+
+---
+
+## Quick Start — Online / Streaming (MonoBehaviour)
+
+### Using OnlineAsrOrchestrator
+
+Real-time speech recognition with microphone. Add `OnlineAsrOrchestrator` to a GameObject:
+
+```csharp
+using UnityEngine;
+using PonyuDev.SherpaOnnx.Asr.Online;
+using PonyuDev.SherpaOnnx.Asr.Online.Engine;
+using PonyuDev.SherpaOnnx.Common.Audio;
+using PonyuDev.SherpaOnnx.Common.Audio.Config;
+
+public class StreamingAsrExample : MonoBehaviour
+{
+    [SerializeField] private OnlineAsrOrchestrator _orchestrator;
+
+    private MicrophoneSource _mic;
+
+    private void Start()
+    {
+        if (_orchestrator.IsInitialized)
+            SetupMicrophone();
+        else
+            _orchestrator.Initialized += SetupMicrophone;
+
+        _orchestrator.PartialResultReady += OnPartial;
+        _orchestrator.FinalResultReady += OnFinal;
+        _orchestrator.EndpointDetected += OnEndpoint;
+    }
+
+    private async void SetupMicrophone()
+    {
+        var micSettings = await MicrophoneSettingsLoader.LoadAsync();
+        _mic = new MicrophoneSource(micSettings);
+        bool started = await _mic.StartRecordingAsync();
+
+        if (started)
+            _orchestrator.ConnectMicrophone(_mic);
+    }
+
+    public void StopRecording()
+    {
+        _orchestrator.DisconnectMicrophone();
+        _mic?.StopRecording();
+    }
+
+    private void OnPartial(OnlineAsrResult result)
+    {
+        Debug.Log($"Partial: {result.Text}");
+    }
+
+    private void OnFinal(OnlineAsrResult result)
+    {
+        Debug.Log($"Final: {result.Text}");
+    }
+
+    private void OnEndpoint()
+    {
+        Debug.Log("Endpoint detected — stream reset.");
+    }
+
+    private void OnDestroy()
+    {
+        _orchestrator.Initialized -= SetupMicrophone;
+        _orchestrator.PartialResultReady -= OnPartial;
+        _orchestrator.FinalResultReady -= OnFinal;
+        _orchestrator.EndpointDetected -= OnEndpoint;
+
+        _orchestrator.DisconnectMicrophone();
+        _mic?.Dispose();
+    }
+}
+```
+
+`OnlineAsrOrchestrator` automatically:
+- Subscribes to `MicrophoneSource.SamplesAvailable` via `ConnectMicrophone()`
+- Feeds audio to the engine and calls `ProcessAvailableFrames()` each frame
+- Forwards `PartialResultReady`, `FinalResultReady`, `EndpointDetected` events
+- Resets the stream on endpoint detection when `_autoResetOnEndpoint` is enabled (default)
+
+### Manual OnlineAsrService (no Orchestrator)
+
+```csharp
+using UnityEngine;
+using PonyuDev.SherpaOnnx.Asr.Online;
+using PonyuDev.SherpaOnnx.Asr.Online.Engine;
+using PonyuDev.SherpaOnnx.Common.Audio;
+using PonyuDev.SherpaOnnx.Common.Audio.Config;
+
+public class ManualStreamingExample : MonoBehaviour
+{
+    private IOnlineAsrService _asr;
+    private MicrophoneSource _mic;
+
+    private async void Awake()
+    {
+        _asr = new OnlineAsrService();
+        await _asr.InitializeAsync();
+
+        _asr.PartialResultReady += OnPartial;
+        _asr.FinalResultReady += OnFinal;
+        _asr.EndpointDetected += OnEndpoint;
+
+        var micSettings = await MicrophoneSettingsLoader.LoadAsync();
+        _mic = new MicrophoneSource(micSettings);
+        bool started = await _mic.StartRecordingAsync();
+
+        if (started)
+        {
+            _mic.SamplesAvailable += OnMicSamples;
+            _asr.StartSession();
+        }
+    }
+
+    private void OnMicSamples(float[] samples)
+    {
+        if (!_asr.IsSessionActive)
+            return;
+
+        _asr.AcceptSamples(samples, _mic.SampleRate);
+        _asr.ProcessAvailableFrames();
+    }
+
+    private void OnPartial(OnlineAsrResult r) => Debug.Log($"Partial: {r.Text}");
+    private void OnFinal(OnlineAsrResult r) => Debug.Log($"Final: {r.Text}");
+
+    private void OnEndpoint()
+    {
+        _asr.ResetStream();
+    }
+
+    private void OnDestroy()
+    {
+        _mic.SamplesAvailable -= OnMicSamples;
+        _asr.PartialResultReady -= OnPartial;
+        _asr.FinalResultReady -= OnFinal;
+        _asr.EndpointDetected -= OnEndpoint;
+
+        _mic?.Dispose();
+        _asr?.Dispose();
+    }
+}
+```
+
+---
+
+## Recognition Examples
+
+### Switching Profiles
+
+```csharp
+// By name
+_asr.SwitchProfile("sherpa-onnx-zipformer-small-en-2023-06-26");
+
+// By index
+_asr.SwitchProfile(0);
+
+// Recognize with new profile
+AsrResult result = _asr.Recognize(samples, sampleRate);
+```
+
+### Disk Usage (extracted profile directories)
+
+On Android every active profile lands in
+`Application.persistentDataPath/SherpaOnnx/asr-models/{profileName}/`
+regardless of `ModelSource`:
+
+| Source   | How it gets there |
+|----------|-------------------|
+| `Local`  | Lazy per-profile extraction from APK on first `LoadProfile` (only that profile's files). |
+| `Remote` | Editor-time import puts files into StreamingAssets; on Android they extract the same way as `Local`. |
+| `LocalZip` | Per-profile zip is unpacked the first time it is loaded. |
+
+Old extractions stay on disk after `SwitchProfile` so a re-switch does
+not pay the re-extract cost. Both `IAsrService` and `IOnlineAsrService`
+implement `IModelDiskUsage` — host code can inspect and free that space
+without knowing about `LocalZipExtractor` or path constants. Offline and
+online ASR each manage their own subfolder.
+
+```csharp
+// What is on disk for offline ASR
+foreach (var name in asr.GetExtractedProfiles())
+    Debug.Log($"{name}: {asr.GetExtractedProfileSizeBytes(name) / (1024 * 1024)} MB");
+
+// Delete one stale profile
+asr.TryDeleteExtractedProfile("old-zipformer");
+
+// Or sweep everything that is no longer in asr-settings.json
+int removed = asr.CleanupUnusedExtractedProfiles();
+```
+
+`GetExtractedProfiles()` returns every profile that has an extraction
+marker on disk regardless of source (LocalZip's `.zip-extracted` and
+Local/Remote's `.profile-extracted` are both recognised).
+
+**Keep only active on disk.** Toggle **Project Settings → Sherpa-ONNX → ASR
+→ Disk Usage → Keep only active profile on disk** (separate toggles in the
+Offline and Online tabs — each only sweeps its own profile list, so
+offline + online never delete each other's active model from the shared
+`asr-models/` directory). On every successful `InitializeAsync` and on
+every `SwitchProfile(...)` the runtime removes every registered profile's
+extraction except the active one. Off by default. Implied automatically
+when **Only active profile in build** is on. On non-Android platforms
+nothing is extracted, so the toggle is a no-op.
+
+> ⚠️ **After upgrading the plugin from a pre-per-profile-extraction
+> version**, regenerate the manifest once via
+> `Tools → SherpaOnnx → Rebuild StreamingAssets Manifest`. Old manifests
+> have a flat `files` list and trigger a single full extraction at first
+> launch (the runtime detects this and falls back gracefully); the new
+> manifest format is what enables per-profile lazy extraction and
+> per-profile cleanup.
+
+### Engine Pool Size (offline only)
+
+Multiple native recognizer instances allow concurrent recognition:
+
+```csharp
+_asr.EnginePoolSize = 4; // up to 4 parallel recognitions
+```
+
+### AudioResampler
+
+If your audio sample rate differs from the model's expected rate (usually 16 kHz):
+
+```csharp
+using PonyuDev.SherpaOnnx.Common.Audio;
+
+// Resample mono audio
+float[] resampled = AudioResampler.Resample(samples, fromRate: 44100, toRate: 16000);
+
+// Downmix stereo to mono + resample
+float[] mono16k = AudioResampler.ResampleMono(
+    stereoSamples, channels: 2, fromRate: 48000, toRate: 16000);
+```
+
+---
+
+## VContainer Integration
+
+### Installer
+
+```csharp
+using PonyuDev.SherpaOnnx.Asr.Offline;
+using PonyuDev.SherpaOnnx.Asr.Online;
+using PonyuDev.SherpaOnnx.Common.Audio;
+using PonyuDev.SherpaOnnx.Common.Audio.Config;
+using VContainer;
+using VContainer.Unity;
+
+public class AsrLifetimeScope : LifetimeScope
+{
+    protected override void Configure(IContainerBuilder builder)
+    {
+        // Offline ASR
+        builder.Register<AsrService>(Lifetime.Singleton)
+            .As<IAsrService>();
+
+        // Online (streaming) ASR
+        builder.Register<OnlineAsrService>(Lifetime.Singleton)
+            .As<IOnlineAsrService>();
+
+        // Microphone settings (loaded from StreamingAssets JSON)
+        builder.Register<MicrophoneSettingsData>(Lifetime.Singleton);
+
+        // Microphone (shared instance)
+        builder.Register<MicrophoneSource>(Lifetime.Singleton);
+
+        // Async initialization
+        builder.RegisterEntryPoint<AsrInitializer>();
+    }
+}
+```
+
+### Async Initialization
+
+```csharp
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using PonyuDev.SherpaOnnx.Asr.Offline;
+using PonyuDev.SherpaOnnx.Asr.Online;
+using PonyuDev.SherpaOnnx.Common.Audio.Config;
+using VContainer.Unity;
+
+public class AsrInitializer : IAsyncStartable
+{
+    private readonly IAsrService _offline;
+    private readonly IOnlineAsrService _online;
+    private readonly MicrophoneSettingsData _micSettings;
+
+    public AsrInitializer(
+        IAsrService offline,
+        IOnlineAsrService online,
+        MicrophoneSettingsData micSettings)
+    {
+        _offline = offline;
+        _online = online;
+        _micSettings = micSettings;
+    }
+
+    public async UniTask StartAsync(CancellationToken ct)
+    {
+        // Load microphone settings from JSON
+        var loaded = await MicrophoneSettingsLoader.LoadAsync(ct);
+        _micSettings.sampleRate = loaded.sampleRate;
+        _micSettings.clipLengthSec = loaded.clipLengthSec;
+        _micSettings.micStartTimeoutSec = loaded.micStartTimeoutSec;
+        _micSettings.resamplingMode = loaded.resamplingMode;
+
+        await _offline.InitializeAsync(ct: ct);
+        await _online.InitializeAsync(ct: ct);
+    }
+}
+```
+
+### Presenter Example
+
+```csharp
+using System;
+using PonyuDev.SherpaOnnx.Asr.Offline;
+using PonyuDev.SherpaOnnx.Asr.Offline.Engine;
+using VContainer;
+using VContainer.Unity;
+
+public class DictationPresenter : IStartable, IDisposable
+{
+    private readonly IAsrService _asr;
+
+    [Inject]
+    public DictationPresenter(IAsrService asr)
+    {
+        _asr = asr;
+    }
+
+    public void Start() { }
+
+    public async void RecognizeClip(float[] samples, int sampleRate)
+    {
+        AsrResult result = await _asr.RecognizeAsync(samples, sampleRate);
+        if (result != null && result.IsValid)
+            OnRecognized(result.Text);
+    }
+
+    private void OnRecognized(string text)
+    {
+        // Update UI or model
+    }
+
+    public void Dispose()
+    {
+        // IAsrService lifetime is managed by the container
+    }
+}
+```
+
+### Streaming Presenter Example
+
+```csharp
+using System;
+using PonyuDev.SherpaOnnx.Asr.Online;
+using PonyuDev.SherpaOnnx.Asr.Online.Engine;
+using PonyuDev.SherpaOnnx.Common.Audio;
+using VContainer;
+using VContainer.Unity;
+
+public class LiveCaptionPresenter : IStartable, IDisposable
+{
+    private readonly IOnlineAsrService _asr;
+    private readonly MicrophoneSource _mic;
+
+    [Inject]
+    public LiveCaptionPresenter(
+        IOnlineAsrService asr,
+        MicrophoneSource mic)
+    {
+        _asr = asr;
+        _mic = mic;
+    }
+
+    public void Start()
+    {
+        _asr.PartialResultReady += OnPartial;
+        _asr.FinalResultReady += OnFinal;
+        _asr.EndpointDetected += OnEndpoint;
+    }
+
+    public async void StartCapture()
+    {
+        bool ok = await _mic.StartRecordingAsync();
+        if (!ok) return;
+
+        _mic.SamplesAvailable += OnMicSamples;
+        _asr.StartSession();
+    }
+
+    public void StopCapture()
+    {
+        _mic.SamplesAvailable -= OnMicSamples;
+        _mic.StopRecording();
+        _asr.StopSession();
+    }
+
+    private void OnMicSamples(float[] samples)
+    {
+        if (!_asr.IsSessionActive) return;
+        _asr.AcceptSamples(samples, _mic.SampleRate);
+        _asr.ProcessAvailableFrames();
+    }
+
+    private void OnPartial(OnlineAsrResult r)
+    {
+        // Update partial caption UI
+    }
+
+    private void OnFinal(OnlineAsrResult r)
+    {
+        // Append final text to transcript
+    }
+
+    private void OnEndpoint()
+    {
+        _asr.ResetStream();
+    }
+
+    public void Dispose()
+    {
+        _asr.PartialResultReady -= OnPartial;
+        _asr.FinalResultReady -= OnFinal;
+        _asr.EndpointDetected -= OnEndpoint;
+        StopCapture();
+    }
+}
+```
+
+---
+
+## Zenject Integration
+
+### Installer
+
+```csharp
+using PonyuDev.SherpaOnnx.Asr.Offline;
+using PonyuDev.SherpaOnnx.Asr.Online;
+using PonyuDev.SherpaOnnx.Common.Audio;
+using PonyuDev.SherpaOnnx.Common.Audio.Config;
+using Zenject;
+
+public class AsrInstaller : MonoInstaller
+{
+    public override void InstallBindings()
+    {
+        // Offline ASR
+        Container.Bind<IAsrService>()
+            .To<AsrService>()
+            .AsSingle();
+
+        // Online (streaming) ASR
+        Container.Bind<IOnlineAsrService>()
+            .To<OnlineAsrService>()
+            .AsSingle();
+
+        // Microphone settings (loaded from StreamingAssets JSON)
+        Container.Bind<MicrophoneSettingsData>()
+            .AsSingle();
+
+        // Microphone
+        Container.Bind<MicrophoneSource>()
+            .AsSingle();
+
+        // Initialization
+        Container.BindInterfacesTo<AsrInitializer>()
+            .AsSingle();
+    }
+}
+```
+
+### Initializer
+
+```csharp
+using System;
+using Cysharp.Threading.Tasks;
+using PonyuDev.SherpaOnnx.Asr.Offline;
+using PonyuDev.SherpaOnnx.Asr.Online;
+using PonyuDev.SherpaOnnx.Common.Audio.Config;
+using Zenject;
+
+public class AsrInitializer : IInitializable, IDisposable
+{
+    private readonly IAsrService _offline;
+    private readonly IOnlineAsrService _online;
+    private readonly MicrophoneSettingsData _micSettings;
+
+    public AsrInitializer(
+        IAsrService offline,
+        IOnlineAsrService online,
+        MicrophoneSettingsData micSettings)
+    {
+        _offline = offline;
+        _online = online;
+        _micSettings = micSettings;
+    }
+
+    public async void Initialize()
+    {
+        // Load microphone settings from JSON
+        var loaded = await MicrophoneSettingsLoader.LoadAsync();
+        _micSettings.sampleRate = loaded.sampleRate;
+        _micSettings.clipLengthSec = loaded.clipLengthSec;
+        _micSettings.micStartTimeoutSec = loaded.micStartTimeoutSec;
+        _micSettings.resamplingMode = loaded.resamplingMode;
+
+        await _offline.InitializeAsync();
+        await _online.InitializeAsync();
+    }
+
+    public void Dispose()
+    {
+        _offline.Dispose();
+        _online.Dispose();
+    }
+}
+```
+
+### Usage with [Inject]
+
+```csharp
+using UnityEngine;
+using PonyuDev.SherpaOnnx.Asr.Offline;
+using PonyuDev.SherpaOnnx.Asr.Offline.Engine;
+using PonyuDev.SherpaOnnx.Asr.Online;
+using PonyuDev.SherpaOnnx.Asr.Online.Engine;
+using PonyuDev.SherpaOnnx.Common.Audio;
+using Zenject;
+
+public class SubtitleController : MonoBehaviour
+{
+    [Inject] private IOnlineAsrService _asr;
+    [Inject] private MicrophoneSource _mic;
+
+    private void OnEnable()
+    {
+        _asr.PartialResultReady += OnPartial;
+        _asr.FinalResultReady += OnFinal;
+        _asr.EndpointDetected += OnEndpoint;
+    }
+
+    public async void StartListening()
+    {
+        bool ok = await _mic.StartRecordingAsync();
+        if (!ok) return;
+
+        _mic.SamplesAvailable += OnMicSamples;
+        _asr.StartSession();
+    }
+
+    public void StopListening()
+    {
+        _mic.SamplesAvailable -= OnMicSamples;
+        _mic.StopRecording();
+        _asr.StopSession();
+    }
+
+    private void OnMicSamples(float[] samples)
+    {
+        if (!_asr.IsSessionActive) return;
+        _asr.AcceptSamples(samples, _mic.SampleRate);
+        _asr.ProcessAvailableFrames();
+    }
+
+    private void OnPartial(OnlineAsrResult r) { /* update subtitle */ }
+    private void OnFinal(OnlineAsrResult r) { /* finalize subtitle */ }
+    private void OnEndpoint() { _asr.ResetStream(); }
+
+    private void OnDisable()
+    {
+        _asr.PartialResultReady -= OnPartial;
+        _asr.FinalResultReady -= OnFinal;
+        _asr.EndpointDetected -= OnEndpoint;
+        StopListening();
+    }
+}
+```
+
+---
+
+## Android Notes
+
+### Automatic File Extraction
+
+On Android, `StreamingAssets` files live inside the APK archive and are not
+accessible via `System.IO.File`. The package handles this automatically:
+
+1. At build time, a manifest of all SherpaOnnx files is generated
+2. On first launch, files are extracted from APK to `persistentDataPath`
+3. Subsequent launches skip extraction (version marker check)
+
+Each file is streamed straight to disk via `UnityWebRequest` +
+`DownloadHandlerFile` — no `byte[]` is ever materialized in managed heap
+and no synchronous `File.WriteAllBytes` runs on the main thread. This
+keeps the UI responsive even when extracting hundred-megabyte models,
+and avoids heap spikes that could OOM on low-memory devices. Partial
+files are removed automatically on cancellation (via
+`DownloadHandlerFile.removeFileOnAbort`) and on HTTP errors.
+
+**You must use `InitializeAsync()` on Android.** The synchronous `Initialize()`
+cannot extract files from the APK.
+
+### Microphone Permission
+
+`MicrophoneSource` requests microphone permission automatically on Android
+(configurable via constructor parameter `requestPermission`). If permission is
+denied, `StartRecordingAsync()` returns `false`.
+
+### Sample-Rate Resampling (Android)
+
+`Microphone.Start(rate=16000)` on Android often returns an `AudioClip` whose
+`frequency` is the device's native rate (44.1 / 48 kHz), not the requested one.
+`MicrophoneSource` reads `AudioClip.frequency` after start and resamples to
+`MicrophoneSettingsData.sampleRate` before publishing samples. When the device
+already captures at the requested rate the resample step is a no-op.
+
+The algorithm is selected by `MicrophoneSettingsData.resamplingMode`:
+
+- `Linear` — pure linear interpolation. Cheapest, fine for ASR/VAD.
+- `Lowpass` — single-pole RC pre-filter at the target Nyquist, then linear
+  interpolation. Cleaner downsampling at slightly higher CPU cost.
+
+### Microphone Settings
+
+Configure microphone behavior via `SherpaOnnx/microphone-settings.json` in
+StreamingAssets, or via `Edit → Project Settings → Sherpa-ONNX → Microphone`:
+
+```json
+{
+    "sampleRate": 16000,
+    "clipLengthSec": 10,
+    "micStartTimeoutSec": 2.0,
+    "resamplingMode": 0,
+    "manageAudioSession": true,
+    "androidReturnToNormalOnStop": false,
+    "androidAudioSessionSettleMs": 500
+}
+```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `sampleRate` | 16000 | Capture sample rate in Hz |
+| `clipLengthSec` | 10 | Circular buffer length in seconds |
+| `micStartTimeoutSec` | 2.0 | Max wait for microphone to start producing samples |
+| `resamplingMode` | `Linear` (0) | Resampling algorithm: `Linear` or `Lowpass` |
+| `manageAudioSession` | `true` | Auto-configure platform audio session on start/stop (see below). Disable when the host project drives the audio session itself. |
+| `androidReturnToNormalOnStop` | `false` | Android-only. When `true`, restore `MODE_NORMAL` + speakerphone-off on stop. Off by default — switching modes mid-session triggers a route change that can break the next capture. |
+| `androidAudioSessionSettleMs` | 500 | Android-only. Delay (ms) between switching `AudioManager` mode and `Microphone.Start`, applied **only on the first capture**. Without it, the mic starts on the old route and produces no samples until routing settles, often exceeding `micStartTimeoutSec`. Raise to 800–1000 if you still see "device did not start within Ns" on the first record. |
+
+### Audio Session (TTS + STT coexistence)
+
+`AudioSessionBridge` configures the platform audio session so TTS playback
+and microphone capture can coexist without the mic returning silence:
+
+- **iOS** — switches `AVAudioSession` between `PlayAndRecord` (recording)
+  and `Playback` (idle). Without this, after the first capture the session
+  stays in `PlayAndRecord` and TTS may route through the voice receiver.
+- **Android** — sets `AudioManager.MODE_IN_COMMUNICATION` + speakerphone
+  the first time recording starts. This engages the platform AEC/AGC.
+  Without it, many devices return near-silent capture while TTS uses the
+  media stream — the most common cause of "voice not recognized" on Android.
+
+When `manageAudioSession` is `true` (default), `MicrophoneSource` calls
+`AudioSessionBridge.ConfigureForRecording()` on start and
+`AudioSessionBridge.RestoreForPlayback(androidReturnToNormalOnStop)` on stop.
+
+`AudioSessionBridge.ConfigureForRecording()` returns `true` on Android
+when the audio mode was just applied — `MicrophoneSource` then waits
+`androidAudioSessionSettleMs` before `Microphone.Start` so the platform
+route change can complete. Subsequent captures see `false` (mode already
+in place) and start immediately.
+
+Drive it manually when integrating with an external audio session manager:
+
+```csharp
+var settings = await MicrophoneSettingsLoader.LoadAsync();
+settings.manageAudioSession = false;
+var mic = new MicrophoneSource(settings);
+
+bool androidModeApplied = AudioSessionBridge.ConfigureForRecording();
+if (androidModeApplied)
+    await UniTask.Delay(500); // let the Android route change settle
+
+await mic.StartRecordingAsync();
+// ...
+mic.StopRecording();
+AudioSessionBridge.RestoreForPlayback();
+```
+
+> ⏳ On iOS, `MicrophonePermission.RequestAsync()` waits 1s after the
+> permission dialog dismisses before returning, so the AVAudioSession can
+> settle (route changes + reactivation) before capture starts.
+
+### Initialization Progress (`ProfileReadyEvent`)
+
+Both `IAsrService.InitializeAsync` and
+`IOnlineAsrService.InitializeAsync` accept a single semantic callback:
+
+```csharp
+UniTask InitializeAsync(
+    Action<ProfileReadyEvent> onEvent = null,
+    CancellationToken ct = default);
+```
+
+Phases fire in order — `Download` (Remote only) → `Extract` (Remote /
+LocalZip / Local-on-Android) → `Init` — each carrying its own 0..100
+percent in `Percent`. Terminal phases are `Ready` (success) and
+`Failed` (retries exhausted or unrecoverable I/O error).
+
+| Phase | When | Notes |
+|-------|------|-------|
+| `Download` | Remote profile, every chunk written to disk | `Url` set; `Percent` 0..100 |
+| `DownloadRetrying` | Network error before retry | `RetryAttempt` 1..N, `Message` = previous error |
+| `Extract` | Decompressing zip / tar.gz | Tar streams report 0% then 100%; zips report per-entry |
+| `Init` | Native engine ctor on the thread pool | Single 0% before, 100% after |
+| `Failed` | Pipeline aborted | `Error` + `Message` describe what |
+| `Ready` | Service fully usable | `Percent = 100` |
+
+`ProfileReadyEvent` is a `readonly struct` — zero allocation per event.
+
+#### Per-phase status text
+
+```csharp
+await _asr.InitializeAsync(OnAsrEvent);
+
+void OnAsrEvent(ProfileReadyEvent e)
+{
+    string text = e.Phase switch
+    {
+        ProfileReadyPhase.Download         => $"Downloading model: {e.Percent}%",
+        ProfileReadyPhase.DownloadRetrying => $"Network issue, retrying ({e.RetryAttempt})…",
+        ProfileReadyPhase.Extract          => $"Extracting model: {e.Percent}%",
+        ProfileReadyPhase.Init             => "Initializing engine…",
+        ProfileReadyPhase.Failed           => $"Failed: {e.Message}",
+        ProfileReadyPhase.Ready            => "Ready",
+        _ => null,
+    };
+    _statusLabel.text = text;
+}
+```
+
+#### Single 0..100 unified bar
+
+For a loading screen with one progress bar, weight the phases. Extract
+is the longest step (ASR encoder/decoder bundles are typically the
+heaviest unzip step), so it gets the largest weight:
+
+```csharp
+const float DownloadWeight = 0.20f;
+const float ExtractWeight  = 0.70f;
+const float InitWeight     = 0.10f;
+
+float _downloadDone, _extractDone, _initDone;
+
+void OnAsrEvent(ProfileReadyEvent e)
+{
+    switch (e.Phase)
+    {
+        case ProfileReadyPhase.Download: _downloadDone = e.Percent / 100f; break;
+        case ProfileReadyPhase.Extract:  _extractDone  = e.Percent / 100f; break;
+        case ProfileReadyPhase.Init:     _initDone     = e.Percent / 100f; break;
+        case ProfileReadyPhase.Ready:    _downloadDone = _extractDone = _initDone = 1f; break;
+    }
+
+    float total =
+        _downloadDone * DownloadWeight +
+        _extractDone  * ExtractWeight  +
+        _initDone     * InitWeight;
+
+    _progressBar.value = Mathf.Clamp01(total) * 100f;
+}
+```
+
+For `Local` or `LocalZip` profiles where there is no download, drop
+`DownloadWeight` to `0` and rebalance Extract / Init (e.g. `0.85` /
+`0.15`). When initializing offline + online ASR back-to-back, run two
+independent bars or weight each pipeline by half of the total budget.
+
+#### Failure handling
+
+```csharp
+await _asr.InitializeAsync(e =>
+{
+    if (e.Phase == ProfileReadyPhase.Failed)
+        Debug.LogError($"[ASR] {e.Message}\n{e.Error}");
+});
+
+if (!_asr.IsReady)
+{
+    // Show a retry button — InitializeAsync can be called again.
+}
+```
+
+---
+
+## API Reference
+
+### IAsrService (offline)
+
+| Category | Method | Description |
+|----------|--------|-------------|
+| **Lifecycle** | `Initialize()` | Sync init (Desktop only) |
+| | `InitializeAsync(onEvent, ct)` | Async init (all platforms, required on Android). `onEvent` receives `ProfileReadyEvent` (Download / Extract / Init / Ready / Failed). |
+| | `LoadProfile(profile)` | Load a specific profile |
+| | `SwitchProfile(index)` | Switch by index (sync). |
+| | `SwitchProfile(name)` | Switch by name (sync). |
+| | `SwitchProfileAsync(index, ct)` | Async switch — native engine ctor on the thread pool, UI thread stays free. Re-emits `ProfileReadyEvent` (Init / Ready / Failed). |
+| | `SwitchProfileAsync(name, ct)` | Async switch by name. |
+| | `IsProfileAvailable(name)` | `true` when the profile is reachable on disk (or downloadable for Remote with a URL). |
+| **Properties** | `IsReady` | `true` when engine is loaded |
+| | `ActiveProfile` | Current `AsrProfile` |
+| | `Settings` | All loaded `AsrSettingsData` |
+| | `EnginePoolSize` | Get/set concurrent native instances |
+| **Recognition** | `Recognize(samples, sampleRate)` | Sync recognition, returns `AsrResult` |
+| | `RecognizeAsync(samples, sampleRate)` | Background thread recognition |
+
+### IOnlineAsrService (streaming)
+
+| Category | Method | Description |
+|----------|--------|-------------|
+| **Lifecycle** | `Initialize()` | Sync init (Desktop only) |
+| | `InitializeAsync(onEvent, ct)` | Async init (all platforms, required on Android). `onEvent` receives `ProfileReadyEvent` (Download / Extract / Init / Ready / Failed). |
+| | `LoadProfile(profile)` | Load a specific profile |
+| | `SwitchProfile(index)` | Switch by index (sync). |
+| | `SwitchProfile(name)` | Switch by name (sync). |
+| | `SwitchProfileAsync(index, ct)` | Async switch — native engine ctor on the thread pool, UI thread stays free. Re-emits `ProfileReadyEvent` (Init / Ready / Failed). |
+| | `SwitchProfileAsync(name, ct)` | Async switch by name. |
+| | `IsProfileAvailable(name)` | `true` when the profile is reachable on disk (or downloadable for Remote with a URL). |
+| **Properties** | `IsReady` | `true` when engine is loaded |
+| | `IsSessionActive` | `true` during active recognition session |
+| | `ActiveProfile` | Current `OnlineAsrProfile` |
+| | `Settings` | All loaded `OnlineAsrSettingsData` |
+| **Session** | `StartSession()` | Begin streaming recognition |
+| | `StopSession()` | End streaming recognition |
+| **Audio** | `AcceptSamples(samples, sampleRate)` | Feed PCM audio samples |
+| | `ProcessAvailableFrames()` | Process buffered audio, fire result events |
+| | `ResetStream()` | Reset decoder state (call after endpoint) |
+| **Events** | `PartialResultReady` | Fires with intermediate recognition text |
+| | `FinalResultReady` | Fires with final text when endpoint detected |
+| | `EndpointDetected` | Fires when a speech endpoint is detected |
+
+### AsrResult (offline)
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `Text` | `string` | Recognized text |
+| `Tokens` | `string[]` | Individual tokens (may be null) |
+| `Timestamps` | `float[]` | Per-token timestamps in seconds (may be null) |
+| `Durations` | `float[]` | Per-token durations in seconds (may be null) |
+| `IsValid` | `bool` | `true` when Text is not empty |
+
+### OnlineAsrResult (streaming)
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `Text` | `string` | Recognized text so far |
+| `Tokens` | `string[]` | Individual tokens (may be null) |
+| `Timestamps` | `float[]` | Per-token timestamps in seconds (may be null) |
+| `IsFinal` | `bool` | `true` when endpoint was detected |
+| `IsValid` | `bool` | `true` when Text is not empty |
+
+### MicrophoneSource
+
+Constructor: `MicrophoneSource(MicrophoneSettingsData settings = null, string deviceName = null, bool requestPermission = true)`
+
+Settings are loaded from `SherpaOnnx/microphone-settings.json` in StreamingAssets via `MicrophoneSettingsLoader.LoadAsync()`. Falls back to defaults when file is missing.
+
+| Category | Member | Description |
+|----------|--------|-------------|
+| **Properties** | `IsRecording` | `true` while capturing |
+| | `DeviceName` | Microphone device name (null = default) |
+| | `SampleRate` | Capture sample rate (from settings, default 16000) |
+| **Methods** | `StartRecordingAsync(ct)` | Request permission and start capture |
+| | `StopRecording()` | Stop capture |
+| | `ReadNewSamples()` | Pull model: get new samples since last call |
+| | `ReadAllSamples()` | Get entire circular buffer |
+| | `Dispose()` | Stop and release resources |
+| **Events** | `SamplesAvailable` | Push model: fires each frame with new PCM samples |
+| | `RecordingStopped` | Fires when recording stops |
+
+### AsrOrchestrator (MonoBehaviour)
+
+| Member | Description |
+|--------|-------------|
+| `Service` | `IAsrService` — the underlying service |
+| `IsInitialized` | `true` after async initialization completes |
+| `Initialized` | Event: fires once after initialization |
+| `RecognizeFromClip(clip)` | Extract PCM from AudioClip and recognize (sync) |
+| `RecognizeFromClipAsync(clip)` | Same but recognition runs on background thread |
+
+### OnlineAsrOrchestrator (MonoBehaviour)
+
+| Member | Description |
+|--------|-------------|
+| `Service` | `IOnlineAsrService` — the underlying service |
+| `IsInitialized` | `true` after async initialization completes |
+| `Initialized` | Event: fires once after initialization |
+| `ConnectMicrophone(mic)` | Wire MicrophoneSource to the streaming pipeline |
+| `DisconnectMicrophone()` | Disconnect and stop forwarding audio |
+| `PartialResultReady` | Forwarded from the service |
+| `FinalResultReady` | Forwarded from the service |
+| `EndpointDetected` | Forwarded from the service |
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `AsrService is not initialized` | Call `Initialize()` or `InitializeAsync()` before `Recognize()` |
+| `No active profile found` | Set an active profile in Project Settings > Sherpa-ONNX > ASR |
+| SIGSEGV crash on Android | Ensure you use `InitializeAsync()`, not `Initialize()` |
+| `StartRecordingAsync` returns false | Microphone permission denied or no devices found |
+| No partial results appear | Ensure `StartSession()` is called and `SamplesAvailable` is wired |
+| Endpoint never fires | Check endpoint detection settings in the online profile |
+| `Recognize()` returns null | Check logs for engine errors; verify model files exist |
+| Audio sounds too slow/fast | Check `clipFreq` in the `MicrophoneSource: started` log; if it differs from `sampleRate`, the resampler should handle it. Try `Lowpass` mode if you hear aliasing |
+| Android mic returns silence | Verify microphone permission, that no other app is holding the mic exclusively, and that the global mic privacy toggle (Android 12+) is off. If silence appears only while/after TTS plays, make sure `manageAudioSession` is enabled — `AudioSessionBridge` switches the device into `MODE_IN_COMMUNICATION` + speakerphone so the platform AEC/AGC engages |
+| iOS TTS plays through earpiece after first STT | Ensure `manageAudioSession` is enabled, or call `AudioSessionBridge.RestoreForPlayback()` manually after stopping the mic — otherwise AVAudioSession stays in `PlayAndRecord` |
