@@ -2212,6 +2212,115 @@ MonoBehaviour:
   m_LayoutPriority: 1
   m_MaxWidth: -1
   m_MaxHeight: -1
+--- !u!1 &217157231
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 217157232}
+  - component: {fileID: 217157236}
+  - component: {fileID: 217157235}
+  - component: {fileID: 217157234}
+  - component: {fileID: 217157233}
+  m_Layer: 7
+  m_Name: EnemyModelView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &217157232
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217157231}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 250061881}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 441.59998, y: 313}
+  m_Pivot: {x: 0.5, y: 1}
+--- !u!114 &217157233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217157231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0af06605ee1c428fa9ec7d03187d1e17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BestiaryModelPreview
+  previewMaterial: {fileID: 2100000, guid: c3643359a10b3f64286d9c1353a6ad61, type: 2}
+  previewLayer: EnemyModelPreview
+  textureSize: 512
+  cameraAngles: {x: 12, y: 155, z: 0}
+  usePointCloud: 1
+  pointMaterial: {fileID: 2100000, guid: ae6a287cbf52e5a4ebbeb6a09fed00d9, type: 2}
+  pointCount: 10000
+  pointSize: 2
+--- !u!114 &217157234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217157231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Texture: {fileID: 0}
+  m_UVRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+--- !u!114 &217157235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217157231}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Shadow
+  m_EffectColor: {r: 0.04, g: 0.05, b: 0.07, a: 0.27}
+  m_EffectDistance: {x: 4, y: -5}
+  m_UseGraphicAlpha: 1
+--- !u!222 &217157236
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217157231}
+  m_CullTransparentMesh: 1
 --- !u!1 &219028474
 GameObject:
   m_ObjectHideFlags: 0
@@ -2639,6 +2748,7 @@ MonoBehaviour:
   cardCatalog: {fileID: 11400000, guid: b00fe2cf949c48bf9a7649627d3cfc25, type: 2}
   bestiary: {fileID: 0}
   lidar: {fileID: 0}
+  rewards: {fileID: 0}
   debugSlot: 1
 --- !u!4 &249347229
 Transform:
@@ -2685,6 +2795,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1245904554}
+  - {fileID: 217157232}
   - {fileID: 527619925}
   - {fileID: 1090636195}
   - {fileID: 410156409}
@@ -12997,7 +13108,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 511
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -23934,7 +24045,7 @@ GameObject:
   - component: {fileID: 1631022041}
   - component: {fileID: 1631022042}
   m_Layer: 7
-  m_Name: DeckRightPage
+  m_Name: RawImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -24077,6 +24188,7 @@ MonoBehaviour:
   entryButtonPrefab: {fileID: 3842644908005678958, guid: 9cdee4890075aba4f89ce2cc90fd5de6, type: 3}
   enemyName: {fileID: 1124292804}
   enemyPortrait: {fileID: 1245904555}
+  modelPreview: {fileID: 217157233}
   dropsText: {fileID: 1090636196}
   regionText: {fileID: 673543085}
   dropCarousel: {fileID: 410156410}

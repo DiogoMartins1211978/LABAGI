@@ -13,6 +13,11 @@ public class BestiaryEntry : ScriptableObject
     public Sprite silhouette;
     public Sprite portrait;
 
+    [Header("3D preview (optional; portrait is the fallback)")]
+    public GameObject modelPrefab;
+    public Vector3 previewEulerAngles;
+    [Min(1f)] public float previewPadding = 1.2f;
+
     [Header("Possible drops (information only, not a gameplay drop table)")]
     [Tooltip("False means unknown. True with an empty list means this enemy drops no cards.")]
     public bool dropInformationKnown;

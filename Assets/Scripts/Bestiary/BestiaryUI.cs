@@ -19,6 +19,7 @@ public class BestiaryUI : MonoBehaviour
     [Header("Right page")]
     [SerializeField] TMP_Text enemyName;
     [SerializeField] Image enemyPortrait;
+    [SerializeField] BestiaryModelPreview modelPreview;
     [SerializeField] TMP_Text dropsText;
     [SerializeField] TMP_Text regionText;
     [SerializeField] BestiaryDropCarousel dropCarousel;
@@ -196,12 +197,13 @@ public class BestiaryUI : MonoBehaviour
     {
         selectedEntry = entry;
         bool known = entry != null && discovery.IsDiscovered(entry);
+        bool showingModel = modelPreview != null && modelPreview.Show(known ? entry : null);
         if (inspectEchoButton != null) inspectEchoButton.interactable = known;
         enemyName.text = entry == null ? "Bestiary" : known ? EntryName(entry) : "Unknown enemy";
         if (enemyPortrait != null)
         {
             enemyPortrait.sprite = known ? entry.portrait : null;
-            enemyPortrait.enabled = enemyPortrait.sprite != null;
+            enemyPortrait.enabled = !showingModel && enemyPortrait.sprite != null;
             enemyPortrait.color = Color.white;
             enemyPortrait.preserveAspect = true;
         }
@@ -309,6 +311,7 @@ public class BestiaryUI : MonoBehaviour
 
     void OnDisable()
     {
+        if (modelPreview != null) modelPreview.Hide();
         if (subscribed && discovery != null) discovery.Changed -= Rebuild;
         subscribed = false;
         if (dropCarousel != null) dropCarousel.NavigationChanged -= RefreshNavigation;

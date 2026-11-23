@@ -17,6 +17,9 @@ MonoBehaviour:
   description: ----
   silhouette: {fileID: 21300000, guid: c1f02d483c965974d9fa216d627f772e, type: 3}
   portrait: {fileID: 21300000, guid: 48a908b9f9070c64bba15d3d4613f525, type: 3}
+  modelPrefab: {fileID: 3336003750909610905, guid: a07321ae221df394396e02fb6f26a7d9, type: 3}
+  previewEulerAngles: {x: 0, y: 0, z: 0}
+  previewPadding: 8
   dropInformationKnown: 0
   possibleDrops: []
   regions: []
