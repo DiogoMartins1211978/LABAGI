@@ -40,6 +40,13 @@ public class Enemy : MonoBehaviour
     public AudioClip presenceAudioClip;
     public AudioClip attackAudioClip;
 
+    [Header("Health")]
+    public int maxHealth = 10;
+
+    private int currentHealth;
+    public int CurrentHealth => currentHealth;
+    public bool IsDead => currentHealth <= 0;
+
     private Action attackFinished;
     private Coroutine attackCoroutine;
 
@@ -135,6 +142,8 @@ public class Enemy : MonoBehaviour
         Debug.Log($"[Enemy] {name}: LiDAR MeshCollider initialized.");
 
         InitializeAudio();
+
+        currentHealth = maxHealth;
     }
 
     private void InitializeAudio()
@@ -326,6 +335,7 @@ public class Enemy : MonoBehaviour
     public virtual void Resolve()
     {
         Resolved = true;
+        StopPresenceAudio();
         gameObject.SetActive(false);
     }
 
@@ -418,8 +428,21 @@ public class Enemy : MonoBehaviour
 
     public void StartPresenceAudio()
     {
-        if (presenceAudioSource == null || presenceAudioClip == null)
+        Debug.Log($"[Enemy Audio] Starting presence audio for {name}");
+
+        if (presenceAudioSource == null)
+        {
+            Debug.LogWarning($"[Enemy Audio] {name}: Presence Audio Source is NULL.");
             return;
+        }
+
+        if (presenceAudioClip == null)
+        {
+            Debug.LogWarning($"[Enemy Audio] {name}: Presence Audio Clip is NULL.");
+            return;
+        }
+
+        Debug.Log($"[Enemy Audio] Playing {presenceAudioClip.name}");
 
         if (!presenceAudioSource.isPlaying)
             presenceAudioSource.Play();
@@ -440,6 +463,34 @@ public class Enemy : MonoBehaviour
             return;
 
         attackAudioSource.PlayOneShot(attackAudioClip);
+    }
+
+    public virtual void TakeDamage(int damage)
+    {
+        if (Resolved || IsDead)
+            return;
+
+        if (damage <= 0)
+            return;
+
+        currentHealth -= damage;
+
+        Debug.Log(
+            $"[Enemy] {name} took {damage} damage. " +
+            $"Health: {currentHealth}/{maxHealth}"
+        );
+
+        if (currentHealth <= 0)
+        {
+            currentHealth = 0;
+            Die();
+        }
+    }
+    protected virtual void Die()
+    {
+        Debug.Log($"[Enemy] {name} died.");
+
+        Resolve();
     }
 
     private void OnDestroy()

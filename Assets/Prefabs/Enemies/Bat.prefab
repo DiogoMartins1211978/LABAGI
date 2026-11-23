@@ -139,6 +139,7 @@ MonoBehaviour:
   attackAudioSource: {fileID: 8904081112782597823}
   presenceAudioClip: {fileID: 8300000, guid: 1cd4b4e19fe56cc48a0ae2a060f3c74b, type: 3}
   attackAudioClip: {fileID: 8300000, guid: 4f37db6707996aa44bb689b6e57c2f2f, type: 3}
+  maxHealth: 10
 --- !u!82 &-5884481689828587301
 AudioSource:
   m_ObjectHideFlags: 0
@@ -150,7 +151,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: 1cd4b4e19fe56cc48a0ae2a060f3c74b, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1

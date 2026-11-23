@@ -137,6 +137,7 @@ public class CombatController : MonoBehaviour
         Enemy enemy = room != null ? room.enemy : null;
         if (enemy == null || enemy.Resolved || !enemy.isActiveAndEnabled) return;
         activeEnemy = enemy;
+        enemy.StartPresenceAudio();
         activeEnemy.Room = room;
 
         player.BlockLeaving = lockMovementInEnemyRooms;
