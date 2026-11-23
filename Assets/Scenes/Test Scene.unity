@@ -2269,8 +2269,8 @@ MonoBehaviour:
   cameraAngles: {x: 12, y: 155, z: 0}
   usePointCloud: 1
   pointMaterial: {fileID: 2100000, guid: ae6a287cbf52e5a4ebbeb6a09fed00d9, type: 2}
-  pointCount: 10000
-  pointSize: 2
+  pointCount: 1000
+  pointSize: 8
 --- !u!114 &217157234
 MonoBehaviour:
   m_ObjectHideFlags: 0
