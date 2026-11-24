@@ -15,5 +15,10 @@ MonoBehaviour:
   displayName: Defense
   description: 
   maxCopies: 5
+  type: 1
+  abilityType: 2
+  effectValue: 6
+  effectDuration: 0
   cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
   frontArt: {fileID: 2800000, guid: e7bef9323e4fcd14ca1b39a39f58ec1f, type: 3}
+  cardSound: {fileID: 0}

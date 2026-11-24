@@ -62,6 +62,15 @@ public class CardSystem : MonoBehaviour
     public bool IsBookDeckOpen => bookDeckOpen;
     public void SetBookDeckOpen(bool open) => bookDeckOpen = open && CurrentMode != Mode.Combat;
 
+    [SerializeField] private PlayerHealth playerHealth;
+
+    private Enemy activeEnemy;
+
+    public void SetActiveEnemy(Enemy enemy)
+    {
+        activeEnemy = enemy;
+    }
+
     [Serializable]
     public struct CardInstance
     {
@@ -328,7 +337,7 @@ public class CardSystem : MonoBehaviour
 
         IsPlayerTurn = false;
 
-        playedCard.Data.OnPlay(gameObject);
+        playedCard.Data.OnPlay(playerHealth, activeEnemy);
 
         hand[selected] = queue.Dequeue();
         queue.Enqueue(playedCard);

@@ -15,5 +15,10 @@ MonoBehaviour:
   displayName: Strike
   description: 
   maxCopies: 3
+  type: 0
+  abilityType: 2
+  effectValue: 3
+  effectDuration: 0
   cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
   frontArt: {fileID: 2800000, guid: 27e9a7a98eb108d43a3ee3d54a71efb6, type: 3}
+  cardSound: {fileID: 0}

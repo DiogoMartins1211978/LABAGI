@@ -15,5 +15,10 @@ MonoBehaviour:
   displayName: Bloody Slash
   description: 
   maxCopies: 2
+  type: 0
+  abilityType: 2
+  effectValue: 0
+  effectDuration: 0
   cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
   frontArt: {fileID: 2800000, guid: 731a5d6f3d3fff249a1a49a80ba2f6d1, type: 3}
+  cardSound: {fileID: 0}

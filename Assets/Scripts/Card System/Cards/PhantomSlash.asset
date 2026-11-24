@@ -15,5 +15,10 @@ MonoBehaviour:
   displayName: Phantom Slash
   description: 
   maxCopies: 3
+  type: 0
+  abilityType: 2
+  effectValue: 0
+  effectDuration: 0
   cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
   frontArt: {fileID: 2800000, guid: 6b7810af020fb644386aec0ca090348a, type: 3}
+  cardSound: {fileID: 0}

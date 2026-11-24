@@ -3082,6 +3082,7 @@ MonoBehaviour:
   slot2Action: SelectSlot2
   slot3Action: SelectSlot3
   slot4Action: SelectSlot4
+  playerHealth: {fileID: 604149156}
 --- !u!4 &269744961
 Transform:
   m_ObjectHideFlags: 0
@@ -3182,6 +3183,7 @@ MonoBehaviour:
   releaseTurnDuration: 0.5
   focusOffset: {x: 0, y: 0.3, z: 0}
   combatCameraTurnSpeed: 8
+  playerHealth: {fileID: 604149156}
 --- !u!114 &269744965
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9809,6 +9811,7 @@ GameObject:
   - component: {fileID: 604149153}
   - component: {fileID: 604149152}
   - component: {fileID: 604149155}
+  - component: {fileID: 604149156}
   m_Layer: 2
   m_Name: Player
   m_TagString: Untagged
@@ -9901,7 +9904,21 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  instantTransitions: 0
   minAlignment: 0.1
+--- !u!114 &604149156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604149150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e059f2519af3bc348b7211ed3961947a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  maxHealth: 20
 --- !u!1 &611431448
 GameObject:
   m_ObjectHideFlags: 0

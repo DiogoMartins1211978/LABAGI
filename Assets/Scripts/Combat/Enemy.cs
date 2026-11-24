@@ -42,10 +42,12 @@ public class Enemy : MonoBehaviour
 
     [Header("Health")]
     public int maxHealth = 10;
-
     private int currentHealth;
     public int CurrentHealth => currentHealth;
     public bool IsDead => currentHealth <= 0;
+
+    [Header("Combat")]
+    public int attackDamage = 3;
 
     private Action attackFinished;
     private Coroutine attackCoroutine;
@@ -67,6 +69,14 @@ public class Enemy : MonoBehaviour
     public float FocusTimer => focusTimer;
     public int ScanTriangleCount => bakedTriangles != null ? bakedTriangles.Length / 3 : 0;
     string scanSurfaceSignature;
+
+    private DamageOverTimeEffect activeDamageOverTime;
+    [System.Serializable]
+    public class DamageOverTimeEffect
+    {
+        public int damagePerTurn;
+        public int remainingTurns;
+    }
 
     public string ScanSurfaceSignature
     {
@@ -486,6 +496,58 @@ public class Enemy : MonoBehaviour
             Die();
         }
     }
+
+    public void ApplyDamageOverTime(int damagePerTurn, int duration)
+    {
+        if (Resolved || IsDead)
+            return;
+
+        if (damagePerTurn <= 0 || duration <= 0)
+            return;
+
+        activeDamageOverTime = new DamageOverTimeEffect
+        {
+            damagePerTurn = damagePerTurn,
+            remainingTurns = duration
+        };
+
+        Debug.Log(
+            $"[Enemy] {name} recebeu Damage Over Time: " +
+            $"{damagePerTurn} dano por {duration} turnos."
+        );
+    }
+
+    public void ProcessDamageOverTime()
+    {
+        if (activeDamageOverTime == null)
+            return;
+
+        if (Resolved || IsDead)
+        {
+            activeDamageOverTime = null;
+            return;
+        }
+
+        TakeDamage(activeDamageOverTime.damagePerTurn);
+
+        activeDamageOverTime.remainingTurns--;
+
+        Debug.Log(
+            $"[Enemy] {name} sofreu {activeDamageOverTime.damagePerTurn} " +
+            $"dano por Damage Over Time. " +
+            $"Turnos restantes: {activeDamageOverTime.remainingTurns}"
+        );
+
+        if (activeDamageOverTime.remainingTurns <= 0)
+        {
+            activeDamageOverTime = null;
+
+            Debug.Log(
+                $"[Enemy] Damage Over Time terminou em {name}."
+            );
+        }
+    }
+
     protected virtual void Die()
     {
         Debug.Log($"[Enemy] {name} died.");

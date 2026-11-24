@@ -48,6 +48,8 @@ public class CombatController : MonoBehaviour
     private bool trackEnemy;
     private Quaternion savedCameraRotation;
 
+    [SerializeField] private PlayerHealth playerHealth;
+
     void Awake()
     {
         Instance = this;
@@ -215,6 +217,7 @@ public class CombatController : MonoBehaviour
 
         CombatStarted?.Invoke(activeEnemy, how);
         StartCoroutine(CombatIntro(activeEnemy, how));
+        cardSystem.SetActiveEnemy(activeEnemy);
     }
 
     IEnumerator CombatIntro(Enemy enemy, CombatStart how)
@@ -261,7 +264,10 @@ public class CombatController : MonoBehaviour
         if (activeEnemy == null || activeEnemy.Resolved)
             yield break;
 
+        activeEnemy.ProcessDamageOverTime();
+
         activeEnemy.Attack(OnEnemyAttackFinished);
+        playerHealth.TakeDamage(activeEnemy.attackDamage);
     }
 
     private void OnEnemyAttackFinished()
