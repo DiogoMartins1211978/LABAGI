@@ -3,7 +3,7 @@ Shader "LABAGI/Bestiary LiDAR Points"
     Properties
     {
         _BaseColor ("Point Color", Color) = (1,1,1,1)
-        _PointSize ("Point Size (texture pixels)", Range(0.5,8)) = 2
+        _PointSize ("Point Size (texture pixels)", Range(0.5,64)) = 2
     }
     SubShader
     {

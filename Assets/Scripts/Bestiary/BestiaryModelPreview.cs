@@ -16,7 +16,8 @@ public sealed class BestiaryModelPreview : MonoBehaviour
     [SerializeField] bool usePointCloud = true;
     [SerializeField] Material pointMaterial;
     [SerializeField, Range(100, 50000)] int pointCount = 10000;
-    [SerializeField, Range(0.5f, 8f)] float pointSize = 2f;
+    [Tooltip("Dot diameter in preview-texture pixels. The book displays that texture at a smaller size.")]
+    [SerializeField, Range(0.5f, 64f)] float pointSize = 2f;
 
     RawImage output;
     GameObject stage;
@@ -198,6 +199,13 @@ public sealed class BestiaryModelPreview : MonoBehaviour
         if (pointMesh != null) { Destroy(pointMesh); pointMesh = null; }
         if (runtimeDepthMaterial != null) { Destroy(runtimeDepthMaterial); runtimeDepthMaterial = null; }
         if (runtimePointMaterial != null) { Destroy(runtimePointMaterial); runtimePointMaterial = null; }
+    }
+
+    void LateUpdate()
+    {
+        // Allow visual tuning while the book is open, without rebuilding the cloud.
+        if (runtimePointMaterial != null && runtimePointMaterial.GetFloat("_PointSize") != pointSize)
+            runtimePointMaterial.SetFloat("_PointSize", pointSize);
     }
 
     void OnEnable() { if (current == null) Hide(); }
