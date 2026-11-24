@@ -257,12 +257,13 @@ public class CombatController : MonoBehaviour
 
     private IEnumerator EnemyTurnRoutine()
     {
-
-
         yield return new WaitForSeconds(0.5f);
 
-        if (activeEnemy == null || activeEnemy.Resolved)
+        if (activeEnemy == null || activeEnemy.Resolved) {
+            EndCombat();
             yield break;
+        }
+            
 
         activeEnemy.ProcessDamageOverTime();
 
