@@ -12,6 +12,8 @@ public class MenuSfxControl : MonoBehaviour, IPointerEnterHandler
 {
     public enum ActivationSound { Automatic, Confirm, Back, Silent }
     [SerializeField] ActivationSound activation = ActivationSound.Automatic;
+    public bool IsSilent => activation == ActivationSound.Silent;
+    public bool AllowFocusWhenSilent { get; set; }
 
     Selectable control;
     Button button;
@@ -30,26 +32,35 @@ public class MenuSfxControl : MonoBehaviour, IPointerEnterHandler
         toggle = GetComponent<Toggle>();
         dropdown = GetComponent<TMP_Dropdown>();
         legacyDropdown = GetComponent<Dropdown>();
-        if (button != null)
-        {
-            // Capture the choice in a plain delegate so scene-changing button
-            // callbacks cannot destroy the audio listener before it executes.
-            ActivationSound sound = activation;
-            if (sound == ActivationSound.Automatic)
-            {
-                string label = name.ToLowerInvariant();
-                sound = label.Contains("back") || label.Contains("close") || label.Contains("cancel")
-                    || label.Contains("resume") || label.Contains("stay")
-                    ? ActivationSound.Back : ActivationSound.Confirm;
-            }
-            clicked = sound == ActivationSound.Back ? MenuSfx.Back
-                : sound == ActivationSound.Silent ? (UnityAction)(() => { }) : MenuSfx.Confirm;
-            button.onClick.AddListener(clicked);
-        }
+        BindButtonSound();
         if (slider != null) slider.onValueChanged.AddListener(OnSlider);
         if (toggle != null) toggle.onValueChanged.AddListener(OnToggle);
         if (dropdown != null) dropdown.onValueChanged.AddListener(OnDropdown);
         if (legacyDropdown != null) legacyDropdown.onValueChanged.AddListener(OnDropdown);
+    }
+
+    public void SetActivationSound(ActivationSound value)
+    {
+        activation = value;
+        BindButtonSound();
+    }
+
+    void BindButtonSound()
+    {
+        if (button == null) return; // Inactive book tabs may not have awakened yet.
+        if (clicked != null) button.onClick.RemoveListener(clicked);
+        // Keep a plain delegate so scene-changing callbacks remain safe.
+        ActivationSound sound = activation;
+        if (sound == ActivationSound.Automatic)
+        {
+            string label = name.ToLowerInvariant();
+            sound = label.Contains("back") || label.Contains("close") || label.Contains("cancel")
+                || label.Contains("resume") || label.Contains("stay")
+                ? ActivationSound.Back : ActivationSound.Confirm;
+        }
+        clicked = sound == ActivationSound.Back ? MenuSfx.Back
+            : sound == ActivationSound.Silent ? (UnityAction)(() => { }) : MenuSfx.Confirm;
+        button.onClick.AddListener(clicked);
     }
 
     public void OnPointerEnter(PointerEventData data)

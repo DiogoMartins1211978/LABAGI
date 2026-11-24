@@ -202,7 +202,7 @@ public class BestiaryController : MonoBehaviour
 
     void FinishClose()
     {
-        pauseController.CloseOverlay(bestiaryPanel);
+        pauseController.CloseOverlay(bestiaryPanel, false);
         if (previewCamera != null) previewCamera.enabled = false;
         closing = false;
         deckVisited = false;
@@ -222,7 +222,7 @@ public class BestiaryController : MonoBehaviour
     {
         closing = false;
         if (bookView != null) bookView.HideImmediately();
-        if (pauseController != null) pauseController.CloseOverlay(bestiaryPanel);
+        if (pauseController != null) pauseController.CloseOverlay(bestiaryPanel, false);
         if (previewCamera != null && previewCamera != Camera.main) previewCamera.enabled = false;
         if (ownsActionEnable && toggleAction != null) toggleAction.Disable();
         if (ownsDeckActionEnable && deckAction != null) deckAction.Disable();

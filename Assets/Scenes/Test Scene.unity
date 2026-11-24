@@ -4155,10 +4155,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9785adc6b1362b84a8d988e7bcf6d2d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BookAudio
-  appear: {fileID: 0}
-  open: {fileID: 0}
-  leaf: {fileID: 0}
-  close: {fileID: 0}
+  appear: {fileID: 8300000, guid: 1f0460623ae7f9249a96e1ac048bfa0a, type: 3}
+  open: {fileID: 8300000, guid: 16495373ccd560b478805c9653271b13, type: 3}
+  leaf: {fileID: 8300000, guid: 2f07dac08ba2e7041b37543190ccc502, type: 3}
+  close: {fileID: 8300000, guid: fc740c0f0ce22a940871ece7bf1e99f3, type: 3}
   disappear: {fileID: 0}
   bookmark: {fileID: 0}
   volume: 0.65

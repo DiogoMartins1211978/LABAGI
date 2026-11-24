@@ -21,6 +21,7 @@ public class BookAudio : MonoBehaviour
         var clip = cue == Cue.Appear ? appear : cue == Cue.Open ? open : cue == Cue.Leaf ? leaf
             : cue == Cue.Close ? close : cue == Cue.Disappear ? disappear : bookmark;
         if (clip == null || source == null) return;
+        MenuSfx.OverrideWithCustomSound(source, clip.length / Mathf.Max(.01f, Mathf.Abs(source.pitch)));
         source.PlayOneShot(clip, volume * Mathf.Clamp01(PlayerPrefs.GetFloat("Audio.MenuSfxVolume", 1)));
     }
 }

@@ -20,6 +20,7 @@ public class BookBookmark : MonoBehaviour
     public void SetCurrentSection(bool current)
     {
         current = sectionTab && current;
+        // if (TryGetComponent<MenuSfxControl>(out var sound)) sound.AllowFocusWhenSilent = !current; // Disallow sound when the bookmark is of the current active section
         if (IsCurrentSection == current)
         {
             ApplyAppearance();

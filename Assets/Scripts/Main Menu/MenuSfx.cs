@@ -14,6 +14,9 @@ public class MenuSfx : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float volume = 0.35f;
 
     static MenuSfx instance;
+    static float customSoundUntil;
+    static int customSoundFrame = -1;
+    static AudioSource customSoundSource;
     AudioSource source;
     GameObject lastSelection;
     Selectable lastFocus;
@@ -21,6 +24,28 @@ public class MenuSfx : MonoBehaviour
     float nextScan;
     int actionFrame = -1;
     float userVolume;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetCustomSoundPriority()
+    {
+        customSoundUntil = 0;
+        customSoundFrame = -1;
+        customSoundSource = null;
+    }
+
+    static bool CustomSoundHasPriority => customSoundFrame == Time.frameCount
+        || (customSoundSource != null && customSoundSource.isActiveAndEnabled
+            && (customSoundSource.isPlaying || Time.unscaledTime < customSoundUntil));
+
+    // Custom presentation audio replaces menu ticks, including ticks that may
+    // already have run earlier in the same button's callback list.
+    public static void OverrideWithCustomSound(AudioSource customSource, float duration)
+    {
+        customSoundSource = customSource;
+        customSoundUntil = Mathf.Max(customSoundUntil, Time.unscaledTime + Mathf.Max(0, duration));
+        customSoundFrame = Time.frameCount;
+        if (instance != null && instance.source != null) instance.source.Stop();
+    }
 
     void Awake()
     {
@@ -76,7 +101,8 @@ public class MenuSfx : MonoBehaviour
     public static void Focus(Selectable control)
     {
         if (instance == null || control == null || !control.IsActive() || !control.IsInteractable()
-            || instance.actionFrame == Time.frameCount) return;
+            || instance.actionFrame == Time.frameCount || CustomSoundHasPriority) return;
+        if (control.TryGetComponent<MenuSfxControl>(out var sound) && sound.IsSilent && !sound.AllowFocusWhenSilent) return;
         if (instance.lastFocus == control && Time.unscaledTime - instance.lastFocusTime < 0.1f) return;
         instance.lastFocus = control;
         instance.lastFocusTime = Time.unscaledTime;
@@ -95,7 +121,7 @@ public class MenuSfx : MonoBehaviour
 
     static void Action(bool back)
     {
-        if (instance == null || instance.actionFrame == Time.frameCount) return;
+        if (instance == null || instance.actionFrame == Time.frameCount || CustomSoundHasPriority) return;
         instance.actionFrame = Time.frameCount;
         // Replace a focus tick rather than layering both sounds on one click.
         instance.source.Stop();

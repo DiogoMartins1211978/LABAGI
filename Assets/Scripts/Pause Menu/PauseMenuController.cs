@@ -134,15 +134,25 @@ public class PauseMenuController : MonoBehaviour
 
     public void CloseOverlay(GameObject overlay)
     {
+        CloseOverlay(overlay, true);
+    }
+
+    public void CloseOverlay(GameObject overlay, bool playBackSound)
+    {
         // Only the owner can release this pause. Closing the book must never
         // accidentally resume a pause/options menu that is open instead.
-        if (IsShowingOverlay(overlay)) Resume();
+        if (IsShowingOverlay(overlay)) Resume(playBackSound);
     }
 
     public void Resume()
     {
+        Resume(true);
+    }
+
+    void Resume(bool playBackSound)
+    {
         if (!ownsPause || changingScene) return;
-        MenuSfx.Back();
+        if (playBackSound) MenuSfx.Back();
         StopAllCoroutines();
         // Keep gameplay blocked until the UI's activating press is released.
         waitingForRelease = true;

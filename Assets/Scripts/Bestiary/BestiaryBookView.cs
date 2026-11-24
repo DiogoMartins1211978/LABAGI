@@ -35,6 +35,13 @@ public class BestiaryBookView : MonoBehaviour
     {
         outlines = model.GetComponentsInChildren<BookEdgeOutline>(true);
         bookmarks = bookRoot.GetComponentsInChildren<BookBookmark>(true);
+        foreach (var bookmark in bookmarks)
+        {
+            if (bookmark.GetComponent<UnityEngine.UI.Selectable>() == null) continue;
+            var sound = bookmark.GetComponent<MenuSfxControl>() ?? bookmark.gameObject.AddComponent<MenuSfxControl>();
+            sound.SetActivationSound(MenuSfxControl.ActivationSound.Silent);
+            sound.AllowFocusWhenSilent = true;
+        }
         surfaces = model.GetComponentsInChildren<SkinnedMeshRenderer>(true);
         foreach (var animator in model.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
         ClearPose();

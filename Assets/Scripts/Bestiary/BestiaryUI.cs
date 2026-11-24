@@ -209,7 +209,7 @@ public class BestiaryUI : MonoBehaviour
         }
         if (dropCarousel == null) dropsText.text = known ? "Drops: " + DropNames(entry) : "Drops · Unknown";
         if (regionText != null) regionText.gameObject.SetActive(false);
-        descriptionText.text = entry == null ? "Defeat enemies to unlock their entries."
+        descriptionText.text = entry == null ? "No Enemy Found"
             : !known ? "Defeat this enemy to reveal its entry."
             : string.IsNullOrWhiteSpace(entry.description) ? "Description unavailable." : entry.description;
         if (descriptionText.text.Trim('-', ' ', '\r', '\n').Length == 0) descriptionText.text = string.Empty;
