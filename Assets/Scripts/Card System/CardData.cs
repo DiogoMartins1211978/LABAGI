@@ -60,6 +60,8 @@ public class CardData : ScriptableObject
 
     public virtual void OnPlay(PlayerHealth player, Enemy target)
     {
+        if (cardSound != null && player != null) AudioSource.PlayClipAtPoint(cardSound, player.transform.position);
+
         switch (type)
         {
             case CardType.Attack:
@@ -93,7 +95,8 @@ public class CardData : ScriptableObject
                             {
                                 target.ApplyDamageOverTime(
                                     effectValue,
-                                    effectDuration
+                                    effectDuration,
+                                    cardSound
                                 );
                             }
                             break;

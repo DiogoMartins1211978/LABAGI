@@ -65,7 +65,7 @@ MonoBehaviour:
   shakeAmount: 3
   shakeSpeed: 35
   liftAmount: 0.12
-  treasureAudioSource: {fileID: 0}
+  treasureAudioSource: {fileID: 2216485500976214525}
 --- !u!1 &6885517350936745257
 GameObject:
   m_ObjectHideFlags: 0
@@ -109,7 +109,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -316887893240878117, guid: a9a310d05ca3ef74bbdfb18a65913e84, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: a92e6a0d3b07bca43b5dd9f8529efc6a, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1

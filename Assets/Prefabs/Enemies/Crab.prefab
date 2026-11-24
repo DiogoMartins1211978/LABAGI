@@ -60,6 +60,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -795823706605978104, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f7a378b9ba5d0ef459d1b80e590b31d4, type: 2}
     - target: {fileID: 919132149155446097, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
       propertyPath: m_Name
       value: Crab
@@ -80,7 +84,37 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3497776659111826265}
+    - targetCorrespondingSourceObject: {fileID: 3840737069386924761, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8269636662703620975}
   m_SourcePrefab: {fileID: 100100000, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
+--- !u!1 &1136312209075495736 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3840737069386924761, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
+  m_PrefabInstance: {fileID: 4218175123281797601}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &8269636662703620975
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1136312209075495736}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1 &3911550261664210096 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
@@ -132,14 +166,18 @@ MonoBehaviour:
   skinnedMeshRenderer: {fileID: 0}
   lidarMeshCollider: {fileID: 0}
   focusPoint: {fileID: 0}
-  focusHeight: 1.2
+  focusHeight: 0
   animator: {fileID: -3989985177005944963}
   attackDuration: 0.85
   presenceAudioSource: {fileID: 2269130909194646168}
   attackAudioSource: {fileID: 3497776659111826265}
   presenceAudioClip: {fileID: 8300000, guid: e4673b113525bfc42a6a7f1ed7b1349c, type: 3}
   attackAudioClip: {fileID: 8300000, guid: 3a1a68fd1498d234084602d16b6287fd, type: 3}
-  maxHealth: 10
+  maxHealth: 25
+  attackDamage: 2
+  normalPresenceVolume: 0.05
+  focusedPresenceVolume: 0.3
+  focusVolumeTransition: 0.4
 --- !u!82 &2269130909194646168
 AudioSource:
   m_ObjectHideFlags: 0
@@ -149,7 +187,7 @@ AudioSource:
   m_GameObject: {fileID: 3911550261664210096}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 1962190501933960530, guid: a9a310d05ca3ef74bbdfb18a65913e84, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: e4673b113525bfc42a6a7f1ed7b1349c, type: 3}
   m_PlayOnAwake: 0
@@ -246,7 +284,7 @@ AudioSource:
   m_GameObject: {fileID: 3911550261664210096}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 1962190501933960530, guid: a9a310d05ca3ef74bbdfb18a65913e84, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0

@@ -124,8 +124,7 @@ public class HandView : MonoBehaviour
         }
     }
 
-    IEnumerator ReplaceCard(int index, CardView oldView,
-        CardSystem.CardInstance newCard)
+    IEnumerator ReplaceCard(int index, CardView oldView, CardSystem.CardInstance newCard)
     {
         yield return StartCoroutine(FlyAway(oldView));
 

@@ -361,6 +361,9 @@ public class CardSystem : MonoBehaviour
         if (selected != index)
         {
             selected = index;
+            CardData card = hand[index].Data;
+            if (card != null && card.cardSound != null && playerHealth != null)
+                AudioSource.PlayClipAtPoint(card.cardSound, playerHealth.transform.position);
             LogHand($"Selected slot {index + 1} (Hover)");
         }
     }

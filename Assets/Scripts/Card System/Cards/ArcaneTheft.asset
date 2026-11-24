@@ -15,5 +15,10 @@ MonoBehaviour:
   displayName: Arcane Theft
   description: 
   maxCopies: 2
+  type: 0
+  abilityType: 0
+  effectValue: 0
+  effectDuration: 0
   cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
   frontArt: {fileID: 2800000, guid: 6b45755d00648564895f3550c2e8b842, type: 3}
+  cardSound: {fileID: 8300000, guid: 93a926ceca89f9347a3166764deca74f, type: 3}

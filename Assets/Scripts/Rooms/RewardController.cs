@@ -217,11 +217,9 @@ public class RewardController : MonoBehaviour
 
     private IEnumerator BeginRewardInteraction(RewardChest chest)
     {
-        if (chest == null || chest.IsClaimed)
-            yield break;
+        if (chest == null || chest.IsClaimed) yield break;
 
-        if (combatController.CurrentState != CombatController.State.Exploring)
-            yield break;
+        if (combatController.CurrentState != CombatController.State.Exploring) yield break;
 
         activeChest = chest;
         state = RewardState.Focusing;
@@ -232,20 +230,13 @@ public class RewardController : MonoBehaviour
         combatController.SetCameraControlEnabled(false);
         combatController.StopCombatSuppressedThings();
 
-        Vector3 aimPosition =
-            activeChest.focusPoint.position + Vector3.up * focusAimHeight;
+        Vector3 aimPosition = activeChest.focusPoint.position + Vector3.up * focusAimHeight;
 
-        Vector3 direction =
-            aimPosition - combatController.cameraTransform.position;
+        Vector3 direction = aimPosition - combatController.cameraTransform.position;
 
-        Quaternion targetRotation = direction.sqrMagnitude > 0.0001f
-            ? Quaternion.LookRotation(direction, Vector3.up)
-            : combatController.cameraTransform.rotation;
+        Quaternion targetRotation = direction.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(direction, Vector3.up) : combatController.cameraTransform.rotation;
 
-        yield return combatController.TurnCameraTo(
-            targetRotation,
-            combatController.focusTurnDuration
-        );
+        yield return combatController.TurnCameraTo(targetRotation, combatController.focusTurnDuration);
 
         state = RewardState.Opening;
 
@@ -256,6 +247,7 @@ public class RewardController : MonoBehaviour
         yield return PresentRewards();
 
         selectedReward = RewardChoice.Heart;
+        activeChest.PlayRewardSelectionSound(false);
         UpdateHighlight();
 
         state = RewardState.Selecting;
@@ -263,19 +255,12 @@ public class RewardController : MonoBehaviour
 
     private IEnumerator PresentRewards()
     {
+        activeChest.PlayRewardSpawnSound();
         Transform spawnPoint = activeChest.rewardSpawnPoint;
 
-        Vector3 cardTarget = new Vector3(
-            -rewardSeparation * 0.5f,
-            rewardHeight,
-            0f
-        );
+        Vector3 cardTarget = new Vector3(-rewardSeparation * 0.5f, rewardHeight, 0f);
 
-        Vector3 heartTarget = new Vector3(
-            rewardSeparation * 0.5f,
-            rewardHeight,
-            0f
-        );
+        Vector3 heartTarget = new Vector3(rewardSeparation * 0.5f, rewardHeight, 0f);
 
         Vector3 startPosition = Vector3.zero;
 
@@ -406,6 +391,7 @@ public class RewardController : MonoBehaviour
             return;
 
         selectedReward = choice;
+        activeChest.PlayRewardSelectionSound(choice == RewardChoice.Card);
         UpdateHighlight();
     }
 
@@ -475,29 +461,24 @@ public class RewardController : MonoBehaviour
     {
         state = RewardState.Returning;
 
+        activeChest.PlayRewardCollectionSound(selectedReward == RewardChoice.Card);
+
         if (selectedReward == RewardChoice.Card)
         {
             ApplyCardReward();
-
-            if (heartVisual != null)
-                Destroy(heartVisual);
+            if (heartVisual != null) Destroy(heartVisual);
         }
         else
         {
             ApplyHeartReward();
-
-            if (cardVisual != null)
-                Destroy(cardVisual);
+            if (cardVisual != null) Destroy(cardVisual);
         }
 
         activeChest.MarkClaimed();
 
         yield return new WaitForSeconds(0.25f);
 
-        yield return combatController.TurnCameraTo(
-            savedCameraRotation,
-            combatController.releaseTurnDuration
-        );
+        yield return combatController.TurnCameraTo(savedCameraRotation, combatController.releaseTurnDuration);
 
         combatController.SetCameraControlEnabled(true);
         combatController.RestoreCombatSuppressedThings();
@@ -616,15 +597,10 @@ public class RewardController : MonoBehaviour
 
         CardData selected = eligibleCards[Random.Range(0, eligibleCards.Count)];
 
-        //for tests
-        //selected = eligibleCards[0];
-
         Debug.Log(
             $"[RewardController] Selected card reward: {selected.displayName}"
         );
 
         return selected;
     }
-
-
 }

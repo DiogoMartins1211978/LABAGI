@@ -253,18 +253,14 @@ public class DungeonGenerator : MonoBehaviour
 
             if (room.enemy != null)
             {
-                if (!room.enemy.Resolved && isAdjacentRoom)
-                    room.enemy.StartPresenceAudio();
-                else
-                    room.enemy.StopPresenceAudio();
+                if (!room.enemy.Resolved && isAdjacentRoom) room.enemy.StartPresenceAudio();
+                else room.enemy.StopPresenceAudio();
             }
 
             if (room.treasure != null)
             {
-                if (isAdjacentRoom)
-                    room.treasure.StartTreasureAudio();
-                else
-                    room.treasure.StopTreasureAudio();
+                if (!room.treasure.IsClaimed && (isActiveRoom || isAdjacentRoom)) room.treasure.StartTreasureAudio();
+                else room.treasure.StopTreasureAudio();
             }
         }
     }

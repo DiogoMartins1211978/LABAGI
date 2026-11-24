@@ -2269,8 +2269,8 @@ MonoBehaviour:
   cameraAngles: {x: 12, y: 155, z: 0}
   usePointCloud: 1
   pointMaterial: {fileID: 2100000, guid: ae6a287cbf52e5a4ebbeb6a09fed00d9, type: 2}
-  pointCount: 2000
-  pointSize: 12
+  pointCount: 100
+  pointSize: 64
 --- !u!114 &217157234
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3145,7 +3145,13 @@ MonoBehaviour:
     prefab: {fileID: 3254160609925099903, guid: 5326542a6a56bba4eb9016573a8974af, type: 3}
   _enemyPrefabs:
   - key: SnakeEnemy
-    prefab: {fileID: 3336003750909610905, guid: a07321ae221df394396e02fb6f26a7d9, type: 3}
+    prefab: {fileID: 3336003750909610905, guid: 456911d2e7595a144bacf0f5f1dc1e95, type: 3}
+  - key: WolfEnemy
+    prefab: {fileID: 3755766612291690917, guid: edf3097d9e5fa924480df2894ab3bf55, type: 3}
+  - key: CrabEnemy
+    prefab: {fileID: 3911550261664210096, guid: 10a8651074f757243a85fc6184dcc649, type: 3}
+  - key: BatEnemy
+    prefab: {fileID: 1230464510362226104, guid: 26b17cacda1af484f9d6622cff87496d, type: 3}
   _randomEnemySpawn: 1
   _enemyWallMargin: 1
   _enemyMinDistanceFromPlayer: 3
@@ -3196,10 +3202,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df26420db3d8b6547b85de9c0e849156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RewardController
-  combatController: {fileID: 0}
-  player: {fileID: 0}
-  cardSystem: {fileID: 0}
-  mainCamera: {fileID: 0}
+  combatController: {fileID: 269744964}
+  player: {fileID: 604149155}
+  cardSystem: {fileID: 269744960}
+  mainCamera: {fileID: 906570677}
   detectionDistance: 5
   gazeRequiredDuration: 1
   detectionMask:

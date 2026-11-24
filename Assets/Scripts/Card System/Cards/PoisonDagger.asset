@@ -15,10 +15,10 @@ MonoBehaviour:
   displayName: Poison Dagger
   description: 
   maxCopies: 4
-  type: 0
-  abilityType: 2
-  effectValue: 0
-  effectDuration: 0
+  type: 2
+  abilityType: 1
+  effectValue: 1
+  effectDuration: 6
   cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
   frontArt: {fileID: 2800000, guid: 31beade514c224d4585fcdb5bb73d997, type: 3}
-  cardSound: {fileID: 0}
+  cardSound: {fileID: 8300000, guid: da296d90ff9b34d4fbaa5237dee1860a, type: 3}

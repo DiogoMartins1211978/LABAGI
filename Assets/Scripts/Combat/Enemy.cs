@@ -1,6 +1,7 @@
-﻿using UnityEngine;
-using System;
+﻿using System;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.Purchasing;
 
 public class Enemy : MonoBehaviour
 {
@@ -89,6 +90,7 @@ public class Enemy : MonoBehaviour
     {
         public int damagePerTurn;
         public int remainingTurns;
+        public AudioClip soundVFX;
     }
 
     public string ScanSurfaceSignature
@@ -516,7 +518,7 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public void ApplyDamageOverTime(int damagePerTurn, int duration)
+    public void ApplyDamageOverTime(int damagePerTurn, int duration, AudioClip attackAudioClip)
     {
         if (Resolved || IsDead)
             return;
@@ -527,7 +529,8 @@ public class Enemy : MonoBehaviour
         activeDamageOverTime = new DamageOverTimeEffect
         {
             damagePerTurn = damagePerTurn,
-            remainingTurns = duration
+            remainingTurns = duration,
+            soundVFX = attackAudioClip,
         };
 
         Debug.Log(
@@ -550,6 +553,8 @@ public class Enemy : MonoBehaviour
         TakeDamage(activeDamageOverTime.damagePerTurn);
 
         activeDamageOverTime.remainingTurns--;
+
+        AudioSource.PlayClipAtPoint(activeDamageOverTime.soundVFX, this.transform.position);
 
         Debug.Log(
             $"[Enemy] {name} sofreu {activeDamageOverTime.damagePerTurn} " +

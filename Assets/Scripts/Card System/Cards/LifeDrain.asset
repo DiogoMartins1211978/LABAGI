@@ -21,4 +21,4 @@ MonoBehaviour:
   effectDuration: 0
   cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
   frontArt: {fileID: 2800000, guid: 408d3342ff94c6d45bf6757b03950862, type: 3}
-  cardSound: {fileID: 0}
+  cardSound: {fileID: 8300000, guid: 5770cbeb5e1e64e4aa9ffa331a02e68a, type: 3}

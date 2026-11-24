@@ -10,7 +10,7 @@
             "id": "R02",
             "from": "R01",
             "dir": "N",
-            "enemy": "", 
+            "enemy": "",
             "hasTreasure": true
         },
         {
@@ -23,27 +23,31 @@
             "id": "R04",
             "from": "R03",
             "dir": "E",
-            "enemy": "SnakeEnemy"
+            "enemy": ""
         },
         {
             "id": "R05",
             "from": "R04",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R06",
             "from": "R05",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R07",
             "from": "R06",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R08",
             "from": "R07",
-            "dir": "W"
+            "dir": "W",
+            "enemy": ""
         },
         {
             "id": "R09",
@@ -54,205 +58,245 @@
         {
             "id": "R10",
             "from": "R03",
-            "dir": "W"
+            "dir": "W",
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R11",
             "from": "R10",
-            "dir": "W"
+            "dir": "W",
+            "enemy": ""
         },
         {
             "id": "R12",
             "from": "R11",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R13",
             "from": "R12",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R14",
             "from": "R11",
-            "dir": "S"
+            "dir": "S",
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R15",
             "from": "R14",
-            "dir": "W"
+            "dir": "W",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R16",
             "from": "R15",
             "dir": "W",
-            "prefab": "Room_Crate"
+            "prefab": "Room_Crate",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R17",
             "from": "R05",
-            "dir": "S"
+            "dir": "S",
+            "enemy": "SnakeEnemy"
         },
         {
             "id": "R18",
             "from": "R17",
-            "dir": "S"
+            "dir": "S",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R19",
             "from": "R18",
-            "dir": "E"
+            "dir": "E",
+            "enemy": ""
         },
         {
             "id": "R20",
             "from": "R19",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R21",
             "from": "R20",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R22",
             "from": "R21",
             "dir": "E",
-            "prefab": "Room_Pillar"
+            "prefab": "Room_Pillar",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R23",
             "from": "R18",
-            "dir": "W"
+            "dir": "W",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R24",
             "from": "R23",
-            "dir": "S"
+            "dir": "S",
+            "enemy": ""
         },
         {
             "id": "R25",
             "from": "R24",
-            "dir": "S"
+            "dir": "S",
+            "enemy": ""
         },
         {
             "id": "R26",
             "from": "R07",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R27",
             "from": "R26",
-            "dir": "N"
+            "dir": "N",
+            "enemy": ""
         },
         {
             "id": "R28",
             "from": "R27",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R29",
             "from": "R28",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R30",
             "from": "R29",
-            "dir": "S"
+            "dir": "S",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R31",
             "from": "R27",
-            "dir": "W"
+            "dir": "W",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R32",
             "from": "R31",
-            "dir": "W"
+            "dir": "W",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R33",
             "from": "R32",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R34",
             "from": "R33",
             "dir": "W",
-            "prefab": "Room_Crate"
+            "prefab": "Room_Crate",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R35",
             "from": "R13",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R36",
             "from": "R35",
-            "dir": "E"
+            "dir": "E",
+            "enemy": ""
         },
         {
             "id": "R37",
             "from": "R36",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "CrabEnemy"
         },
         {
             "id": "R38",
             "from": "R37",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R39",
             "from": "R38",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R40",
             "from": "R39",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R41",
             "from": "R25",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R42",
             "from": "R41",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R43",
             "from": "R42",
-            "dir": "S"
+            "dir": "S",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R44",
             "from": "R43",
-            "dir": "E"
+            "dir": "E",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R45",
             "from": "R40",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "BatEnemy"
         },
         {
             "id": "R46",
             "from": "R45",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "WolfEnemy"
         },
         {
             "id": "R47",
             "from": "R46",
-            "dir": "W"
+            "dir": "W",
+            "enemy": "WolfEnemy"
         },
         {
             "id": "R48",
             "from": "R47",
-            "dir": "W"
+            "dir": "W",
+            "enemy": "WolfEnemy"
         },
         {
             "id": "R49",
             "from": "R48",
-            "dir": "N"
+            "dir": "N",
+            "enemy": "WolfEnemy"
         },
         {
             "id": "R50",
