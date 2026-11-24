@@ -259,13 +259,12 @@ public class CombatController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
 
+        activeEnemy.ProcessDamageOverTime();
+
         if (activeEnemy == null || activeEnemy.Resolved) {
-            EndCombat();
+            if (activeEnemy.Resolved) EndCombat();
             yield break;
         }
-            
-
-        activeEnemy.ProcessDamageOverTime();
 
         activeEnemy.Attack(OnEnemyAttackFinished);
         playerHealth.TakeDamage(activeEnemy.attackDamage);
