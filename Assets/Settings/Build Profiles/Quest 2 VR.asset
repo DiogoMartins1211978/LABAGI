@@ -38,8 +38,8 @@ MonoBehaviour:
   m_OverrideGlobalSceneList: 1
   m_Scenes:
   - m_enabled: 1
-    m_path: Assets/Scenes/VR_TrackingTest.unity
-    m_guid: 486db4a903105da4f83dc8192544ee0d
+    m_path: Assets/Scenes/VR_Test.unity
+    m_guid: 38e2b405f9a141fb9c6c5c0f1da54f30
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:

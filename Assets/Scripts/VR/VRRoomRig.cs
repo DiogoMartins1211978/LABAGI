@@ -10,6 +10,8 @@ public sealed class VRRoomRig : MonoBehaviour
 {
     [SerializeField] PlayerNodeMover player;
     [SerializeField] XROrigin origin;
+    [Tooltip("Enable headset-directed scanning while keeping combat and enemy discovery off for this test.")]
+    [SerializeField] bool enableLidar = true;
 
     InputActionAsset movementAsset;
     InputActionReference movementReference;
@@ -50,7 +52,21 @@ public sealed class VRRoomRig : MonoBehaviour
         foreach (var provider in origin.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionProvider>(true))
             provider.enabled = false;
         DisableOtherSystemsForMovementTest();
-        Debug.Log("[VR] Room movement test: left stick moves one connected room per push; headset controls looking.", this);
+        if (enableLidar)
+        {
+            int scanners = 0;
+            foreach (var root in gameObject.scene.GetRootGameObjects())
+                foreach (var scanner in root.GetComponentsInChildren<LiDARScanner>(true))
+                {
+                    scanner.ConfigureView(origin.Camera, player, false);
+                    scanner.enabled = true;
+                    scanners++;
+                }
+            if (scanners == 0) Debug.LogWarning("[VR] No LiDARScanner found in the VR scene.", this);
+        }
+        origin.Camera.clearFlags = CameraClearFlags.SolidColor;
+        origin.Camera.backgroundColor = Color.black;
+        Debug.Log("[VR] Left stick changes rooms; headset controls looking. LiDAR " + (enableLidar ? "enabled" : "disabled") + "; combat and menus remain off.", this);
     }
 
     void DisableOtherSystemsForMovementTest()

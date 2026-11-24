@@ -5,6 +5,19 @@ using Random = UnityEngine.Random;
 
 public partial class LiDARScanner : MonoBehaviour
 {
+    bool allowEnemyDiscovery = true;
+
+    // VR supplies its tracked camera without editing the desktop prefab references.
+    public void ConfigureView(Camera view, PlayerNodeMover player, bool enableEnemyDiscovery = true)
+    {
+        _camera = view;
+        _playerMover = player;
+        _lookSource = view.transform;
+        _castPoint = view.transform;
+        _pulseOrigin = view.transform;
+        allowEnemyDiscovery = enableEnemyDiscovery;
+        ResetFocus();
+    }
     private class RoomScanData
     {
         public VisualEffect VFX;
@@ -397,6 +410,7 @@ public partial class LiDARScanner : MonoBehaviour
 
     private void UpdateEnemyFocus()
     {
+        if (!allowEnemyDiscovery) return;
         Camera cam = ResolveCamera();
 
         if (cam == null)
@@ -508,7 +522,7 @@ public partial class LiDARScanner : MonoBehaviour
                     enemyHit.point,
                     enemyHit.normal))
                 {
-                    if (!enemy.Discovered)
+                    if (allowEnemyDiscovery && !enemy.Discovered)
                         enemy.RegisterScanPoint();
 
                     hits++;
