@@ -502,6 +502,9 @@ public partial class LiDARScanner : MonoBehaviour
 
             if (enemy != null)
             {
+                
+                if (enemy.Resolved) continue;
+                
                 RoomNode enemyRoom = enemy.Room != null
                     ? enemy.Room
                     : hit.collider.GetComponentInParent<RoomNode>();
@@ -864,5 +867,64 @@ public partial class LiDARScanner : MonoBehaviour
         }
 
         return false;
+    }
+
+    public void RemoveEnemyDots(Enemy enemy)
+    {
+        if (enemy == null)
+            return;
+
+        foreach (var entry in _roomScans)
+        {
+            RoomScanData roomData = entry.Value;
+            bool changed = false;
+
+            for (int i = roomData.SurfaceAttachments.Count - 1; i >= 0; i--)
+            {
+                SurfacePointAttachment attachment = roomData.SurfaceAttachments[i];
+
+                if (attachment.Enemy != enemy)
+                    continue;
+
+                int index = attachment.PointIndex;
+
+                if (index >= 0 && index < roomData.Positions.Count)
+                {
+                    int x = index % resolution;
+                    int y = index / resolution;
+
+                    roomData.Positions[index] = HiddenPosition;
+                    roomData.PointSizes[index] = 0f;
+
+                    roomData.PositionsTexture.SetPixel(
+                        x, y,
+                        new Color(HiddenPosition.x, HiddenPosition.y, HiddenPosition.z, 0f)
+                    );
+
+                    roomData.NormalsTexture.SetPixel(
+                        x, y,
+                        new Color(0.5f, 1f, 0.5f, 0f)
+                    );
+
+                    roomData.SizesTexture.SetPixel(
+                        x, y,
+                        Color.clear
+                    );
+
+                    changed = true;
+                }
+
+                roomData.SurfaceAttachments.RemoveAt(i);
+            }
+
+            if (changed)
+            {
+                roomData.PositionsTexture.Apply();
+                roomData.NormalsTexture.Apply();
+                roomData.SizesTexture.Apply();
+            }
+        }
+
+        Debug.Log($"[LiDAR] Removed dots belonging to {enemy.name}.");
     }
 }

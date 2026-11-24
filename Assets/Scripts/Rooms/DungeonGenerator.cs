@@ -250,13 +250,60 @@ public class DungeonGenerator : MonoBehaviour
                 room == activeRoom.right;
 
             room.SetRoomVisible(isActiveRoom || isAdjacentRoom);
+
+            if (room.enemy != null)
+            {
+                if (!room.enemy.Resolved && isAdjacentRoom)
+                    room.enemy.StartPresenceAudio();
+                else
+                    room.enemy.StopPresenceAudio();
+            }
+
+            if (room.treasure != null)
+            {
+                if (isAdjacentRoom)
+                    room.treasure.StartTreasureAudio();
+                else
+                    room.treasure.StopTreasureAudio();
+            }
         }
     }
+
+
 
     private void OnRoomEntered(RoomNode activeRoom)
     {
         UpdateRoomVisibility(activeRoom);
+
+        foreach (RoomNode room in _nodesById.Values)
+        {
+            if (room == null)
+                continue;
+
+            RoomAudioController audio =
+                room.GetComponent<RoomAudioController>();
+
+            if (audio == null)
+                continue;
+
+            bool isActiveRoom = room == activeRoom;
+
+            bool isAdjacentRoom = room == activeRoom.forward || room == activeRoom.back || room == activeRoom.left || room == activeRoom.right;
+
+            if (isActiveRoom)
+            {
+                bool previouslyVisited = room.MarkVisited();
+                audio.EnterRoom(previouslyVisited);
+            }
+            else if (isAdjacentRoom) audio.EnterAdjacentRoom(room.HasBeenVisited);
+            else audio.LeaveRoom();
+
+            // debugging
+            if (isAdjacentRoom) Debug.Log($"[Room Audio] Adjacent: {room.name} | Visited: {room.HasBeenVisited} | Audio Controller: {audio != null}");
+        }
     }
+
+
 
     private Vector2 ResolveCellSize(DungeonData data)
     {
@@ -388,7 +435,6 @@ public class DungeonGenerator : MonoBehaviour
         if (pending != null && pending.version >= 5)
         {
             saved = pending.treasures.Find(item => item.roomId == roomId);
-            // Preserve rooms where no chest was generated in the saved run.
             if (saved == null) return;
         }
         if (_treasurePrefabs == null || _treasurePrefabs.Count == 0)
@@ -450,7 +496,14 @@ public class DungeonGenerator : MonoBehaviour
             Debug.LogError("[Save] Each treasure prefab must contain exactly one RewardChest: " + selectedPrefab.name);
             return;
         }
-        treasures.Add(roomId, new TreasureInstance { prefabKey = selectedPrefab.name, root = treasure, chest = chests[0] });
+        RewardChest chest = chests[0];
+        treasures.Add(roomId, new TreasureInstance
+        {
+            prefabKey = selectedPrefab.name,
+            root = treasure,
+            chest = chest
+        });
+        room.treasure = chest;
     }
 
     private bool TryGetTreasurePosition(RoomNode room, out Vector3 worldPosition)

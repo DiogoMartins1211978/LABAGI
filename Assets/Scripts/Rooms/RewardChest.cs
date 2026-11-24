@@ -49,6 +49,9 @@ public class RewardChest : MonoBehaviour
     public float shakeSpeed = 35f;
     public float liftAmount = 0.12f;
 
+    [Header("Treasure Audio")]
+    public AudioSource treasureAudioSource;
+
     public bool IsClaimed { get; private set; }
     public bool IsOpened { get; private set; }
 
@@ -83,6 +86,13 @@ public class RewardChest : MonoBehaviour
     private void Start()
     {
         FaceRoomCenter();
+
+        if (!IsClaimed && treasureAudioSource != null)
+        {
+            treasureAudioSource.loop = true;
+            treasureAudioSource.spatialBlend = 1f;
+            treasureAudioSource.Play();
+        }
     }
 
     private void FaceRoomCenter()
@@ -210,6 +220,11 @@ public class RewardChest : MonoBehaviour
 
         if (interactionCollider != null)
             interactionCollider.enabled = false;
+
+        if (treasureAudioSource != null)
+            treasureAudioSource.Stop();
+
+        StopTreasureAudio();
     }
 
     public void RestoreClaimedState(bool claimed)
@@ -224,6 +239,27 @@ public class RewardChest : MonoBehaviour
             // Settle to the opened pose without replaying the reward interaction.
             animator.SetTrigger(openTrigger);
             animator.Update(Mathf.Max(openingDuration, 0.01f));
+        }
+    }
+
+    public void StartTreasureAudio()
+    {
+        if (IsClaimed || treasureAudioSource == null)
+            return;
+
+        treasureAudioSource.loop = true;
+        treasureAudioSource.spatialBlend = 1f;
+
+        if (!treasureAudioSource.isPlaying)
+            treasureAudioSource.Play();
+    }
+
+    public void StopTreasureAudio()
+    {
+        if (treasureAudioSource != null &&
+            treasureAudioSource.isPlaying)
+        {
+            treasureAudioSource.Stop();
         }
     }
 }

@@ -70,6 +70,19 @@ public class Enemy : MonoBehaviour
     public int ScanTriangleCount => bakedTriangles != null ? bakedTriangles.Length / 3 : 0;
     string scanSurfaceSignature;
 
+    [Header("Presence Audio Volume")]
+    [SerializeField, Range(0f, 1f)]
+    private float normalPresenceVolume = 0.05f;
+
+    [SerializeField, Range(0f, 1f)]
+    private float focusedPresenceVolume = 0.30f;
+
+    [SerializeField]
+    private float focusVolumeTransition = 0.4f;
+
+    private Coroutine presenceVolumeRoutine;
+
+
     private DamageOverTimeEffect activeDamageOverTime;
     [System.Serializable]
     public class DamageOverTimeEffect
@@ -163,12 +176,11 @@ public class Enemy : MonoBehaviour
             presenceAudioSource.clip = presenceAudioClip;
             presenceAudioSource.loop = true;
             presenceAudioSource.playOnAwake = false;
+            presenceAudioSource.volume = normalPresenceVolume;
         }
 
         if (attackAudioSource != null)
-        {
             attackAudioSource.playOnAwake = false;
-        }
     }
 
 
@@ -207,7 +219,12 @@ public class Enemy : MonoBehaviour
     public void UpdateGaze(bool isFocused, float deltaTime)
     {
         if (Resolved || Discovered)
+        {
+            SetPresenceFocused(false);
             return;
+        }
+
+        SetPresenceFocused(isFocused);
 
         if (isFocused)
             focusTimer += deltaTime;
@@ -225,7 +242,6 @@ public class Enemy : MonoBehaviour
         registeredScanPoints++;
         CheckDiscovery();
     }
-
 
     private void CheckDiscovery()
     {
@@ -344,8 +360,17 @@ public class Enemy : MonoBehaviour
 
     public virtual void Resolve()
     {
+        if (Resolved) return;
+
         Resolved = true;
+
+        FindAnyObjectByType<LiDARScanner>()?.RemoveEnemyDots(this);
+
         StopPresenceAudio();
+
+        if (attackAudioSource != null)
+            attackAudioSource.Stop();
+
         gameObject.SetActive(false);
     }
 
@@ -438,24 +463,19 @@ public class Enemy : MonoBehaviour
 
     public void StartPresenceAudio()
     {
-        Debug.Log($"[Enemy Audio] Starting presence audio for {name}");
-
-        if (presenceAudioSource == null)
-        {
-            Debug.LogWarning($"[Enemy Audio] {name}: Presence Audio Source is NULL.");
+        if (Resolved || !gameObject.activeInHierarchy)
             return;
-        }
 
-        if (presenceAudioClip == null)
-        {
-            Debug.LogWarning($"[Enemy Audio] {name}: Presence Audio Clip is NULL.");
+        if (presenceAudioSource == null || presenceAudioClip == null)
             return;
-        }
 
-        Debug.Log($"[Enemy Audio] Playing {presenceAudioClip.name}");
+        presenceAudioSource.enabled = true;
 
         if (!presenceAudioSource.isPlaying)
+        {
+            Debug.Log($"[Enemy Audio] Starting presence audio for {name}");
             presenceAudioSource.Play();
+        }
     }
 
     public void StopPresenceAudio()
@@ -463,8 +483,7 @@ public class Enemy : MonoBehaviour
         if (presenceAudioSource == null)
             return;
 
-        if (presenceAudioSource.isPlaying)
-            presenceAudioSource.Stop();
+        presenceAudioSource.Stop();
     }
 
     public void PlayAttackAudio()
@@ -559,5 +578,50 @@ public class Enemy : MonoBehaviour
     {
         if (bakedMesh != null)
             Destroy(bakedMesh);
+    }
+
+    public void SetPresenceFocused(bool focused)
+    {
+        if (presenceAudioSource == null)
+            return;
+
+        if (presenceVolumeRoutine != null)
+            StopCoroutine(presenceVolumeRoutine);
+
+        float targetVolume = focused
+            ? focusedPresenceVolume
+            : normalPresenceVolume;
+
+        presenceVolumeRoutine = StartCoroutine(
+            ChangePresenceVolume(targetVolume)
+        );
+    }
+
+    private IEnumerator ChangePresenceVolume(float targetVolume)
+    {
+        float startVolume = presenceAudioSource.volume;
+        float elapsed = 0f;
+
+        while (elapsed < focusVolumeTransition)
+        {
+            elapsed += Time.deltaTime;
+
+            float t = Mathf.Clamp01(
+                elapsed / Mathf.Max(0.01f, focusVolumeTransition)
+            );
+
+            t = Mathf.SmoothStep(0f, 1f, t);
+
+            presenceAudioSource.volume = Mathf.Lerp(
+                startVolume,
+                targetVolume,
+                t
+            );
+
+            yield return null;
+        }
+
+        presenceAudioSource.volume = targetVolume;
+        presenceVolumeRoutine = null;
     }
 }

@@ -4,6 +4,8 @@ public enum MoveDirection { Forward, Back, Left, Right }
 
 public class RoomNode : MonoBehaviour
 {
+    public bool HasBeenVisited { get; private set; }
+
     [Header("Room size (meters)")]
     public float width = 8f;
     public float depth = 12f;
@@ -28,8 +30,8 @@ public class RoomNode : MonoBehaviour
     [Tooltip("Optional. Where an enemy stands in this room. If empty, a spot ahead of the player is used.")]
     public Transform enemySpawnPoint;
     [HideInInspector] public Enemy enemy;
+    [HideInInspector] public RewardChest treasure;
     Vector3 LocalAnchor => new Vector3(width * (widthSplit - 0.5f), 0f, depth * (depthBehind - 0.5f));
-
     public Vector3 AnchorPosition => transform.TransformPoint(LocalAnchor);
     public Quaternion AnchorRotation => transform.rotation;
 
@@ -83,5 +85,12 @@ public class RoomNode : MonoBehaviour
         {
             renderer.enabled = visible;
         }
+    }
+
+    public bool MarkVisited()
+    {
+        bool wasAlreadyVisited = HasBeenVisited;
+        HasBeenVisited = true;
+        return wasAlreadyVisited;
     }
 }
