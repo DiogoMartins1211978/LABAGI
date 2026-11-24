@@ -17,6 +17,8 @@ public class PlayerNodeMover : MonoBehaviour
     public float minDuration = 0.8f;
     public float heightOffset = 1f;
     public AnimationCurve ease = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [Tooltip("Instant room changes for VR. Disabled by default for existing scenes.")]
+    public bool instantTransitions;
     [Tooltip("How closely the chosen direction must match a neighbor (1 = exact, 0 = 90 degrees off).")]
     [Range(0f, 1f)] public float minAlignment = 0.1f;
 
@@ -217,6 +219,15 @@ public class PlayerNodeMover : MonoBehaviour
 
         Vector3 startPos = transform.position;
         Vector3 endPos = target.AnchorPosition + Vector3.up * heightOffset;
+
+        if (instantTransitions)
+        {
+            transform.position = endPos;
+            CurrentRoom = target;
+            moving = false;
+            RoomEntered?.Invoke(target);
+            yield break;
+        }
 
         float duration = Mathf.Max(minDuration, Vector3.Distance(startPos, endPos) / Mathf.Max(0.01f, moveSpeed));
 
