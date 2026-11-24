@@ -109,3 +109,108 @@ MonoBehaviour:
     - Room_Standard
     - Room_Start
     - SnakeEnemy
+  - id: card.arcaneTheft
+    category: cards
+    asset: {fileID: 11400000, guid: 994b6d9995ce45c45be2b1c2f1ea9949, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.battleFocus
+    category: cards
+    asset: {fileID: 11400000, guid: 0df8ab53f7ddf2f4bb3cf2ead3627686, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.chains
+    category: cards
+    asset: {fileID: 11400000, guid: 23e142155ee05bd42b073a3ef031f58c, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.counterAttack
+    category: cards
+    asset: {fileID: 11400000, guid: cccb063d1c042d441988623652e13dc6, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.crushingBlow
+    category: cards
+    asset: {fileID: 11400000, guid: f45b159600a944e42b558bdc207109e9, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.curse
+    category: cards
+    asset: {fileID: 11400000, guid: b58a465d56f3928418b4a2c5828be9d5, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.Empowerment
+    category: cards
+    asset: {fileID: 11400000, guid: fc3ae74f447255345861a0eedb8fd65d, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.Frost
+    category: cards
+    asset: {fileID: 11400000, guid: a20ee769fabe2d245b43e347c733fcfb, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.healing
+    category: cards
+    asset: {fileID: 11400000, guid: 92ec4145f31b8a345adc24c1a9dea9b2, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.lifeDrain
+    category: cards
+    asset: {fileID: 11400000, guid: 9aceaa33ca954b9418ff2b4a5b3f2ff9, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.phantomSlash
+    category: cards
+    asset: {fileID: 11400000, guid: 20d0deff96d7b16429b513e097cc321a, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.poisonDagger
+    category: cards
+    asset: {fileID: 11400000, guid: 80208b5b2566b334daab430aae55ef3c, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.reflect
+    category: cards
+    asset: {fileID: 11400000, guid: 10e7be6a31a4b6a44a21d85abaedc49e, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.toughSkin
+    category: cards
+    asset: {fileID: 11400000, guid: a8ae3bfc3a34f1c4bb8f9c25f31d0c10, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []
+  - id: card.thunderStrike
+    category: cards
+    asset: {fileID: 11400000, guid: 5d40236a98309b7499f37b381f253839, type: 2}
+    requiresRegion: 0
+    allowedRegionIds: []
+    excludedRegionIds: []
+    requiredIds: []

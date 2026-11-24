@@ -16108,15 +16108,15 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 296
   _pointsPerScan: 40
-  resolution: 100
+  resolution: 256
   _camera: {fileID: 906570677}
   _distanceThinningStart: 8
   _lookSource: {fileID: 906570674}
   _cameraRotationThresholdDegrees: 0.1
-  _scanInterval: 0.1
+  _scanInterval: 0.15
   _debug: 1
   _initialScanRadius: 0.05
-  _focusExpansionSpeed: 0.35
+  _focusExpansionSpeed: 0.15
   _minimumPointSpacing: 0.04
   _pulseOrigin: {fileID: 0}
   _pulseRange: 12

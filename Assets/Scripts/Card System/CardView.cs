@@ -1,6 +1,7 @@
+
 using System;
-using TMPro;
 using UnityEngine;
+using static CardData;
 
 public class CardView : MonoBehaviour
 {
@@ -15,10 +16,23 @@ public class CardView : MonoBehaviour
 
     static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
     static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+
+    [Header("Rarity Visuals")]
+    public Renderer rarityFrameRenderer;
+
+    public Texture2D commonFrame;
+    public Texture2D rareFrame;
+    public Texture2D epicFrame;
+    public Texture2D legendaryFrame;
+    public Texture2D mythicFrame;
+
     MaterialPropertyBlock block;
 
-    public void Setup(CardData data)
+    public int Level { get; private set; }
+
+    public void Setup(CardData data, int level)
     {
+        Level = level;
         Data = data;
 
         if (iconRenderer != null && data.frontArt != null)
@@ -31,6 +45,27 @@ public class CardView : MonoBehaviour
             currentScale.x = currentScale.y * texAspect;
             iconRenderer.transform.localScale = currentScale;
         }
+
+        ApplyLevelAppearance(level);
+    }
+
+    private void ApplyLevelAppearance(int level)
+    {
+        if (rarityFrameRenderer == null)
+            return;
+
+        Texture2D texture = level switch
+        {
+            1 => commonFrame,
+            2 => rareFrame,
+            3 => epicFrame,
+            4 => legendaryFrame,
+            5 => mythicFrame,
+            _ => commonFrame
+        };
+
+        if (texture != null)
+            rarityFrameRenderer.material.mainTexture = texture;
     }
 
     public void SetFaceUp(bool faceUp)
@@ -47,5 +82,11 @@ public class CardView : MonoBehaviour
     void OnMouseDown()
     {
         CardClicked?.Invoke(this);
+    }
+
+    public void SetLevel(int level)
+    {
+        Level = level;
+        ApplyLevelAppearance(level);
     }
 }

@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd82884e94855514fac66a89a800c972, type: 3}
-  m_Name: Card_DoubleAttack
+  m_Name: Frost
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  displayName: Double Strike
+  displayName: Frost Bind
   description: 
   maxCopies: 1
-  cardPrefab: {fileID: 5402039138179560827, guid: ff40f389a2a765c4eb34c758a0ca0d36, type: 3}
-  frontArt: {fileID: 2800000, guid: 858f9b4a63183734185edc86daa133bc, type: 3}
+  cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
+  frontArt: {fileID: 2800000, guid: 6434fcb03ad94b146ad7e9d85b706698, type: 3}

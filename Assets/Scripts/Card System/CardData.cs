@@ -6,7 +6,7 @@ public class CardData : ScriptableObject
     public string displayName = "New Card";
     [TextArea] public string description;
     [Tooltip("Max copies of this card allowed in one deck")]
-    public int maxCopies = 3;
+    public int maxCopies = 5;
 
     [Header("Visuals")]
     [Tooltip("Card prefab (or Prefab Variant) with a CardView on its root")]
@@ -14,7 +14,7 @@ public class CardData : ScriptableObject
     [Tooltip("Picture shown on the front of the card")]
     public Texture2D frontArt;
 
-    public CardView CreateView(Transform parent = null)
+    public CardView CreateView(Transform parent = null, int level = 1)
     {
         if (cardPrefab == null)
         {
@@ -23,7 +23,7 @@ public class CardData : ScriptableObject
         }
 
         CardView view = Instantiate(cardPrefab, parent);
-        view.Setup(this);
+        view.Setup(this, level);
         return view;
     }
 

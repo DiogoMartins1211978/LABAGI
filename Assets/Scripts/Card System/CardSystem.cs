@@ -42,8 +42,8 @@ public class CardSystem : MonoBehaviour
 
     public Mode CurrentMode { get; private set; } = Mode.Exploration;
     public bool IsPlayerTurn { get; private set; }
-    public IReadOnlyList<CardData> Hand => hand;
-    public CardData NextCard => queue.Count > 0 ? queue.Peek() : null;
+    public IReadOnlyList<CardInstance> Hand => hand;
+    public CardData NextCard => queue.Count > 0 ? queue.Peek().Data : null;
     public int SelectedIndex => selected;
 
     public event Action TurnStarted;
@@ -51,8 +51,8 @@ public class CardSystem : MonoBehaviour
     public event Action TurnEnded;
     public event Action StateChanged;
 
-    readonly List<CardData> hand = new List<CardData>();
-    readonly Queue<CardData> queue = new Queue<CardData>();
+    readonly List<CardInstance> hand = new List<CardInstance>();
+    readonly Queue<CardInstance> queue = new Queue<CardInstance>();
     int selected;
     float nextTurnTimer = -1f;
 
@@ -61,6 +61,19 @@ public class CardSystem : MonoBehaviour
     bool bookDeckOpen;
     public bool IsBookDeckOpen => bookDeckOpen;
     public void SetBookDeckOpen(bool open) => bookDeckOpen = open && CurrentMode != Mode.Combat;
+
+    [Serializable]
+    public struct CardInstance
+    {
+        public CardData Data;
+        public int Level;
+
+        public CardInstance(CardData data, int level)
+        {
+            Data = data;
+            Level = level;
+        }
+    }
 
     InputAction prev, next, confirm, remove, toggle;
     InputAction slot1, slot2, slot3, slot4;
@@ -139,21 +152,51 @@ public class CardSystem : MonoBehaviour
     {
         bookDeckOpen = false;
         CurrentMode = Mode.Combat;
+
         hand.Clear();
         queue.Clear();
         nextTurnTimer = -1f;
 
-        var shuffled = new List<CardData>(deck);
+        Dictionary<CardData, Queue<int>> ownedLevels = new Dictionary<CardData, Queue<int>>();
+
+        foreach (CardData card in collection)
+        {
+            if (card == null) continue;
+
+            if (!ownedLevels.ContainsKey(card))
+                ownedLevels[card] = new Queue<int>();
+
+            ownedLevels[card].Enqueue(ownedLevels[card].Count + 1);
+        }
+
+        List<CardInstance> shuffled = new List<CardInstance>();
+
+        foreach (CardData card in deck)
+        {
+            if (card == null) continue;
+
+            if (!ownedLevels.ContainsKey(card) || ownedLevels[card].Count == 0)
+                continue;
+
+            int level = ownedLevels[card].Dequeue();
+            shuffled.Add(new CardInstance(card, level));
+        }
+
         Shuffle(shuffled);
+
         for (int i = 0; i < shuffled.Count; i++)
         {
-            if (i < handSize) hand.Add(shuffled[i]);
-            else queue.Enqueue(shuffled[i]);
+            if (i < handSize)
+                hand.Add(shuffled[i]);
+            else
+                queue.Enqueue(shuffled[i]);
         }
 
         selected = 0;
+
         SetPlayerMovementEnabled(false);
         StartPlayerTurn();
+
         Debug.Log("[Cards] Entered Combat Mode.");
     }
 
@@ -274,25 +317,30 @@ public class CardSystem : MonoBehaviour
     void PlaySelected()
     {
         if (PauseMenuController.BlocksGameplayInput) return;
+
         if (!IsPlayerTurn)
         {
             Debug.Log("[Cards] It's not your turn.");
             return;
         }
 
-        CardData card = hand[selected];
+        CardInstance playedCard = hand[selected];
+
         IsPlayerTurn = false;
 
-        card.OnPlay(gameObject);
+        playedCard.Data.OnPlay(gameObject);
 
         hand[selected] = queue.Dequeue();
-        queue.Enqueue(card);
+        queue.Enqueue(playedCard);
 
-        LogHand($"Played {card.displayName}");
-        CardPlayed?.Invoke(card);
+        StateChanged?.Invoke();
+        LogHand($"Played {playedCard.Data.displayName}");
+
+        CardPlayed?.Invoke(playedCard.Data);
         TurnEnded?.Invoke();
 
-        if (autoStartNextTurn) nextTurnTimer = nextTurnDelay;
+        if (autoStartNextTurn)
+            nextTurnTimer = nextTurnDelay;
     }
 
     public void SetSelection(int index)
@@ -365,7 +413,7 @@ public class CardSystem : MonoBehaviour
         return n;
     }
 
-    static void Shuffle(List<CardData> list)
+    static void Shuffle<T>(List<T> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
         {
@@ -377,8 +425,13 @@ public class CardSystem : MonoBehaviour
     void LogHand(string header)
     {
         var sb = new StringBuilder($"[Cards] {header}\nHand: ");
+
         for (int i = 0; i < hand.Count; i++)
-            sb.Append(i == selected ? "> " : "  ").Append($"[{hand[i].displayName}] ");
+        {
+            sb.Append(i == selected ? "> " : "  ")
+              .Append($"[{hand[i].Data.displayName} Lv.{hand[i].Level}] ");
+        }
+
         Debug.Log(sb.ToString());
         StateChanged?.Invoke();
     }
@@ -387,5 +440,47 @@ public class CardSystem : MonoBehaviour
     {
         Debug.Log($"[Cards] {header}");
         StateChanged?.Invoke();
+    }
+
+    public int GetCardLevel(CardData card)
+    {
+        int count = 0;
+
+        foreach (CardData ownedCard in collection)
+        {
+            if (ownedCard == card)
+                count++;
+        }
+
+        return Mathf.Clamp(count, 1, 5);
+    }
+
+    public bool AddCardToCollection(CardData card)
+    {
+        if (card == null)
+            return false;
+
+        int currentLevel = Count(collection, card);
+
+        if (currentLevel >= 5)
+        {
+            Debug.Log($"[Cards] {card.displayName} is already Mythic (Level 5).");
+            return false;
+        }
+
+        collection.Add(card);
+
+        int newLevel = currentLevel + 1;
+
+        Debug.Log($"[Cards] Acquired {card.displayName}. New Level: {newLevel}");
+
+        StateChanged?.Invoke();
+
+        return true;
+    }
+
+    public int GetOwnedCardCount(CardData card)
+    {
+        return Count(collection, card);
     }
 }

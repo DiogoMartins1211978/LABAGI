@@ -68,10 +68,20 @@ public class BookDeckUI : MonoBehaviour
     }
     public void Refresh()
     {
-        var unique = new List<CardData>();
-        foreach (var card in cards.collection) if (card != null && !unique.Contains(card)) unique.Add(card);
+        var collectionEntries = new List<(CardData card, int level)>();
+        var ownedLevels = new Dictionary<CardData, int>();
+
+        foreach (var card in cards.collection)
+        {
+            if (card == null) continue;
+            ownedLevels.TryGetValue(card, out int level);
+            level++;
+            ownedLevels[card] = level;
+            collectionEntries.Add((card, level));
+        }
+
         int leftCapacity = Capacity(collectionGrid), rightCapacity = Capacity(deckGrid);
-        int leftPages = Mathf.Max(1, Mathf.CeilToInt(unique.Count / (float)leftCapacity));
+        int leftPages = Mathf.Max(1, Mathf.CeilToInt(collectionEntries.Count / (float)leftCapacity));
         int rightPages = Mathf.Max(1, Mathf.CeilToInt(cards.deckSize / (float)rightCapacity));
         collectionPageCount = leftPages; deckPageCount = rightPages;
         collectionPage = (collectionPage % leftPages + leftPages) % leftPages;
@@ -84,13 +94,35 @@ public class BookDeckUI : MonoBehaviour
         for (int i = 0; i < leftCapacity; i++)
         {
             int index = collectionPage * leftCapacity + i;
-            var card = index < unique.Count ? unique[index] : null;
-            collectionSlots[i].Bind(this, card, false, card != null ? cards.collection.Count(c => c == card) : 0, scale);
+            CardData card = null;
+            int level = 0;
+            if (index < collectionEntries.Count)
+            {
+                card = collectionEntries[index].card;
+                level = collectionEntries[index].level;
+            }
+            collectionSlots[i].Bind(this, card, false, level, scale);
         }
+        var deckLevels = new Dictionary<CardData, int>();
+
         for (int i = 0; i < rightCapacity; i++)
         {
             int index = deckPage * rightCapacity + i;
-            deckSlots[i].Bind(this, index < cards.deck.Count && index < cards.deckSize ? cards.deck[index] : null, true, 1, scale);
+
+            CardData card = index < cards.deck.Count && index < cards.deckSize
+                ? cards.deck[index]
+                : null;
+
+            int level = 0;
+
+            if (card != null)
+            {
+                deckLevels.TryGetValue(card, out level);
+                level++;
+                deckLevels[card] = level;
+            }
+
+            deckSlots[i].Bind(this, card, true, level, scale);
         }
         deckHeading.text = "Deck";
         collectionFolio.text = "— " + BestiaryUI.Roman(collectionPage + 1) + " —";

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 694880977383984457}
   - component: {fileID: 4481649916135052588}
   m_Layer: 3
-  m_Name: Back
+  m_Name: BackFace
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -140,7 +140,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5695295867388576730}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -0.001}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -254,7 +254,7 @@ Transform:
   m_GameObject: {fileID: 7248326805494854242}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.07993, y: 0.65134, z: 3.123}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -274,7 +274,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f718e008dc6835d43ae3802ff53b4086, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardView
-  iconRenderer: {fileID: 0}
+  iconRenderer: {fileID: 7340589518714186298}
+  rarityFrameRenderer: {fileID: 8251927926668015964}
+  commonFrame: {fileID: 2800000, guid: 70d8f1b3e73104d43b134ae11bd35dc8, type: 3}
+  rareFrame: {fileID: 2800000, guid: 6d8bbe4ed3154de40bb1bb47369c3bff, type: 3}
+  epicFrame: {fileID: 2800000, guid: 58a3fa5add2bb3640a6ef988dc0e3b2a, type: 3}
+  legendaryFrame: {fileID: 2800000, guid: 43442bca84e30e645bae1dad000bb3f2, type: 3}
+  mythicFrame: {fileID: 2800000, guid: 7e7d437111ce02e46b9f160698915c15, type: 3}
 --- !u!65 &225865957988871837
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -325,7 +331,7 @@ GameObject:
   - component: {fileID: 8251927926668015964}
   - component: {fileID: 4259708587049340676}
   m_Layer: 3
-  m_Name: Front
+  m_Name: FrontFace
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

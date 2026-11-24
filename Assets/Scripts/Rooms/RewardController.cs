@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Tools.Content;
 
 public class RewardController : MonoBehaviour
 {
@@ -76,6 +77,7 @@ public class RewardController : MonoBehaviour
 
     private GameObject cardVisual;
     private GameObject heartVisual;
+    private CardData selectedCardReward;
 
     private Vector3 cardBaseScale;
     private Vector3 heartBaseScale;
@@ -249,6 +251,8 @@ public class RewardController : MonoBehaviour
 
         yield return activeChest.Open();
 
+        selectedCardReward = GetRandomCardReward();
+
         yield return PresentRewards();
 
         selectedReward = RewardChoice.Heart;
@@ -275,21 +279,24 @@ public class RewardController : MonoBehaviour
 
         Vector3 startPosition = Vector3.zero;
 
-        if (activeChest.cardVisualPrefab != null)
+        if (selectedCardReward != null)
         {
-            cardVisual = Instantiate(
-                activeChest.cardVisualPrefab,
-                spawnPoint,
-                false
-            );
+            int rewardLevel = Mathf.Clamp(cardSystem.GetOwnedCardCount(selectedCardReward) + 1, 1, 5);
 
-            cardVisual.transform.localPosition = startPosition;
-            cardVisual.transform.localRotation = Quaternion.identity;
+            CardView rewardCard = selectedCardReward.CreateView(spawnPoint, rewardLevel);
 
-            cardVisual.transform.localScale = Vector3.one * 1.7f;
-            cardBaseScale = cardVisual.transform.localScale;
+            if (rewardCard != null)
+            {
+                cardVisual = rewardCard.gameObject;
 
-            DisableRewardFloat(cardVisual);
+                cardVisual.transform.localPosition = startPosition;
+                cardVisual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); ;
+
+                cardVisual.transform.localScale = Vector3.one * 1.7f;
+                cardBaseScale = cardVisual.transform.localScale;
+
+                DisableRewardFloat(cardVisual);
+            }
         }
 
         if (activeChest.heartVisualPrefab != null)
@@ -392,6 +399,9 @@ public class RewardController : MonoBehaviour
 
     private void SelectReward(RewardChoice choice)
     {
+        if (choice == RewardChoice.Card && selectedCardReward == null)
+            return;
+
         if (selectedReward == choice)
             return;
 
@@ -502,9 +512,9 @@ public class RewardController : MonoBehaviour
 
     private void ApplyCardReward()
     {
-        if (activeChest == null || activeChest.cardReward == null)
+        if (selectedCardReward == null)
         {
-            Debug.LogWarning("[RewardController] No card reward assigned to this chest.");
+            Debug.LogWarning("[RewardController] No eligible card reward selected.");
             return;
         }
 
@@ -514,10 +524,18 @@ public class RewardController : MonoBehaviour
             return;
         }
 
-        cardSystem.collection.Add(activeChest.cardReward);
+        cardSystem.AddCardToCollection(selectedCardReward);
+
+        int newLevel = 0;
+
+        foreach (CardData card in cardSystem.collection)
+        {
+            if (card == selectedCardReward)
+                newLevel++;
+        }
 
         Debug.Log(
-            $"[RewardController] Collected card: {activeChest.cardReward.displayName}"
+            $"[RewardController] Collected {selectedCardReward.displayName} - Level {newLevel}"
         );
     }
 
@@ -536,47 +554,9 @@ public class RewardController : MonoBehaviour
 
         cardVisual = null;
         heartVisual = null;
+        selectedCardReward = null;
 
         originalBlocks.Clear();
-    }
-
-    private Quaternion GetRewardRotation(Vector3 position)
-    {
-        Vector3 direction = mainCamera.transform.position - position;
-
-        if (direction.sqrMagnitude < 0.001f)
-            return Quaternion.identity;
-
-        return Quaternion.LookRotation(direction.normalized, Vector3.up);
-    }
-
-    private void PositionRewardAboveChest(GameObject reward, Vector3 horizontalPosition)
-    {
-        Renderer[] renderers = reward.GetComponentsInChildren<Renderer>();
-
-        if (renderers.Length == 0)
-        {
-            reward.transform.position = horizontalPosition + Vector3.up * rewardClearance;
-            return;
-        }
-
-        Bounds bounds = renderers[0].bounds;
-
-        for (int i = 1; i < renderers.Length; i++)
-            bounds.Encapsulate(renderers[i].bounds);
-
-        float rendererBottomOffset =
-            bounds.min.y - reward.transform.position.y;
-
-        float targetY = horizontalPosition.y +
-                        rewardClearance -
-                        rendererBottomOffset;
-
-        reward.transform.position = new Vector3(
-            horizontalPosition.x,
-            targetY,
-            horizontalPosition.z
-        );
     }
 
     private void DisableRewardFloat(GameObject reward)
@@ -596,4 +576,55 @@ public class RewardController : MonoBehaviour
             animation.enabled = true;
         }
     }
+
+    private CardData GetRandomCardReward()
+    {
+        if (cardSystem == null)
+        {
+            Debug.LogWarning("[RewardController] No CardSystem available.");
+            return null;
+        }
+
+        IReadOnlyList<CardData> availableCards = ContentAvailability.GetAvailable<CardData>("cards");
+
+        List<CardData> eligibleCards = new List<CardData>();
+
+        foreach (CardData card in availableCards)
+        {
+            if (card == null)
+                continue;
+
+            int ownedCopies = 0;
+
+            foreach (CardData ownedCard in cardSystem.collection)
+            {
+                if (ownedCard == card)
+                    ownedCopies++;
+            }
+
+            if (ownedCopies >= card.maxCopies)
+                continue;
+
+            eligibleCards.Add(card);
+        }
+
+        if (eligibleCards.Count == 0)
+        {
+            Debug.Log("[RewardController] No eligible card rewards remaining.");
+            return null;
+        }
+
+        CardData selected = eligibleCards[Random.Range(0, eligibleCards.Count)];
+
+        //for tests
+        //selected = eligibleCards[0];
+
+        Debug.Log(
+            $"[RewardController] Selected card reward: {selected.displayName}"
+        );
+
+        return selected;
+    }
+
+
 }

@@ -44,6 +44,7 @@ public class HandView : MonoBehaviour
     public float flyTime = 0.35f;
 
     readonly List<CardView> views = new List<CardView>();
+    readonly HashSet<CardView> animating = new HashSet<CardView>();
 
     void OnEnable()
     {
@@ -91,27 +92,52 @@ public class HandView : MonoBehaviour
             return;
         }
 
-        IReadOnlyList<CardData> hand = cardSystem.Hand;
+        IReadOnlyList<CardSystem.CardInstance> hand = cardSystem.Hand;
 
         while (views.Count > hand.Count)
         {
-            if (views[views.Count - 1] != null) Destroy(views[views.Count - 1].gameObject);
+            if (views[views.Count - 1] != null)
+                Destroy(views[views.Count - 1].gameObject);
+
             views.RemoveAt(views.Count - 1);
         }
-        while (views.Count < hand.Count) views.Add(null);
+
+        while (views.Count < hand.Count)
+            views.Add(null);
 
         for (int i = 0; i < hand.Count; i++)
         {
-            if (views[i] != null && views[i].Data == hand[i]) continue;
+            CardSystem.CardInstance card = hand[i];
 
-            if (views[i] != null) StartCoroutine(FlyAway(views[i]));
-            views[i] = Spawn(hand[i]);
+            if (views[i] == null)
+            {
+                views[i] = Spawn(card.Data, card.Level);
+                continue;
+            }
+
+            if (views[i].Data == card.Data && views[i].Level == card.Level) continue;
+
+            CardView oldView = views[i];
+            views[i] = null;
+
+            StartCoroutine(ReplaceCard(i, oldView, card));
         }
     }
 
-    CardView Spawn(CardData data)
+    IEnumerator ReplaceCard(int index, CardView oldView,
+        CardSystem.CardInstance newCard)
     {
-        CardView view = data.CreateView(transform);
+        yield return StartCoroutine(FlyAway(oldView));
+
+        if (index >= views.Count || views[index] != null)
+            yield break;
+
+        views[index] = Spawn(newCard.Data, newCard.Level);
+    }
+
+    CardView Spawn(CardData data, int level)
+    {
+        CardView view = data.CreateView(transform, level);
         if (view == null) return null;
 
         view.SetFaceUp(true);
@@ -122,18 +148,14 @@ public class HandView : MonoBehaviour
         {
             int idx = views.IndexOf(v);
             if (idx != -1 && cardSystem != null)
-            {
                 cardSystem.SetSelection(idx);
-            }
         };
 
         view.CardClicked += (v) =>
         {
             int idx = views.IndexOf(v);
             if (idx != -1 && cardSystem != null)
-            {
                 cardSystem.PlayIndexDirectly(idx);
-            }
         };
 
         return view;
@@ -154,7 +176,7 @@ public class HandView : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             CardView v = views[i];
-            if (v == null) continue;
+            if (v == null || animating.Contains(v)) continue;
 
             GetSlot(i, count, i == cardSystem.SelectedIndex, out Vector3 pos, out Quaternion rot, out float scale);
 
@@ -167,22 +189,34 @@ public class HandView : MonoBehaviour
 
     IEnumerator FlyAway(CardView v)
     {
+        Debug.LogWarning($"Card {v} was played");
+        if (v == null) yield break;
+
+        animating.Add(v);
+
         Transform tr = v.transform;
         Vector3 startPos = tr.localPosition;
         Vector3 startScale = tr.localScale;
         Vector3 endPos = startPos + playOffset;
 
         float t = 0f;
+
         while (t < 1f && v != null)
         {
             t += Time.deltaTime / Mathf.Max(0.01f, flyTime);
+
             float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
+
             tr.localPosition = Vector3.Lerp(startPos, endPos, k);
             tr.localScale = Vector3.Lerp(startScale, Vector3.zero, k);
+
             yield return null;
         }
 
-        if (v != null) Destroy(v.gameObject);
+        if (v != null)
+            Destroy(v.gameObject);
+
+        animating.Remove(v);
     }
 
     void OnDrawGizmos()
