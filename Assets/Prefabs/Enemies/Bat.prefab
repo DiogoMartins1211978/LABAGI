@@ -386,7 +386,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   requiredFocusTime: 2
-  requiredScanPoints: 12
+  requiredScanPoints: 70
   discoveredMaterials: []
   skinnedMeshRenderer: {fileID: 0}
   lidarMeshCollider: {fileID: 0}

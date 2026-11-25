@@ -12,18 +12,6 @@ public class RewardChest : MonoBehaviour
         ProceduralNoLid
     }
 
-    public enum TreasureType
-    {
-        Chest,
-        Barrel
-    }
-
-    [Header("Treasure Type")]
-    public TreasureType treasureType = TreasureType.Chest;
-
-    public GameObject chestModel;
-    public GameObject barrelModel;
-
     [Header("Orientation")]
     [Tooltip("Assign the centre of the room this chest belongs to.")]
     public Transform roomCenter;
@@ -65,7 +53,7 @@ public class RewardChest : MonoBehaviour
     public AudioSource treasureAudioSource;
 
     [SerializeField, Range(0f, 1f)]
-    private float treasureVolume = 0.05f;
+    private float treasureVolume = 1f;
 
     [SerializeField, Min(0.01f)]
     private float treasureFadeDuration = 0.5f;
@@ -76,11 +64,7 @@ public class RewardChest : MonoBehaviour
     public AudioSource rewardAudioSource;
 
     public AudioClip rewardSpawnSound;
-    public AudioClip cardRewardSound;
     public AudioClip heartRewardSound;
-
-    [SerializeField, Min(0.01f)]
-    private float rewardCollectionFadeDuration = 0.6f;
 
     private Coroutine rewardSoundRoutine;
 
@@ -95,12 +79,6 @@ public class RewardChest : MonoBehaviour
 
     private void Awake()
     {
-        if (chestModel != null)
-            chestModel.SetActive(treasureType == TreasureType.Chest);
-
-        if (barrelModel != null)
-            barrelModel.SetActive(treasureType == TreasureType.Barrel);
-
         initialPosition = transform.localPosition;
         initialRotation = transform.localRotation;
 
@@ -338,39 +316,12 @@ public class RewardChest : MonoBehaviour
         treasureFadeRoutine = null;
     }
 
-    public void PlayRewardSpawnSound()
+    public void PlayRewardSound(bool isCard = false)
     {
-        PlayRewardSound(rewardSpawnSound);
-    }
-
-    public void PlayRewardSelectionSound(bool isCard)
-    {
-        AudioClip clip = isCard ? cardRewardSound : heartRewardSound;
-        PlayRewardSound(clip);
-    }
-
-    public void PlayRewardCollectionSound(bool isCard)
-    {
-        AudioClip clip = isCard ? cardRewardSound : heartRewardSound;
-
-        if (rewardAudioSource == null || clip == null)
+        if (isCard)
             return;
 
-        if (rewardSoundRoutine != null)
-            StopCoroutine(rewardSoundRoutine);
-
-        rewardAudioSource.Stop();
-        rewardAudioSource.loop = false;
-        rewardAudioSource.clip = clip;
-        rewardAudioSource.volume = 1f;
-        rewardAudioSource.Play();
-
-        rewardSoundRoutine = StartCoroutine(FadeRewardCollectionSound());
-    }
-
-    private void PlayRewardSound(AudioClip clip)
-    {
-        if (rewardAudioSource == null || clip == null)
+        if (rewardAudioSource == null || heartRewardSound == null)
             return;
 
         if (rewardSoundRoutine != null)
@@ -381,41 +332,14 @@ public class RewardChest : MonoBehaviour
 
         rewardAudioSource.Stop();
         rewardAudioSource.loop = false;
-        rewardAudioSource.clip = clip;
-        rewardAudioSource.volume = 1f;
-        rewardAudioSource.Play();
+        rewardAudioSource.PlayOneShot(heartRewardSound);
     }
 
-    private IEnumerator FadeRewardCollectionSound()
+    public void PlayRewardSpawnSound()
     {
-        float duration = Mathf.Min(
-            rewardCollectionFadeDuration,
-            rewardAudioSource.clip.length
-        );
+        if (rewardAudioSource == null || rewardSpawnSound == null)
+            return;
 
-        float waitTime = Mathf.Max(
-            0f,
-            rewardAudioSource.clip.length - duration
-        );
-
-        yield return new WaitForSeconds(waitTime);
-
-        float elapsed = 0f;
-
-        while (elapsed < duration && rewardAudioSource.isPlaying)
-        {
-            elapsed += Time.deltaTime;
-
-            float t = Mathf.Clamp01(elapsed / duration);
-            float smoothT = Mathf.SmoothStep(0f, 1f, t);
-
-            rewardAudioSource.volume = Mathf.Lerp(1f, 0f, smoothT);
-
-            yield return null;
-        }
-
-        rewardAudioSource.Stop();
-        rewardAudioSource.volume = 1f;
-        rewardSoundRoutine = null;
+        rewardAudioSource.PlayOneShot(rewardSpawnSound);
     }
 }

@@ -3204,6 +3204,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RewardController
   combatController: {fileID: 269744964}
   player: {fileID: 604149155}
+  playerHealth: {fileID: 604149156}
   cardSystem: {fileID: 269744960}
   mainCamera: {fileID: 906570677}
   detectionDistance: 5
@@ -13186,8 +13187,6 @@ MonoBehaviour:
   sensitivity: 0.2
   keyboardLookSpeed: 90
   maxVerticalAngle: 20
-  focusOffset: {x: 0, y: 0.3, z: 0}
-  combatCameraTurnSpeed: 8
 --- !u!1 &908346302
 GameObject:
   m_ObjectHideFlags: 0

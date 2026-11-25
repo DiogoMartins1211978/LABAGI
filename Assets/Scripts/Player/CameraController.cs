@@ -18,10 +18,6 @@ public class CameraController : MonoBehaviour
     private float verticalRotation = 0f;
     private float horizontalRotation = 0f;
 
-    [Header("Combat Camera")]
-    [SerializeField] private Vector3 focusOffset = new Vector3(0f, 0.3f, 0f);
-    [SerializeField] private float combatCameraTurnSpeed = 8f;
-
     void Start()
     {
         keyboardLook = InputSystem.actions?.FindAction("Player/KeyboardLook");

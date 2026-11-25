@@ -22,3 +22,5 @@ MonoBehaviour:
   cardPrefab: {fileID: 1548273081794107269, guid: ad29f4e4d542606409f162925174e745, type: 3}
   frontArt: {fileID: 2800000, guid: 731a5d6f3d3fff249a1a49a80ba2f6d1, type: 3}
   cardSound: {fileID: 8300000, guid: b61e4bcd7263baf4394db7ef620c8032, type: 3}
+  shinySound: {fileID: 8300000, guid: fdfa052121107ec42ac3d29f1e1d1088, type: 3}
+  cardAudioGroup: {fileID: 7221677375424192839, guid: a9a310d05ca3ef74bbdfb18a65913e84, type: 2}

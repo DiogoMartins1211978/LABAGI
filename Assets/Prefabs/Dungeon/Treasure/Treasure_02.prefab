@@ -67,6 +67,13 @@ MonoBehaviour:
   shakeSpeed: 35
   liftAmount: 0.12
   treasureAudioSource: {fileID: 7529493266049480709}
+  treasureVolume: 0.05
+  treasureFadeDuration: 0.5
+  rewardAudioSource: {fileID: 7529493266049480709}
+  rewardSpawnSound: {fileID: 8300000, guid: cae7fc73bfc982f4192e7c706fd9e705, type: 3}
+  cardRewardSound: {fileID: 8300000, guid: 6463cb6bf036eac409a68470c3e87bbe, type: 3}
+  heartRewardSound: {fileID: 8300000, guid: dce18d64ed900314487634ee64d6c085, type: 3}
+  rewardCollectionFadeDuration: 0.6
 --- !u!1 &2619847324457394535
 GameObject:
   m_ObjectHideFlags: 0

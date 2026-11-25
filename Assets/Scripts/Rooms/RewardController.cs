@@ -25,11 +25,11 @@ public class RewardController : MonoBehaviour
     [Header("References")]
     public CombatController combatController;
     public PlayerNodeMover player;
+    [SerializeField] private PlayerHealth playerHealth;
     public CardSystem cardSystem;
     public Camera mainCamera;
 
     [Header("Chest Detection")]
-    public float detectionDistance = 5f;
     public float gazeRequiredDuration = 1f;
     public LayerMask detectionMask = ~0;
 
@@ -86,8 +86,7 @@ public class RewardController : MonoBehaviour
 
     private RewardChoice selectedReward = RewardChoice.Heart;
 
-    private readonly Dictionary<Renderer, MaterialPropertyBlock> originalBlocks =
-        new Dictionary<Renderer, MaterialPropertyBlock>();
+    private readonly Dictionary<Renderer, MaterialPropertyBlock> originalBlocks = new Dictionary<Renderer, MaterialPropertyBlock>();
 
     private static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
 
@@ -154,7 +153,7 @@ public class RewardController : MonoBehaviour
         if (string.IsNullOrEmpty(actionName))
             return null;
 
-        InputAction action = InputSystem.actions != null
+        InputAction action = InputSystem.actions != null 
             ? InputSystem.actions.FindAction(actionName)
             : null;
 
@@ -180,7 +179,7 @@ public class RewardController : MonoBehaviour
 
         Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
 
-        if (!Physics.Raycast(ray, out RaycastHit hit, detectionDistance, detectionMask))
+        if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, detectionMask))
         {
             ResetGaze();
             return;
@@ -247,7 +246,7 @@ public class RewardController : MonoBehaviour
         yield return PresentRewards();
 
         selectedReward = RewardChoice.Heart;
-        activeChest.PlayRewardSelectionSound(false);
+        activeChest.PlayRewardSound(false);
         UpdateHighlight();
 
         state = RewardState.Selecting;
@@ -384,14 +383,21 @@ public class RewardController : MonoBehaviour
 
     private void SelectReward(RewardChoice choice)
     {
-        if (choice == RewardChoice.Card && selectedCardReward == null)
-            return;
-
-        if (selectedReward == choice)
-            return;
-
         selectedReward = choice;
-        activeChest.PlayRewardSelectionSound(choice == RewardChoice.Card);
+
+        if (choice == RewardChoice.Card)
+        {
+            if (selectedCardReward != null && cardVisual != null)
+            {
+                CardView rewardCard = cardVisual.GetComponent<CardView>();
+                if (rewardCard != null) selectedCardReward.PlayCardFeedback(rewardCard.transform, rewardCard.Level);
+            }
+        }
+        else
+        {
+            activeChest.PlayRewardSound(false);
+        }
+
         UpdateHighlight();
     }
 
@@ -461,17 +467,27 @@ public class RewardController : MonoBehaviour
     {
         state = RewardState.Returning;
 
-        activeChest.PlayRewardCollectionSound(selectedReward == RewardChoice.Card);
-
         if (selectedReward == RewardChoice.Card)
         {
+            if (selectedCardReward != null && cardVisual != null)
+            {
+                CardView rewardCard = cardVisual.GetComponent<CardView>();
+                if (rewardCard != null) selectedCardReward.PlayCardFeedback(rewardCard.transform, rewardCard.Level);
+            }
+
             ApplyCardReward();
-            if (heartVisual != null) Destroy(heartVisual);
+
+            if (heartVisual != null)
+                Destroy(heartVisual);
         }
         else
         {
+            activeChest.PlayRewardSound(false);
+
             ApplyHeartReward();
-            if (cardVisual != null) Destroy(cardVisual);
+
+            if (cardVisual != null)
+                Destroy(cardVisual);
         }
 
         activeChest.MarkClaimed();
@@ -522,7 +538,13 @@ public class RewardController : MonoBehaviour
 
     private void ApplyHeartReward()
     {
-        // TODO
+        if (playerHealth == null)
+        {
+            Debug.LogWarning("[Reward] PlayerHealth reference is missing.");
+            return;
+        }
+
+        playerHealth.IncreaseMaxHealthAndFullyHeal(5);
     }
 
     private void ClearRewardVisuals()
@@ -597,9 +619,9 @@ public class RewardController : MonoBehaviour
 
         CardData selected = eligibleCards[Random.Range(0, eligibleCards.Count)];
 
-        Debug.Log(
-            $"[RewardController] Selected card reward: {selected.displayName}"
-        );
+        selected = eligibleCards[0];
+
+        Debug.Log($"[RewardController] Selected card reward: {selected.displayName}");
 
         return selected;
     }

@@ -105,9 +105,6 @@ PrefabInstance:
       addedObject: {fileID: 8671622808394906465}
     - targetCorrespondingSourceObject: {fileID: -1099241868288562820, guid: 7af8d47011b06d44db671beae136b215, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 972573194571419427}
-    - targetCorrespondingSourceObject: {fileID: -1099241868288562820, guid: 7af8d47011b06d44db671beae136b215, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 3014842146334317465}
   m_SourcePrefab: {fileID: 100100000, guid: 7af8d47011b06d44db671beae136b215, type: 3}
 --- !u!1 &3336003750909610905 stripped
@@ -156,7 +153,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   requiredFocusTime: 2
-  requiredScanPoints: 12
+  requiredScanPoints: 50
   discoveredMaterials: []
   skinnedMeshRenderer: {fileID: 0}
   lidarMeshCollider: {fileID: 0}
@@ -385,42 +382,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -1099241868288562820, guid: 7af8d47011b06d44db671beae136b215, type: 3}
   m_PrefabInstance: {fileID: 2489000126104450760}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &972573194571419427
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5923360737785798580}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c55e695b8fb4a64593a6fae8789d811, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  spotRange: 0
-  spotAngle: 35
-  requireLineOfSight: 1
-  lineOfSightMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  requiredFocusTime: 2
-  requiredScanPoints: 12
-  discoveredMaterials: []
-  skinnedMeshRenderer: {fileID: 0}
-  lidarMeshCollider: {fileID: 0}
-  focusPoint: {fileID: 0}
-  focusHeight: 1.2
-  animator: {fileID: 0}
-  attackDuration: 1.5
-  presenceAudioSource: {fileID: 0}
-  attackAudioSource: {fileID: 0}
-  presenceAudioClip: {fileID: 0}
-  attackAudioClip: {fileID: 0}
-  maxHealth: 10
-  attackDamage: 3
-  normalPresenceVolume: 0.05
-  focusedPresenceVolume: 0.3
-  focusVolumeTransition: 0.4
 --- !u!64 &3014842146334317465
 MeshCollider:
   m_ObjectHideFlags: 0

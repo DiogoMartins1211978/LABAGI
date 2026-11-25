@@ -19,7 +19,7 @@ public class Enemy : MonoBehaviour
 
     [Header("Discovery")]
     [SerializeField] private float requiredFocusTime = 2f;
-    [SerializeField] private int requiredScanPoints = 12;
+    [SerializeField] private int requiredScanPoints = 100;
     [SerializeField] private Material[] discoveredMaterials;
 
     [Header("LiDAR Mesh")]
@@ -90,7 +90,8 @@ public class Enemy : MonoBehaviour
     {
         public int damagePerTurn;
         public int remainingTurns;
-        public AudioClip soundVFX;
+        public CardData sourceCard;
+        public int sourceCardLvl;
     }
 
     public string ScanSurfaceSignature
@@ -256,7 +257,7 @@ public class Enemy : MonoBehaviour
             $"Points: {registeredScanPoints}/{requiredScanPoints}"
         );
 
-        if (focusTimer < requiredFocusTime ||
+        if (focusTimer < requiredFocusTime &&
             registeredScanPoints < requiredScanPoints)
             return;
 
@@ -518,25 +519,21 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public void ApplyDamageOverTime(int damagePerTurn, int duration, AudioClip attackAudioClip)
+    public void ApplyDamageOverTime(int damagePerTurn, int duration, CardData attackSourceCard, int cardLvl)
     {
-        if (Resolved || IsDead)
-            return;
+        if (Resolved || IsDead) return;
 
-        if (damagePerTurn <= 0 || duration <= 0)
-            return;
+        if (damagePerTurn <= 0 || duration <= 0) return;
 
         activeDamageOverTime = new DamageOverTimeEffect
         {
             damagePerTurn = damagePerTurn,
             remainingTurns = duration,
-            soundVFX = attackAudioClip,
+            sourceCard = attackSourceCard,
+            sourceCardLvl = cardLvl
         };
 
-        Debug.Log(
-            $"[Enemy] {name} recebeu Damage Over Time: " +
-            $"{damagePerTurn} dano por {duration} turnos."
-        );
+        Debug.Log($"[Enemy] {name} recebeu Damage Over Time: {damagePerTurn} dano por {duration} turnos.");
     }
 
     public void ProcessDamageOverTime()
@@ -554,7 +551,7 @@ public class Enemy : MonoBehaviour
 
         activeDamageOverTime.remainingTurns--;
 
-        AudioSource.PlayClipAtPoint(activeDamageOverTime.soundVFX, this.transform.position);
+        if (activeDamageOverTime.sourceCard != null) activeDamageOverTime.sourceCard.PlayCardFeedback(transform, activeDamageOverTime.sourceCardLvl);
 
         Debug.Log(
             $"[Enemy] {name} sofreu {activeDamageOverTime.damagePerTurn} " +

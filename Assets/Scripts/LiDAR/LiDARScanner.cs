@@ -109,11 +109,9 @@ public partial class LiDARScanner : MonoBehaviour
 
     private void Start()
     {
-        if (_playerMover == null)
-            _playerMover = FindAnyObjectByType<PlayerNodeMover>();
+        if (_playerMover == null) _playerMover = FindAnyObjectByType<PlayerNodeMover>();
 
-        if (_vfxContainer == null)
-            _vfxContainer = gameObject;
+        if (_vfxContainer == null) _vfxContainer = gameObject;
 
         if (_playerMover == null)
         {
@@ -132,32 +130,20 @@ public partial class LiDARScanner : MonoBehaviour
         SubscribeToPlayer();
 
         _activeRoom = _playerMover.CurrentRoom;
-        if (_activeRoom != null)
-            GetOrCreateRoomScan(_activeRoom);
+        if (_activeRoom != null) GetOrCreateRoomScan(_activeRoom);
 
         UpdateRoomVFXVisibility();
     }
 
     private void Update()
     {
-        if (PauseMenuController.BlocksGameplayInput)
-            return;
+        if (PauseMenuController.BlocksGameplayInput) return;
 
         UpdatePulse();
         UpdateEnemyFocus();
 
-        if (HasCameraRotated())
-        {
-            _currentScanRadius = _initialScanRadius;
-        }
-        else
-        {
-            _currentScanRadius = Mathf.MoveTowards(
-                _currentScanRadius,
-                1f,
-                _focusExpansionSpeed * Time.deltaTime
-            );
-        }
+        if (HasCameraRotated()) _currentScanRadius = _initialScanRadius;
+        else _currentScanRadius = Mathf.MoveTowards(_currentScanRadius, 1f, _focusExpansionSpeed * Time.deltaTime);
 
         _scanTimer += Time.deltaTime;
 
@@ -171,8 +157,7 @@ public partial class LiDARScanner : MonoBehaviour
     private bool HasCameraRotated()
     {
         Transform rotationTransform = GetRotationTransform();
-        if (rotationTransform == null)
-            return false;
+        if (rotationTransform == null) return false;
 
         Quaternion currentRotation = rotationTransform.rotation;
 
@@ -192,29 +177,20 @@ public partial class LiDARScanner : MonoBehaviour
     private Transform GetRotationTransform()
     {
         Camera cam = ResolveCamera();
-        if (cam != null)
-            return cam.transform;
-
-        if (_lookSource != null)
-            return _lookSource;
-
+        if (cam != null) return cam.transform;
+        if (_lookSource != null) return _lookSource;
         return _castPoint;
     }
 
     private void LateUpdate()
     {
-        if (resolution <= 0)
-            return;
+        if (resolution <= 0) return;
 
         foreach (var entry in _roomScans)
         {
             RoomScanData roomData = entry.Value;
-
-            if (roomData.SurfaceAttachments.Count == 0)
-                continue;
-
+            if (roomData.SurfaceAttachments.Count == 0) continue;
             bool changed = false;
-
             foreach (SurfacePointAttachment attachment in roomData.SurfaceAttachments)
             {
                 Vector3 position;
@@ -222,11 +198,7 @@ public partial class LiDARScanner : MonoBehaviour
 
                 if (attachment.IsAnimatedEnemy)
                 {
-                    if (attachment.Enemy == null ||
-                        !attachment.Enemy.GetAnimatedSurfacePoint(
-                            attachment.EnemySurface,
-                            out position,
-                            out normal))
+                    if (attachment.Enemy == null || !attachment.Enemy.GetAnimatedSurfacePoint(attachment.EnemySurface, out position, out normal))
                     {
                         continue;
                     }
@@ -515,8 +487,7 @@ public partial class LiDARScanner : MonoBehaviour
                 if (!enemy.TryGetLidarSurfaceHit(ray, out RaycastHit enemyHit))
                     continue;
 
-                Enemy.SurfaceAttachment attachment =
-                    enemy.CreateSurfaceAttachment(enemyHit);
+                Enemy.SurfaceAttachment attachment = enemy.CreateSurfaceAttachment(enemyHit);
 
                 if (AddEnemyScanPoint(
                     _activeRoom,

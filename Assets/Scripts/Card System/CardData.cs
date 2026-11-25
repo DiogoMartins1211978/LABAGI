@@ -1,4 +1,8 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.UIElements;
+using static UnityEngine.GraphicsBuffer;
 
 public enum CardType
 {
@@ -44,6 +48,11 @@ public class CardData : ScriptableObject
     [Header("Audio")]
     [Tooltip("Short sound played when the card is used")]
     public AudioClip cardSound;
+    [Tooltip("Shiny sound played according to card level")]
+    public AudioClip shinySound;
+
+    [Header("Audio")]
+    [SerializeField] private AudioMixerGroup cardAudioGroup;
 
     public CardView CreateView(Transform parent = null, int level = 1)
     {
@@ -58,57 +67,62 @@ public class CardData : ScriptableObject
         return view;
     }
 
-    public virtual void OnPlay(PlayerHealth player, Enemy target)
+    public virtual void OnPlay(PlayerHealth player, Enemy target, int currentLevel = 1)
     {
-        if (cardSound != null && player != null) AudioSource.PlayClipAtPoint(cardSound, player.transform.position);
+        if (cardSound != null) PlayCardFeedback(null, currentLevel);
 
         switch (type)
         {
             case CardType.Attack:
                 Debug.LogWarning($"[Card] {displayName} was played.");
-                if (target != null) {
-                    target.TakeDamage(effectValue);
-                }else Debug.LogWarning("TARGET IS NULL.");
-
-
+                if (target != null) target.TakeDamage(effectValue);
+                else Debug.LogWarning("TARGET IS NULL.");
                 break;
 
             case CardType.Defense:
-
-                if (player != null)
-                    player.AddShield(effectValue);
-
+                if (player != null) player.AddShield(effectValue);
                 break;
 
             case CardType.Ability:
-
-                if (player != null)
+                if (player == null) return;
+                switch (abilityType)
                 {
-                    switch (abilityType)
-                    {
-                        case AbilityType.Heal:
-                            player.Heal(effectValue);
-                            break;
+                    case AbilityType.Heal:
+                        player.Heal(effectValue);
+                        break;
 
-                        case AbilityType.DamageOverTime:
-                            if (target != null)
-                            {
-                                target.ApplyDamageOverTime(
-                                    effectValue,
-                                    effectDuration,
-                                    cardSound
-                                );
-                            }
-                            break;
-                    }
+                    case AbilityType.DamageOverTime:
+                        if (target != null) target.ApplyDamageOverTime(effectValue, effectDuration, this, currentLevel);
+                        break;
                 }
-
                 break;
 
             case CardType.Trap:
-
                 // Implementar depois
                 break;
         }
+    }
+
+    public void PlayCardFeedback(Transform soundOrigin = null, int currentLevel = 1)
+    {
+        Vector3 position;
+        if (soundOrigin != null) position = soundOrigin.position;
+        else
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            position = player != null ? player.transform.position : Vector3.zero;
+        }
+
+        GameObject audioHost = new GameObject($"CardAudio_{displayName}");
+        audioHost.transform.position = position;
+
+        AudioSource source = audioHost.AddComponent<AudioSource>();
+
+        source.spatialBlend = 1f;
+        source.rolloffMode = AudioRolloffMode.Linear;
+
+        source.outputAudioMixerGroup = cardAudioGroup;
+
+        audioHost.AddComponent<CardAudioPlayer>().PlaySequence(source, cardSound, shinySound, currentLevel);
     }
 }

@@ -337,7 +337,7 @@ public class CardSystem : MonoBehaviour
 
         IsPlayerTurn = false;
 
-        playedCard.Data.OnPlay(playerHealth, activeEnemy);
+        playedCard.Data.OnPlay(playerHealth, activeEnemy, playedCard.Level);
 
         hand[selected] = queue.Dequeue();
         queue.Enqueue(playedCard);
@@ -360,10 +360,10 @@ public class CardSystem : MonoBehaviour
 
         if (selected != index)
         {
+            CardInstance playedCard = hand[selected];
             selected = index;
             CardData card = hand[index].Data;
-            if (card != null && card.cardSound != null && playerHealth != null)
-                AudioSource.PlayClipAtPoint(card.cardSound, playerHealth.transform.position);
+            if (card != null && card.cardSound != null && playerHealth != null) card.PlayCardFeedback(this.transform, playedCard.Level);
             LogHand($"Selected slot {index + 1} (Hover)");
         }
     }

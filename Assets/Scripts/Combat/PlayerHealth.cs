@@ -93,4 +93,18 @@ public class PlayerHealth : MonoBehaviour
 
         // Death behaviour will be implemented later.
     }
+
+    public void IncreaseMaxHealthAndFullyHeal(int amount)
+    {
+        if (IsDead || amount <= 0)
+            return;
+
+        maxHealth += amount;
+        currentHealth = maxHealth;
+
+        Debug.Log(
+            $"[Player] Max health increased by {amount}. " +
+            $"Fully healed: {currentHealth}/{maxHealth}"
+        );
+    }
 }
