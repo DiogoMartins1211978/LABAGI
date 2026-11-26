@@ -40,6 +40,9 @@ MonoBehaviour:
   - m_enabled: 1
     m_path: Assets/Scenes/VR_Test.unity
     m_guid: 38e2b405f9a141fb9c6c5c0f1da54f30
+  - m_enabled: 1
+    m_path: Assets/Scenes/Main Menu.unity
+    m_guid: 8b0212dc53e32b94c9f7625898914fe1
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:

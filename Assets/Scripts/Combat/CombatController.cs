@@ -390,6 +390,7 @@ public class CombatController : MonoBehaviour
 
     public void SetCameraControlEnabled(bool value)
     {
+        if (trackedHeadset) return;
         if (cameraControlScripts == null) return;
 
         var names = new System.Text.StringBuilder();
@@ -460,6 +461,8 @@ public class CombatController : MonoBehaviour
 
     public IEnumerator TurnCameraTo(Quaternion target, float duration)
     {
+        // XR owns the tracked pose throughout combat, including intro/exit.
+        if (trackedHeadset) yield break;
         Quaternion start = cameraTransform.rotation;
         float t = 0f;
         while (t < 1f)
