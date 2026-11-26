@@ -84,6 +84,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3497776659111826265}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -4528920600514031602}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -4603696491181681268}
     - targetCorrespondingSourceObject: {fileID: 3840737069386924761, guid: c413f6fb016a4b5489981a8fae2e8bae, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8269636662703620975}
@@ -154,6 +160,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c55e695b8fb4a64593a6fae8789d811, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
+  maxHealth: 25
+  attackPattern:
+  - {fileID: 11400000, guid: 17b403dbee0025b4385d95bd478803f4, type: 2}
+  - {fileID: 11400000, guid: 82f0121487e0a9d43a6693064aeb2852, type: 2}
+  - {fileID: 11400000, guid: 17b403dbee0025b4385d95bd478803f4, type: 2}
   spotRange: 0
   spotAngle: 35
   requireLineOfSight: 1
@@ -172,9 +183,6 @@ MonoBehaviour:
   presenceAudioSource: {fileID: 2269130909194646168}
   attackAudioSource: {fileID: 3497776659111826265}
   presenceAudioClip: {fileID: 8300000, guid: e4673b113525bfc42a6a7f1ed7b1349c, type: 3}
-  attackAudioClip: {fileID: 8300000, guid: 3a1a68fd1498d234084602d16b6287fd, type: 3}
-  maxHealth: 25
-  attackDamage: 2
   normalPresenceVolume: 0.05
   focusedPresenceVolume: 0.3
   focusVolumeTransition: 0.4
@@ -372,3 +380,43 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &-4528920600514031602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911550261664210096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3451490075
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &-4603696491181681268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911550261664210096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 720a49a081cdd8d4495d4a13cb0678b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkEnemyState
+  ShowTopMostFoldoutHeaderGroup: 1

@@ -619,8 +619,6 @@ public class RewardController : MonoBehaviour
 
         CardData selected = eligibleCards[Random.Range(0, eligibleCards.Count)];
 
-        selected = eligibleCards[0];
-
         Debug.Log($"[RewardController] Selected card reward: {selected.displayName}");
 
         return selected;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class DungeonGenerator : MonoBehaviour
@@ -100,6 +101,11 @@ public class DungeonGenerator : MonoBehaviour
         foreach (var pair in _nodesById)
             if (pair.Value == room) return pair.Key;
         return null;
+    }
+
+    public bool TryGetRoom(string roomId, out RoomNode room)
+    {
+        return _nodesById.TryGetValue(roomId, out room);
     }
 
     private void Awake()
@@ -371,6 +377,9 @@ public class DungeonGenerator : MonoBehaviour
     {
         if (string.IsNullOrEmpty(entry.enemy)) return;
 
+        bool isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isMultiplayer && !NetworkManager.Singleton.IsServer) return;
+
         if (!_enemyLookup.TryGetValue(entry.enemy, out GameObject enemyPrefab))
         {
             Debug.LogError($"[DungeonGenerator] Missing enemy prefab mapping for key '{entry.enemy}' (room '{entry.id}')");
@@ -378,29 +387,53 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         Vector3 pos;
-        if (_randomEnemySpawn)
-        {
-            pos = RandomPointInRoom(room);
-        }
-        else
-        {
-            pos = room.enemySpawnPoint != null
-                ? room.enemySpawnPoint.position
-                : room.transform.TransformPoint(new Vector3(0f, 0f, room.depth * 0.25f));
-        }
+
+        if (_randomEnemySpawn) pos = RandomPointInRoom(room);
+        else pos = room.enemySpawnPoint != null ? room.enemySpawnPoint.position : room.transform.TransformPoint(new Vector3(0f, 0f, room.depth * 0.25f));
 
         Vector3 toPlayer = room.AnchorPosition - pos;
         toPlayer.y = 0f;
+
         Quaternion rot = toPlayer.sqrMagnitude > 0.001f ? Quaternion.LookRotation(toPlayer) : Quaternion.identity;
 
-        GameObject enemyObj = Instantiate(enemyPrefab, pos, rot, room.transform);
+        GameObject enemyObj = isMultiplayer ? Instantiate(enemyPrefab, pos, rot) : Instantiate(enemyPrefab, pos, rot, room.transform);
         enemyObj.name = $"{entry.id}_Enemy_{entry.enemy}";
-
         Enemy enemy = enemyObj.GetComponent<Enemy>();
+
         if (enemy == null) enemy = enemyObj.AddComponent<Enemy>();
 
         enemy.Room = room;
         room.enemy = enemy;
+
+        if (!isMultiplayer) return;
+
+        NetworkObject networkObject = enemyObj.GetComponent<NetworkObject>();
+
+        NetworkEnemyState networkState = enemyObj.GetComponent<NetworkEnemyState>();
+
+        if (networkObject == null || networkState == null)
+        {
+            Debug.LogError($"[DungeonGenerator] Multiplayer enemy prefab '{enemyPrefab.name}' must have NetworkObject and NetworkEnemyState on its root.");
+            Destroy(enemyObj);
+            room.enemy = null;
+            return;
+        }
+
+        string roomId = GetRoomId(room);
+
+        if (string.IsNullOrEmpty(roomId))
+        {
+            Debug.LogError($"[DungeonGenerator] Could not get room ID for enemy '{enemyObj.name}'.");
+
+            Destroy(enemyObj);
+            room.enemy = null;
+            return;
+        }
+
+        networkState.SetRoomIdBeforeSpawn(roomId);
+        networkObject.Spawn();
+
+        Debug.Log($"[DungeonGenerator] Host spawned network enemy '{enemyObj.name}' in room '{roomId}'.");
     }
 
     private Vector3 RandomPointInRoom(RoomNode room)

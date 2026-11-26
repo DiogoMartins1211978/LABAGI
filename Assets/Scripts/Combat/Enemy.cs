@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Purchasing;
+using System.Collections.Generic;
 
 public class Enemy : MonoBehaviour
 {
@@ -9,6 +10,26 @@ public class Enemy : MonoBehaviour
     {
         public int TriangleIndex;
         public Vector3 BarycentricCoordinate;
+    }
+
+    [Header("Health")]
+    public int maxHealth = 10;
+    private int currentHealth;
+    public int CurrentHealth => currentHealth;
+    public bool IsDead => currentHealth <= 0;
+
+    [Header("Attack Pattern")]
+    [SerializeField]
+    private List<CardData> attackPattern = new();
+    private int currentAttackIndex = 0;
+    private bool currentAttackAnnounced;
+    public CardData CurrentAttackCue
+    {
+        get
+        {
+            if (attackPattern == null || attackPattern.Count == 0) return null;
+            return attackPattern[currentAttackIndex];
+        }
     }
 
     [Header("Detection")]
@@ -39,16 +60,6 @@ public class Enemy : MonoBehaviour
     public AudioSource attackAudioSource;
 
     public AudioClip presenceAudioClip;
-    public AudioClip attackAudioClip;
-
-    [Header("Health")]
-    public int maxHealth = 10;
-    private int currentHealth;
-    public int CurrentHealth => currentHealth;
-    public bool IsDead => currentHealth <= 0;
-
-    [Header("Combat")]
-    public int attackDamage = 3;
 
     private Action attackFinished;
     private Coroutine attackCoroutine;
@@ -82,6 +93,9 @@ public class Enemy : MonoBehaviour
     private float focusVolumeTransition = 0.4f;
 
     private Coroutine presenceVolumeRoutine;
+
+    private float presenceVolumeBeforeCombat;
+    private Coroutine combatVolumeRoutine;
 
 
     private DamageOverTimeEffect activeDamageOverTime;
@@ -117,6 +131,11 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    public void SetHealthFromNetwork(int health)
+    {
+        currentHealth = Mathf.Clamp(health, 0, maxHealth);
+    }
+
     public void RestoreScanProgress(int pointCount, float focusedSeconds, bool discovered)
     {
         registeredScanPoints = pointCount;
@@ -124,7 +143,6 @@ public class Enemy : MonoBehaviour
         Discovered = discovered;
         if (discovered && skinnedMeshRenderer != null && discoveredMaterials != null && discoveredMaterials.Length > 0)
             skinnedMeshRenderer.sharedMaterials = discoveredMaterials;
-        // Do not notify combat merely because a save is being restored.
     }
 
     public Vector3 FocusPosition => focusPoint != null ? focusPoint.position : transform.position + Vector3.up * focusHeight;
@@ -184,18 +202,6 @@ public class Enemy : MonoBehaviour
 
         if (attackAudioSource != null)
             attackAudioSource.playOnAwake = false;
-    }
-
-
-    void LateUpdate()
-    {
-        BakeAnimatedMesh();
-
-        if (lidarMeshCollider == null || bakedMesh == null)
-            return;
-
-        lidarMeshCollider.sharedMesh = null;
-        lidarMeshCollider.sharedMesh = bakedMesh;
     }
 
     public bool IsSeenBy(Transform viewer)
@@ -288,7 +294,6 @@ public class Enemy : MonoBehaviour
         }
     }
 
-
     public bool TryGetLidarSurfaceHit(Ray ray, out RaycastHit hit)
     {
         hit = default;
@@ -320,29 +325,37 @@ public class Enemy : MonoBehaviour
 
     public virtual void Attack(Action onFinished = null)
     {
-        if (Resolved || animator == null)
+        if (Resolved)
         {
             onFinished?.Invoke();
             return;
         }
 
-        Debug.Log($"[Enemy] {name} started attack.");
+        CardData cue = CurrentAttackCue;
+
+        if (cue == null)
+        {
+            Debug.LogWarning($"[Enemy] {name} has no attack pattern assigned.");
+            onFinished?.Invoke();
+            return;
+        }
+
+        Debug.Log($"[Enemy] {name} performs: {cue.displayName}");
 
         attackFinished = onFinished;
-
-        PlayAttackAudio();
-
-        animator.SetBool("isAttacking", true);
 
         if (attackCoroutine != null)
             StopCoroutine(attackCoroutine);
 
-        attackCoroutine = StartCoroutine(AttackRoutine());
+        attackCoroutine = StartCoroutine(AttackAfterAnnouncement(cue));
     }
 
     private IEnumerator AttackRoutine()
     {
         yield return new WaitForSeconds(attackDuration);
+
+        while (attackAudioSource != null && attackAudioSource.isPlaying)
+            yield return null;
 
         EndAttack();
     }
@@ -354,11 +367,22 @@ public class Enemy : MonoBehaviour
         if (animator != null)
             animator.SetBool("isAttacking", false);
 
+        AdvanceAttackPattern();
+
         Action callback = attackFinished;
         attackFinished = null;
         attackCoroutine = null;
 
         callback?.Invoke();
+    }
+
+    private void AdvanceAttackPattern()
+    {
+        if (attackPattern == null || attackPattern.Count == 0)
+            return;
+
+        currentAttackIndex = (currentAttackIndex + 1) % attackPattern.Count;
+        currentAttackAnnounced = false;
     }
 
     public virtual void Resolve()
@@ -489,12 +513,34 @@ public class Enemy : MonoBehaviour
         presenceAudioSource.Stop();
     }
 
-    public void PlayAttackAudio()
+    public void PlayAttackAudio(CardData cue)
     {
-        if (attackAudioSource == null || attackAudioClip == null)
+        if (attackAudioSource == null || cue == null || cue.cardSound == null)
             return;
 
-        attackAudioSource.PlayOneShot(attackAudioClip);
+        attackAudioSource.PlayOneShot(cue.cardSound);
+    }
+
+    public void AnnounceNextAttack()
+    {
+        if (Resolved)
+            return;
+
+        CardData cue = CurrentAttackCue;
+
+        if (cue == null)
+        {
+            Debug.LogWarning($"[Enemy] {name} has no attack pattern assigned.");
+            return;
+        }
+
+        if (currentAttackAnnounced) return;
+
+        Debug.Log($"[Enemy] {name} prepares: {cue.displayName}");
+
+        PlayAttackAudio(cue);
+
+        currentAttackAnnounced = true;
     }
 
     public virtual void TakeDamage(int damage)
@@ -625,5 +671,76 @@ public class Enemy : MonoBehaviour
 
         presenceAudioSource.volume = targetVolume;
         presenceVolumeRoutine = null;
+    }
+
+    public void SetCombatAmbience(bool inCombat)
+    {
+        if (presenceAudioSource == null)
+            return;
+
+        if (!isActiveAndEnabled)
+        {
+            if (!inCombat) presenceAudioSource.volume = presenceVolumeBeforeCombat;
+            return;
+        }
+
+        if (combatVolumeRoutine != null)
+            StopCoroutine(combatVolumeRoutine);
+
+        float targetVolume;
+
+        if (inCombat)
+        {
+            presenceVolumeBeforeCombat = presenceAudioSource.volume;
+            targetVolume = presenceVolumeBeforeCombat * 0.6f;
+        }
+        else
+        {
+            targetVolume = presenceVolumeBeforeCombat;
+        }
+
+        combatVolumeRoutine = StartCoroutine(
+            ChangePresenceVolume(targetVolume)
+        );
+    }
+
+    private IEnumerator WaitForAnnouncementSound(CardData cue)
+    {
+        if (attackAudioSource == null || cue == null || cue.cardSound == null)
+            yield break;
+
+        while (attackAudioSource.isPlaying)
+            yield return null;
+    }
+
+    private IEnumerator AttackAfterAnnouncement(CardData cue)
+    {
+        if (currentAttackAnnounced)
+            yield return WaitForAnnouncementSound(cue);
+
+        if (attackAudioSource != null && cue != null && cue.cardSound != null)
+        {
+            Debug.Log($"[Enemy Audio] {name} plays attack sound: {cue.displayName}");
+            attackAudioSource.PlayOneShot(cue.cardSound);
+        }
+
+        if (animator == null)
+        {
+            while (attackAudioSource != null && attackAudioSource.isPlaying)
+                yield return null;
+
+            AdvanceAttackPattern();
+
+            Action callback = attackFinished;
+            attackFinished = null;
+            attackCoroutine = null;
+
+            callback?.Invoke();
+            yield break;
+        }
+
+        animator.SetBool("isAttacking", true);
+
+        yield return AttackRoutine();
     }
 }

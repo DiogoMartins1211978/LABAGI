@@ -235,14 +235,13 @@ public class RewardChest : MonoBehaviour
 
     public void RestoreClaimedState(bool claimed)
     {
-        if (!claimed) return; // Newly instantiated chests are already closed and available.
+        if (!claimed) return;
         IsOpened = true;
         MarkClaimed();
         if (openingType == OpeningType.ProceduralLid && lidPivot != null)
             lidPivot.localRotation = openLidRotation;
         else if (openingType == OpeningType.Animator && animator != null && !string.IsNullOrEmpty(openTrigger))
         {
-            // Settle to the opened pose without replaying the reward interaction.
             animator.SetTrigger(openTrigger);
             animator.Update(Mathf.Max(openingDuration, 0.01f));
         }

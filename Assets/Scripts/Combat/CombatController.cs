@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Audio;
+using Unity.Netcode;
 
 public enum CombatStart { PlayerSpotted, Ambushed }
 
@@ -59,6 +60,10 @@ public class CombatController : MonoBehaviour
     [SerializeField] private PlayerHealth playerHealth;
     bool trackedHeadset;
 
+    private NetworkCombatManager networkCombatManager;
+
+    private bool IsMultiplayerSession => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+
     public void ConfigureTrackedHeadset(PlayerNodeMover mover, Transform head, CardSystem cards, PlayerHealth health)
     {
         player = mover;
@@ -102,6 +107,21 @@ public class CombatController : MonoBehaviour
         if (cardSystem != null)
             cardSystem.TurnEnded += HandlePlayerTurnEnded;
 
+        if (IsMultiplayerSession)
+        {
+            networkCombatManager = FindAnyObjectByType<NetworkCombatManager>();
+
+            if (networkCombatManager != null)
+            {
+                networkCombatManager.MultiplayerCombatStarted += HandleMultiplayerCombatStarted;
+                StartCoroutine(ReportInitialRoomWhenReady());
+                Debug.Log("[CombatController] Connected to NetworkCombatManager.");
+            }
+            else
+                Debug.LogError("[CombatController] NetworkCombatManager not found!");
+
+        }
+
         player.RoomEntered += HandleRoomEntered;
         player.LeaveBlocked += HandleLeaveBlocked;
 
@@ -124,6 +144,10 @@ public class CombatController : MonoBehaviour
             player.RoomEntered -= HandleRoomEntered;
             player.LeaveBlocked -= HandleLeaveBlocked;
         }
+
+        if (networkCombatManager != null)
+            networkCombatManager.MultiplayerCombatStarted -= HandleMultiplayerCombatStarted;
+
         if (Instance == this) Instance = null;
     }
 
@@ -159,6 +183,17 @@ public class CombatController : MonoBehaviour
 
     void HandleRoomEntered(RoomNode room)
     {
+        if (IsMultiplayerSession && networkCombatManager != null)
+        {
+            DungeonGenerator generator = FindAnyObjectByType<DungeonGenerator>();
+
+            if (generator != null)
+            {
+                string roomId = generator.GetRoomId(room);
+                if (!string.IsNullOrEmpty(roomId)) networkCombatManager.ReportCurrentRoom(roomId);
+            }
+        }
+
         player.BlockLeaving = false;
         if (CurrentState != State.Exploring) return;
 
@@ -176,11 +211,16 @@ public class CombatController : MonoBehaviour
 
     void HandleLeaveBlocked(RoomNode attemptedTarget)
     {
+        Debug.Log($"[CombatController] LeaveBlocked received. Active enemy: {(activeEnemy != null ? activeEnemy.name : "NULL")}");
+        if (CurrentState != State.Exploring || activeEnemy == null) return;
 
-        Debug.Log($"[CombatController] LeaveBlocked received. " + $"Active enemy: {(activeEnemy != null ? activeEnemy.name : "NULL")}");
+        if (IsMultiplayerSession)
+        {
+            RequestMultiplayerCombatStart();
+            return;
+        }
 
-        if (CurrentState == State.Exploring && activeEnemy != null)
-            BeginCombat(CombatStart.Ambushed);
+        BeginCombat(CombatStart.Ambushed);
     }
 
     public void NotifyEnemySpotted(Enemy enemy)
@@ -201,7 +241,7 @@ public class CombatController : MonoBehaviour
 
         if (CurrentState != State.Exploring)
         {
-            Debug.LogWarning("[CombatController] Cannot start combat: not exploring.");
+            if (!IsMultiplayerSession) Debug.LogWarning("[CombatController] Cannot start combat: not exploring.");
             return;
         }
 
@@ -228,11 +268,104 @@ public class CombatController : MonoBehaviour
         }
 
         Debug.Log($"[CombatController] Starting combat with discovered enemy: {enemy.name}");
+
+        if (IsMultiplayerSession)
+        {
+            RequestMultiplayerCombatStart();
+            return;
+        }
+
         BeginCombat(CombatStart.PlayerSpotted);
+    }
+
+    private void RequestMultiplayerCombatStart()
+    {
+        if (networkCombatManager == null || player.CurrentRoom == null)
+            return;
+
+        DungeonGenerator generator = FindAnyObjectByType<DungeonGenerator>();
+
+        if (generator == null)
+            return;
+
+        string roomId = generator.GetRoomId(player.CurrentRoom);
+
+        if (string.IsNullOrEmpty(roomId))
+            return;
+
+        Debug.Log(
+            $"[CombatController] Requesting multiplayer combat in room '{roomId}'."
+        );
+
+        networkCombatManager.RequestCombatStart(roomId);
+    }
+
+    private void HandleMultiplayerCombatStarted(string roomId)
+    {
+        if (!IsMultiplayerSession || CurrentState != State.Exploring)
+            return;
+
+        DungeonGenerator generator = FindAnyObjectByType<DungeonGenerator>();
+
+        if (generator == null || player.CurrentRoom == null)
+            return;
+
+        string currentRoomId = generator.GetRoomId(player.CurrentRoom);
+
+        if (currentRoomId != roomId)
+            return;
+
+        // Get the locally replicated enemy in this room.
+        activeEnemy = player.CurrentRoom.enemy;
+
+        if (activeEnemy == null || activeEnemy.Resolved)
+        {
+            Debug.LogError(
+                $"[CombatController] Cannot start multiplayer combat: " +
+                $"no valid enemy in room '{roomId}'."
+            );
+            return;
+        }
+
+        BeginMultiplayerCombat();
+    }
+
+    private void BeginMultiplayerCombat()
+    {
+        Debug.Log(
+            $"[CombatController] Starting synchronised multiplayer combat " +
+            $"with {activeEnemy.name}."
+        );
+
+        CurrentState = State.Combat;
+        trackEnemy = false;
+
+        player.BlockLeaving = false;
+        player.SetInputLocked(true);
+
+        SetCameraControlEnabled(false);
+        StopCombatSuppressedThings();
+
+        savedCameraRotation = cameraTransform.rotation;
+
+        CombatStarted?.Invoke(activeEnemy, CombatStart.PlayerSpotted);
+
+        cardSystem?.SetActiveEnemy(activeEnemy);
+
+        StartCoroutine(MultiplayerCombatIntro(activeEnemy));
+    }
+
+    private IEnumerator MultiplayerCombatIntro(Enemy enemy)
+    {
+        yield return TurnCameraTo(FocusRotation(enemy), focusTurnDuration);
+
+        trackEnemy = true;
     }
 
     void BeginCombat(CombatStart how)
     {
+        activeEnemy.SetCombatAmbience(true);
+
         CurrentState = State.Combat;
 
         if (how == CombatStart.Ambushed)
@@ -261,6 +394,8 @@ public class CombatController : MonoBehaviour
         {
             enemy.OnSurpriseAttack();
 
+            enemy.AnnounceNextAttack();
+
             bool attackFinished = false;
 
             enemy.Attack(() =>
@@ -269,10 +404,14 @@ public class CombatController : MonoBehaviour
             });
 
             yield return new WaitUntil(() => attackFinished);
+
+            enemy.AnnounceNextAttack();
         }
         else
         {
             enemy.OnSpotted();
+
+            enemy.AnnounceNextAttack();
         }
 
         if (cardSystem != null)
@@ -299,16 +438,28 @@ public class CombatController : MonoBehaviour
         activeEnemy.ProcessDamageOverTime();
         if (activeEnemy.Resolved) { EndCombat(); yield break; }
 
+        CardData currentCue = activeEnemy.CurrentAttackCue;
         activeEnemy.Attack(OnEnemyAttackFinished);
-        playerHealth.TakeDamage(activeEnemy.attackDamage);
+        if (currentCue != null && currentCue.type == CardType.Attack)
+            playerHealth.TakeDamage(currentCue.effectValue);
     }
 
     private void OnEnemyAttackFinished()
     {
-        Debug.Log("[Combat] Enemy attack finished. Starting player turn.");
+        Debug.Log("[Combat] Enemy attack finished.");
 
         if (CurrentState != State.Combat)
             return;
+
+        if (activeEnemy == null || activeEnemy.Resolved)
+        {
+            EndCombat(activeEnemy != null && activeEnemy.Resolved);
+            return;
+        }
+
+        activeEnemy.AnnounceNextAttack();
+
+        Debug.Log("[Combat] Starting player turn.");
 
         cardSystem.StartPlayerTurn();
     }
@@ -334,6 +485,9 @@ public class CombatController : MonoBehaviour
 
         if (cardSystem != null && cardSystem.CurrentMode == CardSystem.Mode.Combat)
             cardSystem.EnterExploration();
+
+        if (enemy != null)
+            enemy.SetCombatAmbience(false);
 
         activeEnemy = null;
         player.SetInputLocked(false);
@@ -479,5 +633,28 @@ public class CombatController : MonoBehaviour
         if (ambushStartSound == null) return;
 
         combatAudioSource.PlayOneShot(ambushStartSound, ambushStartVolume);
+    }
+
+    private IEnumerator ReportInitialRoomWhenReady()
+    {
+        while (networkCombatManager == null || !networkCombatManager.IsSpawned)
+        {
+            yield return null;
+            if (networkCombatManager == null) networkCombatManager = FindAnyObjectByType<NetworkCombatManager>();
+        }
+
+        yield return null;
+
+        if (player != null && player.CurrentRoom != null)
+        {
+            DungeonGenerator generator = FindAnyObjectByType<DungeonGenerator>();
+
+            if (generator != null)
+            {
+                string roomId = generator.GetRoomId(player.CurrentRoom);
+                networkCombatManager.ReportCurrentRoom(roomId);
+                Debug.Log($"[CombatController] Initial network room reported: {roomId}");
+            }
+        }
     }
 }
