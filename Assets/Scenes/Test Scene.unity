@@ -3189,6 +3189,9 @@ MonoBehaviour:
   releaseTurnDuration: 0.5
   focusOffset: {x: 0, y: 0.3, z: 0}
   combatCameraTurnSpeed: 8
+  ambushStartSound: {fileID: 8300000, guid: 96a6fd012e334644dabd176764e9db79, type: 3}
+  combatAudioGroup: {fileID: 1962190501933960530, guid: a9a310d05ca3ef74bbdfb18a65913e84, type: 2}
+  ambushStartVolume: 1
   playerHealth: {fileID: 604149156}
 --- !u!114 &269744965
 MonoBehaviour:
@@ -3207,7 +3210,6 @@ MonoBehaviour:
   playerHealth: {fileID: 604149156}
   cardSystem: {fileID: 269744960}
   mainCamera: {fileID: 906570677}
-  detectionDistance: 5
   gazeRequiredDuration: 1
   detectionMask:
     serializedVersion: 2
@@ -13172,6 +13174,13 @@ MonoBehaviour:
   spawnOffset: {x: 0.5, y: -0.3, z: 0}
   playOffset: {x: 0, y: 0.3, z: 0.3}
   flyTime: 0.35
+  cardsAppearSound: {fileID: 8300000, guid: d3896f7490bad734094494cb1c1ed623, type: 3}
+  cardDrawSounds:
+  - {fileID: 8300000, guid: 387aefcf4a39b72499bb96d77e288702, type: 3}
+  - {fileID: 8300000, guid: c545a0bbce4ee144996f588d2bc2ce77, type: 3}
+  - {fileID: 8300000, guid: 879f75854b5cff44bb8e1dfe4eb06c39, type: 3}
+  uiAudioGroup: {fileID: 7221677375424192839, guid: a9a310d05ca3ef74bbdfb18a65913e84, type: 2}
+  cardAppearVolume: 0.8
 --- !u!114 &906570679
 MonoBehaviour:
   m_ObjectHideFlags: 0

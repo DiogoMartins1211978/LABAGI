@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class HandView : MonoBehaviour
 {
@@ -45,6 +46,23 @@ public class HandView : MonoBehaviour
 
     readonly List<CardView> views = new List<CardView>();
     readonly HashSet<CardView> animating = new HashSet<CardView>();
+
+    [Header("Card Appearance Audio")]
+    [SerializeField] private AudioClip cardsAppearSound;
+    [SerializeField] private AudioClip[] cardDrawSounds = new AudioClip[3];
+    [SerializeField] private AudioMixerGroup uiAudioGroup;
+    [SerializeField, Range(0f, 1f)] private float cardAppearVolume = 0.8f;  
+    private AudioSource cardAppearSource;
+
+    readonly HashSet<int> replacingIndices = new HashSet<int>();
+
+    void Awake()
+    {
+        cardAppearSource = gameObject.AddComponent<AudioSource>();
+        cardAppearSource.playOnAwake = false;
+        cardAppearSource.spatialBlend = 0f;
+        cardAppearSource.outputAudioMixerGroup = uiAudioGroup;
+    }
 
     void OnEnable()
     {
@@ -96,22 +114,24 @@ public class HandView : MonoBehaviour
 
         while (views.Count > hand.Count)
         {
-            if (views[views.Count - 1] != null)
-                Destroy(views[views.Count - 1].gameObject);
-
+            if (views[views.Count - 1] != null) Destroy(views[views.Count - 1].gameObject);
             views.RemoveAt(views.Count - 1);
         }
 
-        while (views.Count < hand.Count)
-            views.Add(null);
+        while (views.Count < hand.Count) views.Add(null);
+
+        bool spawnedAny = false;
 
         for (int i = 0; i < hand.Count; i++)
         {
+            if (replacingIndices.Contains(i)) continue;
+
             CardSystem.CardInstance card = hand[i];
 
             if (views[i] == null)
             {
                 views[i] = Spawn(card.Data, card.Level);
+                if (views[i] != null) spawnedAny = true;
                 continue;
             }
 
@@ -119,19 +139,31 @@ public class HandView : MonoBehaviour
 
             CardView oldView = views[i];
             views[i] = null;
+            replacingIndices.Add(i);
 
             StartCoroutine(ReplaceCard(i, oldView, card));
         }
+
+        if (spawnedAny)
+            PlayCardUISound(cardsAppearSound);
     }
 
     IEnumerator ReplaceCard(int index, CardView oldView, CardSystem.CardInstance newCard)
     {
-        yield return StartCoroutine(FlyAway(oldView));
+        try
+        {
+            yield return StartCoroutine(FlyAway(oldView));
 
-        if (index >= views.Count || views[index] != null)
-            yield break;
+            if (index >= views.Count || views[index] != null) yield break;
 
-        views[index] = Spawn(newCard.Data, newCard.Level);
+            views[index] = Spawn(newCard.Data, newCard.Level);
+
+            if (views[index] != null) PlayRandomCardDrawSound();
+        }
+        finally
+        {
+            replacingIndices.Remove(index);
+        }
     }
 
     CardView Spawn(CardData data, int level)
@@ -165,6 +197,7 @@ public class HandView : MonoBehaviour
         foreach (CardView v in views)
             if (v != null) Destroy(v.gameObject);
         views.Clear();
+        replacingIndices.Clear();
     }
 
     void Update()
@@ -216,6 +249,22 @@ public class HandView : MonoBehaviour
             Destroy(v.gameObject);
 
         animating.Remove(v);
+    }
+
+    private void PlayCardUISound(AudioClip clip)
+    {
+        if (clip == null) return;
+        cardAppearSource.PlayOneShot(clip, cardAppearVolume);
+    }
+
+    private void PlayRandomCardDrawSound()
+    {
+        if (cardDrawSounds == null || cardDrawSounds.Length == 0)
+            return;
+
+        AudioClip clip = cardDrawSounds[Random.Range(0, cardDrawSounds.Length)];
+
+        PlayCardUISound(clip);
     }
 
     void OnDrawGizmos()

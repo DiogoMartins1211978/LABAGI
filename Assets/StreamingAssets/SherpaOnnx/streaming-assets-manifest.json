@@ -1,6 +1,6 @@
 {
-    "version": "360_81149929",
-    "totalSizeBytes": 81149929,
+    "version": "360_81153776",
+    "totalSizeBytes": 81153776,
     "files": [],
     "shared": [
         "SherpaOnnx/tts-settings.json"
@@ -8,7 +8,7 @@
     "profileGroups": [
         {
             "subdir": "tts-models/vits-piper-en_US-lessac-medium",
-            "sizeBytes": 81147006,
+            "sizeBytes": 81150768,
             "files": [
                 "SherpaOnnx/tts-models/vits-piper-en_US-lessac-medium/en_US-lessac-medium.onnx",
                 "SherpaOnnx/tts-models/vits-piper-en_US-lessac-medium/en_US-lessac-medium.onnx.json",

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public enum CombatStart { PlayerSpotted, Ambushed }
 
@@ -37,6 +38,13 @@ public class CombatController : MonoBehaviour
     [SerializeField] private Vector3 focusOffset = new Vector3(0f, 0.3f, 0f);
     [SerializeField] private float combatCameraTurnSpeed = 8f;
 
+    [Header("Combat Audio")]
+    [SerializeField] private AudioClip ambushStartSound;
+    [SerializeField] private AudioMixerGroup combatAudioGroup;
+    [SerializeField, Range(0f, 1f)] private float ambushStartVolume = 1f;
+
+    private AudioSource combatAudioSource;
+
     public State CurrentState { get; private set; } = State.Exploring;
     public bool InCombat => CurrentState != State.Exploring;
     public Enemy ActiveEnemy => activeEnemy;
@@ -53,6 +61,11 @@ public class CombatController : MonoBehaviour
     void Awake()
     {
         Instance = this;
+
+        combatAudioSource = gameObject.AddComponent<AudioSource>();
+        combatAudioSource.playOnAwake = false;
+        combatAudioSource.spatialBlend = 0f;
+        combatAudioSource.outputAudioMixerGroup = combatAudioGroup;
     }
 
     void Start()
@@ -206,6 +219,10 @@ public class CombatController : MonoBehaviour
     void BeginCombat(CombatStart how)
     {
         CurrentState = State.Combat;
+
+        if (how == CombatStart.Ambushed)
+            PlayAmbushStartSound();
+
         trackEnemy = false;
 
         player.BlockLeaving = false;
@@ -285,9 +302,6 @@ public class CombatController : MonoBehaviour
         if (CurrentState != State.Combat) return;
         StartCoroutine(EndRoutine(enemyDefeated));
     }
-
-    [ContextMenu("Debug: End Combat")]
-    void DebugEndCombat() => EndCombat(true);
 
     IEnumerator EndRoutine(bool defeated)
     {
@@ -439,5 +453,12 @@ public class CombatController : MonoBehaviour
             yield return null;
         }
         cameraTransform.rotation = target;
+    }
+
+    private void PlayAmbushStartSound()
+    {
+        if (ambushStartSound == null) return;
+
+        combatAudioSource.PlayOneShot(ambushStartSound, ambushStartVolume);
     }
 }

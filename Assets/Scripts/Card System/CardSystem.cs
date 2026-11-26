@@ -303,8 +303,9 @@ public class CardSystem : MonoBehaviour
     void MoveSelection(int dir)
     {
         if (hand.Count == 0) return;
-        selected = (selected + dir + hand.Count) % hand.Count;
-        LogHand("Selected");
+
+        int nextIndex = (selected + dir + hand.Count) % hand.Count;
+        SetSelection(nextIndex);
     }
 
     public void SelectOrPlayIndex(int index)
@@ -360,10 +361,9 @@ public class CardSystem : MonoBehaviour
 
         if (selected != index)
         {
-            CardInstance playedCard = hand[selected];
             selected = index;
             CardData card = hand[index].Data;
-            if (card != null && card.cardSound != null && playerHealth != null) card.PlayCardFeedback(this.transform, playedCard.Level);
+            if (card != null && card.cardSound != null && playerHealth != null) card.PlayCardFeedback(this.transform, hand[index].Level);
             LogHand($"Selected slot {index + 1} (Hover)");
         }
     }
