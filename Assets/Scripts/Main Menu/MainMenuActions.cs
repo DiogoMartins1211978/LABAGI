@@ -10,7 +10,7 @@ public class MainMenuActions : MonoBehaviour
         else Debug.LogError("Add and configure SinglePlayerMenu on MenuManager before opening Single Player.", this);
     }
 
-    public void OpenMultiplayer()
+    public void MultiPlayer()
     {
         var menu = GetComponent<MultiplayerMenu>();
         if (menu == null) menu = FindAnyObjectByType<MultiplayerMenu>();

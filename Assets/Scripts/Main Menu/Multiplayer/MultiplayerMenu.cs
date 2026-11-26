@@ -34,8 +34,6 @@ public class MultiplayerMenu : MonoBehaviour
 
     private void Awake()
     {
-        sessionManager = SessionManager.Instance;
-
         hostButton.onClick.AddListener(OpenHostPanel);
         joinButton.onClick.AddListener(OpenJoinPanel);
         multiplayerBackButton.onClick.AddListener(BackToMainMenu);
@@ -45,9 +43,10 @@ public class MultiplayerMenu : MonoBehaviour
 
         joinBackButton.onClick.AddListener(BackToMultiplayer);
         confirmJoinButton.onClick.AddListener(JoinGame);
+        sessionCodeInput.onValueChanged.AddListener(OnSessionCodeChanged);
 
-        ShowPanel(multiplayerPanel);
         startGameButton.interactable = false;
+        UpdateJoinButtonState();
     }
 
     private void OnEnable()
@@ -63,6 +62,23 @@ public class MultiplayerMenu : MonoBehaviour
     {
         if (sessionManager != null)
             sessionManager.PlayerCountChanged -= UpdatePlayerCount;
+    }
+
+    private void Start()
+    {
+        sessionManager = SessionManager.Instance;
+
+        if (sessionManager == null)
+        {
+            Debug.LogError(
+                "[MultiplayerMenu] SessionManager was not found in Start!"
+            );
+            return;
+        }
+
+        sessionManager.PlayerCountChanged += UpdatePlayerCount;
+
+        Debug.Log("[MultiplayerMenu] SessionManager successfully connected!");
     }
 
     public void Open()
@@ -93,6 +109,14 @@ public class MultiplayerMenu : MonoBehaviour
 
     private async void CreateHost()
     {
+        sessionManager = SessionManager.Instance;
+
+        if (sessionManager == null)
+        {
+            Debug.LogError("[MultiplayerMenu] SessionManager not found!");
+            return;
+        }
+
         try
         {
             string code = await sessionManager.CreateHostSessionAsync();
@@ -134,16 +158,19 @@ public class MultiplayerMenu : MonoBehaviour
         sessionManager.StartGame();
     }
 
-    private void OpenJoinPanel()
-    {
-        ShowPanel(joinGamePanel);
-        sessionCodeInput.text = "";
-        joinStatusText.text = "Enter your friend's session code.";
-    }
-
     private async void JoinGame()
     {
+        sessionManager = SessionManager.Instance;
+
+        if (sessionManager == null)
+        {
+            Debug.LogError("[MultiplayerMenu] SessionManager not found!");
+            return;
+        }
+
         string code = sessionCodeInput.text.Trim();
+
+        Debug.Log($"[MultiplayerMenu] Attempting to join with code: {code}");
 
         if (string.IsNullOrWhiteSpace(code))
         {
@@ -156,13 +183,20 @@ public class MultiplayerMenu : MonoBehaviour
 
         try
         {
+            Debug.Log("[MultiplayerMenu] Calling JoinSessionAsync...");
+
             await sessionManager.JoinSessionAsync(code);
+
+            Debug.Log("[MultiplayerMenu] Successfully joined session!");
             joinStatusText.text = "Joined! Waiting for the host to start...";
         }
         catch (Exception e)
         {
             Debug.LogException(e);
             joinStatusText.text = "Could not join: " + e.Message;
+        }
+        finally
+        {
             confirmJoinButton.interactable = true;
         }
     }
@@ -199,5 +233,28 @@ public class MultiplayerMenu : MonoBehaviour
 
         if (confirmJoinButton != null)
             confirmJoinButton.onClick.RemoveListener(JoinGame);
+
+        if (sessionCodeInput != null)
+            sessionCodeInput.onValueChanged.RemoveListener(OnSessionCodeChanged);
     }
+
+    private void OpenJoinPanel()
+    {
+        ShowPanel(joinGamePanel);
+        sessionCodeInput.text = "";
+        joinStatusText.text = "Enter your friend's session code.";
+        UpdateJoinButtonState();
+    }
+
+    private void OnSessionCodeChanged(string _)
+    {
+        UpdateJoinButtonState();
+    }
+
+    private void UpdateJoinButtonState()
+    {
+        if (confirmJoinButton == null || sessionCodeInput == null) return;
+        confirmJoinButton.interactable = !string.IsNullOrWhiteSpace(sessionCodeInput.text);
+    }
+
 }
