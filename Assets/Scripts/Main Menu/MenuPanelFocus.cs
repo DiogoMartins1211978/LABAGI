@@ -18,6 +18,7 @@ public class MenuPanelFocus : MonoBehaviour
     static int lastSubmitFrame = -1;
 
     public Button BackControl => backButton;
+    public Selectable InitialControl => firstSelected;
 
     public void ConfigureNavigation(Selectable first, Selectable[] order, bool resetSelection = false)
     {

@@ -65,6 +65,25 @@ public class CardSystem : MonoBehaviour
     [SerializeField] private PlayerHealth playerHealth;
 
     private Enemy activeEnemy;
+    bool externalControls;
+
+    public void ConfigureExternalControls(PlayerHealth health)
+    {
+        playerHealth = health;
+        externalControls = true;
+        // CombatController locks room movement; never disable tracked rig scripts.
+        freezePlayerInMenus = false;
+    }
+
+    public void SelectRelativeCard(int direction)
+    {
+        if (!PauseMenuController.BlocksGameplayInput && CurrentMode == Mode.Combat) MoveSelection(direction);
+    }
+
+    public void PlaySelectedCard()
+    {
+        if (CurrentMode == Mode.Combat && hand.Count > 0 && queue.Count > 0) PlaySelected();
+    }
 
     public void SetActiveEnemy(Enemy enemy)
     {
@@ -106,23 +125,23 @@ public class CardSystem : MonoBehaviour
         if (collection.Count == 0)
             Debug.LogWarning("[Cards] Collection is empty. Add CardData assets to Collection.");
 
-        EnterExploration(); 
+        EnterExploration();
         //EnterCombat();
     }
 
     void Update()
     {
         if (PauseMenuController.BlocksGameplayInput) return;
-        if (Pressed(toggle)) ToggleMode();
+        if (!externalControls && Pressed(toggle)) ToggleMode();
 
         if (CurrentMode == Mode.Combat)
         {
-            PlayInput();
+            if (!externalControls) PlayInput();
             TickNextTurnTimer();
         }
         else if (CurrentMode == Mode.DeckBuilder)
         {
-            BuilderInput();
+            if (!externalControls) BuilderInput();
         }
     }
 

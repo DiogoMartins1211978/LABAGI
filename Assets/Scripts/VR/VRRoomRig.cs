@@ -12,6 +12,10 @@ public sealed class VRRoomRig : MonoBehaviour
     [SerializeField] XROrigin origin;
     [Tooltip("Enable headset-directed scanning while keeping combat and enemy discovery off for this test.")]
     [SerializeField] bool enableLidar = true;
+    [Tooltip("Enable tracked-head combat and right-controller card controls. Other menus and rewards stay off.")]
+    [SerializeField] bool enableCombat = true;
+    [Tooltip("Hide the legacy player body mesh so it cannot mask LiDAR points around the tracked headset. Colliders stay enabled.")]
+    [SerializeField] bool hideDesktopBody = true;
 
     InputActionAsset movementAsset;
     InputActionReference movementReference;
@@ -30,6 +34,8 @@ public sealed class VRRoomRig : MonoBehaviour
             enabled = false;
             return;
         }
+        var sceneOrigin = origin;
+        origin = VRRuntimeSession.GetOrCreate().ReuseRig(origin);
         // Set before PlayerNodeMover.Awake resolves its action reference. Keep
         // these bindings separate from the desktop/gameplay action asset.
         movementAsset = ScriptableObject.CreateInstance<InputActionAsset>();
@@ -44,7 +50,18 @@ public sealed class VRRoomRig : MonoBehaviour
         player.instantTransitions = true;
         move.Enable();
 
-        origin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+        // Requesting Floor again invokes subsystem initialization/recentering.
+        // A reused, already-tracking rig must keep its current reference space.
+        if (origin == sceneOrigin)
+            origin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+        // This game moves between room anchors, not via XR capsule locomotion.
+        // Its unused capsule must not intercept the scanner's physics rays.
+        foreach (var capsule in origin.GetComponentsInChildren<CharacterController>(true))
+            capsule.enabled = false;
+        if (hideDesktopBody)
+            foreach (var renderer in player.GetComponentsInChildren<Renderer>(true))
+                if (renderer is MeshRenderer || renderer is SkinnedMeshRenderer)
+                    renderer.enabled = false;
         // The starter rig's locomotion includes free movement, jumping,
         // teleportation and turning. None should move this test's rig.
         var locomotion = origin.transform.Find("Locomotion");
@@ -52,13 +69,14 @@ public sealed class VRRoomRig : MonoBehaviour
         foreach (var provider in origin.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionProvider>(true))
             provider.enabled = false;
         DisableOtherSystemsForMovementTest();
+        if (enableCombat) ConfigureCombat();
         if (enableLidar)
         {
             int scanners = 0;
             foreach (var root in gameObject.scene.GetRootGameObjects())
                 foreach (var scanner in root.GetComponentsInChildren<LiDARScanner>(true))
                 {
-                    scanner.ConfigureView(origin.Camera, player, false);
+                    scanner.ConfigureView(origin.Camera, player, enableCombat);
                     scanner.enabled = true;
                     scanners++;
                 }
@@ -66,7 +84,36 @@ public sealed class VRRoomRig : MonoBehaviour
         }
         origin.Camera.clearFlags = CameraClearFlags.SolidColor;
         origin.Camera.backgroundColor = Color.black;
-        Debug.Log("[VR] Left stick changes rooms; headset controls looking. LiDAR " + (enableLidar ? "enabled" : "disabled") + "; combat and menus remain off.", this);
+        VRRuntimeSession.GetOrCreate().Adopt(origin);
+        gameObject.AddComponent<VRPauseMenu>().Initialize(origin.Camera);
+        Debug.Log("[VR] Left stick changes rooms; headset controls looking. LiDAR " + (enableLidar ? "enabled" : "disabled")
+            + "; combat " + (enableCombat ? "enabled" : "disabled") + "; left Menu opens pause. Saving and rewards remain off.", this);
+    }
+
+    void ConfigureCombat()
+    {
+        CombatController combat = null;
+        CardSystem cards = null;
+        foreach (var root in gameObject.scene.GetRootGameObjects())
+        {
+            if (combat == null) combat = root.GetComponentInChildren<CombatController>(true);
+            if (cards == null) cards = root.GetComponentInChildren<CardSystem>(true);
+            foreach (var hand in root.GetComponentsInChildren<HandView>(true)) hand.enabled = false;
+        }
+        if (combat == null || cards == null)
+        {
+            Debug.LogError("[VR] The VR game scene needs CombatController and CardSystem for combat.", this);
+            enableCombat = false;
+            return;
+        }
+        var health = player.GetComponent<PlayerHealth>();
+        if (health == null) health = player.gameObject.AddComponent<PlayerHealth>();
+        cards.ConfigureExternalControls(health);
+        combat.ConfigureTrackedHeadset(player, origin.Camera.transform, cards, health);
+        cards.enabled = combat.enabled = true;
+        var controls = GetComponent<VRCombatCards>();
+        if (controls == null) controls = gameObject.AddComponent<VRCombatCards>();
+        controls.Initialize(cards, combat, health, origin.Camera);
     }
 
     void DisableOtherSystemsForMovementTest()
@@ -91,6 +138,7 @@ public sealed class VRRoomRig : MonoBehaviour
     void SilenceEnemies(Scene scene, LoadSceneMode mode)
     {
         if (scene != gameObject.scene) return;
+        if (enableCombat) return;
         foreach (var root in scene.GetRootGameObjects())
             foreach (var enemy in root.GetComponentsInChildren<Enemy>(true))
             {
