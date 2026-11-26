@@ -38,6 +38,11 @@ public sealed class SinglePlayerMenu : MonoBehaviour
     bool wired;
     bool announceOverwrite;
     GameObject lastNarrated;
+    Action launchPreview;
+
+    // Runtime-only preview mode: use the existing UI without writing a slot
+    // before VR gameplay has a working save/load integration.
+    public void ConfigureUnsavedPreview(Action launch) => launchPreview = launch;
 
     void Awake()
     {
@@ -134,6 +139,13 @@ public sealed class SinglePlayerMenu : MonoBehaviour
                 : "Could not read slot " + slot + ": " + errors[index]
                     + " Your save has not been changed. Choose New Game only if you want to replace it.";
         ConfigureSlotNavigation();
+        if (launchPreview != null)
+        {
+            confirmButton.interactable = true;
+            newGameButton.interactable = false;
+            if (label != null) label.text = "Start VR Test (unsaved)";
+            statusLabel.text = "Selected slot " + slot + ". VR preview: starts a new unsaved test run. Existing saves are not loaded or changed.";
+        }
     }
 
     void ResolveNavigationButtons()
@@ -250,6 +262,7 @@ public sealed class SinglePlayerMenu : MonoBehaviour
     public void ConfirmSelection()
     {
         if (!slotsPanel.activeInHierarchy) return;
+        if (launchPreview != null) { launchPreview(); return; }
         // Recheck disk state: an occupied slot must never be treated as empty
         // simply because the panel's cached summary was out of date.
         bool exists = SaveGames.Files.Exists(selectedSlot);
@@ -261,6 +274,7 @@ public sealed class SinglePlayerMenu : MonoBehaviour
 
     public void NewGame()
     {
+        if (launchPreview != null) return;
         if (!slotsPanel.activeInHierarchy) return;
         pendingOverwrite = selectedSlot;
         overwriteLabel.text = "Start a new game in slot " + selectedSlot
@@ -274,6 +288,7 @@ public sealed class SinglePlayerMenu : MonoBehaviour
 
     public void ConfirmOverwrite()
     {
+        if (launchPreview != null) return;
         if (!overwritePanel.activeInHierarchy || pendingOverwrite == 0) return;
         if (!SaveGames.StartNew(pendingOverwrite, true, out string error, gameplayScene))
         {

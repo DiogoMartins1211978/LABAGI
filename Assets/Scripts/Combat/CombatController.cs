@@ -57,6 +57,20 @@ public class CombatController : MonoBehaviour
     private Quaternion savedCameraRotation;
 
     [SerializeField] private PlayerHealth playerHealth;
+    bool trackedHeadset;
+
+    public void ConfigureTrackedHeadset(PlayerNodeMover mover, Transform head, CardSystem cards, PlayerHealth health)
+    {
+        player = mover;
+        cameraTransform = head;
+        cardSystem = cards;
+        playerHealth = health;
+        trackedHeadset = true;
+        cameraControlScripts = Array.Empty<MonoBehaviour>();
+        // Keep the room's LiDAR visible so looking around remains meaningful.
+        disableDuringCombat = Array.Empty<MonoBehaviour>();
+        deactivateDuringCombat = Array.Empty<GameObject>();
+    }
 
     void Awake()
     {
@@ -91,7 +105,7 @@ public class CombatController : MonoBehaviour
         player.RoomEntered += HandleRoomEntered;
         player.LeaveBlocked += HandleLeaveBlocked;
 
-        if (!HasUsableLookScript())
+        if (!trackedHeadset && !HasUsableLookScript())
         {
             cameraControlScripts = AutoDetectLookScripts();
             if (cameraControlScripts.Length > 0)
@@ -127,6 +141,7 @@ public class CombatController : MonoBehaviour
 
     void LateUpdate()
     {
+        if (trackedHeadset) return;
         if (CurrentState != State.Combat || !trackEnemy || activeEnemy == null)
             return;
 
@@ -156,13 +171,13 @@ public class CombatController : MonoBehaviour
         activeEnemy.Room = room;
 
         player.BlockLeaving = lockMovementInEnemyRooms;
-        Debug.Log($"[CombatController] Enemy room detected. " +$"Enemy: {activeEnemy.name} | " +$"BlockLeaving: {player.BlockLeaving}");
+        Debug.Log($"[CombatController] Enemy room detected. " + $"Enemy: {activeEnemy.name} | " + $"BlockLeaving: {player.BlockLeaving}");
     }
 
     void HandleLeaveBlocked(RoomNode attemptedTarget)
     {
 
-        Debug.Log($"[CombatController] LeaveBlocked received. " +$"Active enemy: {(activeEnemy != null ? activeEnemy.name : "NULL")}");
+        Debug.Log($"[CombatController] LeaveBlocked received. " + $"Active enemy: {(activeEnemy != null ? activeEnemy.name : "NULL")}");
 
         if (CurrentState == State.Exploring && activeEnemy != null)
             BeginCombat(CombatStart.Ambushed);
@@ -276,12 +291,13 @@ public class CombatController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
 
-        activeEnemy.ProcessDamageOverTime();
-
-        if (activeEnemy == null || activeEnemy.Resolved) {
-            if (activeEnemy.Resolved) EndCombat();
+        if (activeEnemy == null || activeEnemy.Resolved)
+        {
+            EndCombat(activeEnemy != null && activeEnemy.Resolved);
             yield break;
         }
+        activeEnemy.ProcessDamageOverTime();
+        if (activeEnemy.Resolved) { EndCombat(); yield break; }
 
         activeEnemy.Attack(OnEnemyAttackFinished);
         playerHealth.TakeDamage(activeEnemy.attackDamage);
@@ -319,7 +335,7 @@ public class CombatController : MonoBehaviour
         if (cardSystem != null && cardSystem.CurrentMode == CardSystem.Mode.Combat)
             cardSystem.EnterExploration();
 
-        activeEnemy = null; 
+        activeEnemy = null;
         player.SetInputLocked(false);
         CurrentState = State.Exploring;
 

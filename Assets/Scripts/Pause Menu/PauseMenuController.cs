@@ -30,6 +30,7 @@ public class PauseMenuController : MonoBehaviour
     bool previousCursorVisible;
     GameObject previousSelection;
     GameObject activeOverlay;
+    bool selectOnOpen = true;
 
     public bool IsShowingOverlay(GameObject overlay) => ownsPause && overlay != null && activeOverlay == overlay;
 
@@ -38,6 +39,12 @@ public class PauseMenuController : MonoBehaviour
     {
         IsPaused = waitingForRelease = false;
         openedFrame = blockThroughFrame = -1;
+    }
+
+    public void ConfigurePanel(GameObject panel, Button resume, bool focusFirstButton = true)
+    {
+        pausePanel = panel; resumeButton = resume;
+        selectOnOpen = focusFirstButton;
     }
 
     void Start()
@@ -80,7 +87,7 @@ public class PauseMenuController : MonoBehaviour
     public void Pause()
     {
         if (IsPaused || changingScene || pausePanel == null || resumeButton == null) return;
-        TryOpenOverlay(pausePanel, resumeButton);
+        TryOpenOverlay(pausePanel, selectOnOpen ? resumeButton : null);
     }
 
     // A book or other gameplay overlay can borrow the same pause state without
@@ -207,6 +214,17 @@ public class PauseMenuController : MonoBehaviour
 
     static bool AnyGameplayControlHeld()
     {
+        foreach (var device in InputSystem.devices)
+            if (device is UnityEngine.InputSystem.XR.XRController)
+                foreach (var control in device.allControls)
+                {
+                    if (control is ButtonControl xrButton && xrButton.isPressed
+                        && (control.name == "triggerPressed" || control.name == "gripPressed"
+                            || control.name == "primaryButton" || control.name == "secondaryButton"
+                            || control.name == "menu" || control.name == "menuButton"
+                            || control.name == "primary2DAxisClick" || control.name == "secondary2DAxisClick")) return true;
+                    if (control is Vector2Control axis && axis.ReadValue().sqrMagnitude > 0.04f) return true;
+                }
         if (Keyboard.current != null)
             foreach (var key in Keyboard.current.allKeys)
                 if (key.isPressed) return true;
