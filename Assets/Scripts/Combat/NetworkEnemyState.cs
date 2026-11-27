@@ -32,7 +32,6 @@ public class NetworkEnemyState : NetworkBehaviour
         enemy = GetComponent<Enemy>();
     }
 
-    // Called by the host before NetworkObject.Spawn().
     public void SetRoomIdBeforeSpawn(string id)
     {
         if (NetworkObject.IsSpawned)
@@ -61,13 +60,11 @@ public class NetworkEnemyState : NetworkBehaviour
 
         enemyHealth.OnValueChanged += OnHealthChanged;
 
-        // The host initializes the authoritative health.
         if (IsServer)
         {
             enemyHealth.Value = enemy.maxHealth;
         }
 
-        // Apply the current value locally, including on joining clients.
         ApplyHealth(enemyHealth.Value);
 
         StartCoroutine(BindToRoomWhenReady());
@@ -92,8 +89,6 @@ public class NetworkEnemyState : NetworkBehaviour
             enemy.SetHealthFromNetwork(health);
     }
 
-    // Multiplayer damage entry point.
-    // Only the host can change the authoritative health.
     public bool ApplyDamageServer(int damage)
     {
         if (!IsServer || !IsSpawned)

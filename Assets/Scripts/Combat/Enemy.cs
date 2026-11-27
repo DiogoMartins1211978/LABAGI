@@ -325,6 +325,11 @@ public class Enemy : MonoBehaviour
 
     public virtual void Attack(Action onFinished = null)
     {
+        Attack(1f, onFinished);
+    }
+
+    public virtual void Attack(float volumeMultiplier, Action onFinished = null)
+    {
         if (Resolved)
         {
             onFinished?.Invoke();
@@ -347,7 +352,9 @@ public class Enemy : MonoBehaviour
         if (attackCoroutine != null)
             StopCoroutine(attackCoroutine);
 
-        attackCoroutine = StartCoroutine(AttackAfterAnnouncement(cue));
+        attackCoroutine = StartCoroutine(
+            AttackAfterAnnouncement(cue, volumeMultiplier)
+        );
     }
 
     private IEnumerator AttackRoutine()
@@ -513,18 +520,15 @@ public class Enemy : MonoBehaviour
         presenceAudioSource.Stop();
     }
 
-    public void PlayAttackAudio(CardData cue)
+    public void PlayAttackAudio(CardData cue, float volumeMultiplier = 1f)
     {
-        if (attackAudioSource == null || cue == null || cue.cardSound == null)
-            return;
-
-        attackAudioSource.PlayOneShot(cue.cardSound);
+        if (attackAudioSource == null || cue == null || cue.cardSound == null) return;
+        attackAudioSource.PlayOneShot(cue.cardSound, Mathf.Clamp01(volumeMultiplier));
     }
 
-    public void AnnounceNextAttack()
+    public void AnnounceNextAttack(float volumeMultiplier = 1f)
     {
-        if (Resolved)
-            return;
+        if (Resolved) return;
 
         CardData cue = CurrentAttackCue;
 
@@ -538,8 +542,7 @@ public class Enemy : MonoBehaviour
 
         Debug.Log($"[Enemy] {name} prepares: {cue.displayName}");
 
-        PlayAttackAudio(cue);
-
+        PlayAttackAudio(cue, volumeMultiplier);
         currentAttackAnnounced = true;
     }
 
@@ -584,8 +587,7 @@ public class Enemy : MonoBehaviour
 
     public void ProcessDamageOverTime()
     {
-        if (activeDamageOverTime == null)
-            return;
+        if (activeDamageOverTime == null) return;
 
         if (Resolved || IsDead)
         {
@@ -618,7 +620,6 @@ public class Enemy : MonoBehaviour
     protected virtual void Die()
     {
         Debug.Log($"[Enemy] {name} died.");
-
         Resolve();
     }
 
@@ -713,15 +714,16 @@ public class Enemy : MonoBehaviour
             yield return null;
     }
 
-    private IEnumerator AttackAfterAnnouncement(CardData cue)
+    private IEnumerator AttackAfterAnnouncement(CardData cue, float volumeMultiplier)
     {
         if (currentAttackAnnounced)
             yield return WaitForAnnouncementSound(cue);
 
         if (attackAudioSource != null && cue != null && cue.cardSound != null)
         {
-            Debug.Log($"[Enemy Audio] {name} plays attack sound: {cue.displayName}");
-            attackAudioSource.PlayOneShot(cue.cardSound);
+            Debug.Log($"[Enemy Audio] {name} executes attack: {cue.displayName}");
+
+            attackAudioSource.PlayOneShot(cue.cardSound, Mathf.Clamp01(volumeMultiplier));
         }
 
         if (animator == null)

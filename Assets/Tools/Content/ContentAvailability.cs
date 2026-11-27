@@ -122,6 +122,59 @@ namespace Tools.Content
             return false;
         }
 
+        public static bool TryGetCatalogId(CardData card, out string id)
+        {
+            id = null;
+
+            if (card == null)
+                return false;
+
+            var source = GetCatalog();
+
+            if (source == null)
+                return false;
+
+            foreach (var entry in source.entries)
+            {
+                if (entry != null &&
+                    entry.category == "cards" &&
+                    entry.asset == card)
+                {
+                    id = entry.id;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool TryGetCardById(string id, out CardData card)
+        {
+            card = null;
+
+            if (string.IsNullOrWhiteSpace(id))
+                return false;
+
+            var source = GetCatalog();
+
+            if (source == null)
+                return false;
+
+            foreach (var entry in source.entries)
+            {
+                if (entry != null &&
+                    entry.id == id &&
+                    entry.category == "cards" &&
+                    entry.asset is CardData match)
+                {
+                    card = match;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public static IReadOnlyList<T> GetAvailable<T>(string category) where T : UnityEngine.Object
         {
             var assets = new List<T>();

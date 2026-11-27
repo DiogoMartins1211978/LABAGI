@@ -97,24 +97,27 @@ public class CombatController : MonoBehaviour
             return;
         }
 
+        if (playerHealth == null) playerHealth = player.GetComponentInChildren<PlayerHealth>(true);
+
+        if (playerHealth == null) Debug.LogError("[CombatController] No local PlayerHealth found!");
+
         if (cameraTransform == null) cameraTransform = FindCameraTransform();
         Debug.Log($"[CombatController] Using '{cameraTransform.name}' as the combat camera.");
 
         if (cardSystem == null) cardSystem = FindAnyObjectByType<CardSystem>();
-        if (cardSystem == null)
-            Debug.LogWarning("[CombatController] No CardSystem found, so no cards will show in combat.");
+        if (cardSystem == null) Debug.LogWarning("[CombatController] No CardSystem found, so no cards will show in combat.");
 
-        if (cardSystem != null)
-            cardSystem.TurnEnded += HandlePlayerTurnEnded;
+        if (cardSystem != null) cardSystem.TurnEnded += HandlePlayerTurnEnded;
 
         if (IsMultiplayerSession)
         {
             networkCombatManager = FindAnyObjectByType<NetworkCombatManager>();
-
             if (networkCombatManager != null)
             {
                 networkCombatManager.MultiplayerCombatStarted += HandleMultiplayerCombatStarted;
+                networkCombatManager.MultiplayerCombatEnded += HandleMultiplayerCombatEnded;
                 StartCoroutine(ReportInitialRoomWhenReady());
+                StartCoroutine(RegisterLocalPlayerHealthWhenReady());
                 Debug.Log("[CombatController] Connected to NetworkCombatManager.");
             }
             else
@@ -149,6 +152,9 @@ public class CombatController : MonoBehaviour
             networkCombatManager.MultiplayerCombatStarted -= HandleMultiplayerCombatStarted;
 
         if (Instance == this) Instance = null;
+
+        if (networkCombatManager != null)
+            networkCombatManager.MultiplayerCombatEnded -= HandleMultiplayerCombatEnded;
     }
 
     void Update()
@@ -302,6 +308,8 @@ public class CombatController : MonoBehaviour
 
     private void HandleMultiplayerCombatStarted(string roomId)
     {
+        Debug.Log($"[MP Combat] HandleMultiplayerCombatStarted received. Room: {roomId}");
+
         if (!IsMultiplayerSession || CurrentState != State.Exploring)
             return;
 
@@ -332,6 +340,8 @@ public class CombatController : MonoBehaviour
 
     private void BeginMultiplayerCombat()
     {
+        Debug.Log("[MP Combat] BeginMultiplayerCombat called.");
+
         Debug.Log(
             $"[CombatController] Starting synchronised multiplayer combat " +
             $"with {activeEnemy.name}."
@@ -357,9 +367,53 @@ public class CombatController : MonoBehaviour
 
     private IEnumerator MultiplayerCombatIntro(Enemy enemy)
     {
+        Debug.Log("[MP Combat] MultiplayerCombatIntro started.");
+
         yield return TurnCameraTo(FocusRotation(enemy), focusTurnDuration);
 
+        Debug.Log("[MP Combat] Camera turn finished. Continuing combat intro.");
+
         trackEnemy = true;
+
+        Debug.Log("[MP Combat] About to enter CardSystem combat.");
+
+        if (cardSystem != null)
+        {
+            cardSystem.EnterCombat();
+            Debug.Log("[MP Combat] CardSystem.EnterCombat() completed.");
+        }
+        else
+        {
+            Debug.LogError("[MP Combat] CardSystem is missing.");
+            yield break;
+        }
+
+        Debug.Log("[MP Combat] Checking NetworkCombatManager.");
+
+        if (networkCombatManager == null)
+        {
+            Debug.LogError("[MP Combat] NetworkCombatManager is missing.");
+            yield break;
+        }
+
+        Debug.Log("[MP Combat] Reading target information.");
+
+        ulong localClientId = networkCombatManager.NetworkManager.LocalClientId;
+        ulong targetClientId = networkCombatManager.LocalCombatTargetClientId;
+
+        bool isTargeted = localClientId == targetClientId;
+        float volumeMultiplier = isTargeted ? 1f : 0.5f;
+
+        Debug.Log(
+            $"[MP Combat] Target: {targetClientId} | " +
+            $"Local: {localClientId} | " +
+            $"Targeted: {isTargeted} | " +
+            $"Volume: {volumeMultiplier}"
+        );
+
+        enemy.AnnounceNextAttack(volumeMultiplier);
+
+        Debug.Log("[MP Combat] Attack announcement requested.");
     }
 
     void BeginCombat(CombatStart how)
@@ -656,5 +710,45 @@ public class CombatController : MonoBehaviour
                 Debug.Log($"[CombatController] Initial network room reported: {roomId}");
             }
         }
+    }
+
+    private IEnumerator RegisterLocalPlayerHealthWhenReady()
+    {
+        while (networkCombatManager == null || !networkCombatManager.IsSpawned)
+        {
+            yield return null;
+
+            if (networkCombatManager == null)
+                networkCombatManager = FindAnyObjectByType<NetworkCombatManager>();
+        }
+
+        if (playerHealth == null)
+        {
+            Debug.LogError(
+                "[CombatController] Cannot register multiplayer health: PlayerHealth is missing."
+            );
+            yield break;
+        }
+
+        networkCombatManager.RegisterLocalPlayerHealth(playerHealth);
+
+        Debug.Log(
+            $"[CombatController] Registered local player health: " +
+            $"{playerHealth.CurrentHealth}/{playerHealth.maxHealth} | " +
+            $"Shield: {playerHealth.CurrentShield}"
+        );
+    }
+
+    private void HandleMultiplayerCombatEnded(string roomId, bool enemyDefeated)
+    {
+        if (CurrentState != State.Combat)
+            return;
+
+        Debug.Log(
+            $"[MP Combat] Encounter ended. " +
+            $"Room: {roomId} | Enemy defeated: {enemyDefeated}"
+        );
+
+        EndCombat(enemyDefeated);
     }
 }

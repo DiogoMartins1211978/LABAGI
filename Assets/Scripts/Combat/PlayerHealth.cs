@@ -26,41 +26,30 @@ public class PlayerHealth : MonoBehaviour
         if (IsDead || damage <= 0)
             return;
 
-        // Shield absorbs damage first
         int damageToShield = Mathf.Min(CurrentShield, damage);
 
         CurrentShield -= damageToShield;
         damage -= damageToShield;
 
-        // Remaining damage goes to health
-        if (damage > 0)
-            currentHealth -= damage;
+        if (damage > 0) currentHealth -= damage;
 
         currentHealth = Mathf.Max(currentHealth, 0);
 
-        Debug.Log(
-            $"[Player] Took damage. " +
-            $"Health: {currentHealth}/{maxHealth} | " +
-            $"Shield: {CurrentShield}"
-        );
-
-        if (IsDead)
-            Die();
+        Debug.Log($"[Player] Took damage. Health: {currentHealth}/{maxHealth} | Shield: {CurrentShield}");
+        NotifyMultiplayerVitalsChanged();
+        if (IsDead) Die();
     }
 
 
     public void Heal(int amount)
     {
-        if (IsDead || amount <= 0)
-            return;
+        if (IsDead || amount <= 0) return;
 
         currentHealth += amount;
         currentHealth = Mathf.Min(currentHealth, maxHealth);
 
-        Debug.Log(
-            $"[Player] Healed {amount}. " +
-            $"Health: {currentHealth}/{maxHealth}"
-        );
+        Debug.Log($"[Player] Healed {amount}. Health: {currentHealth}/{maxHealth}");
+        NotifyMultiplayerVitalsChanged();
     }
 
 
@@ -71,26 +60,21 @@ public class PlayerHealth : MonoBehaviour
 
         CurrentShield += amount;
 
-        Debug.Log(
-            $"[Player] Gained {amount} shield. " +
-            $"Health: {currentHealth}/{maxHealth} | " +
-            $"Shield: {CurrentShield}"
-        );
+        Debug.Log($"[Player] Gained {amount} shield. Health: {currentHealth}/{maxHealth} | Shield: {CurrentShield}");
+        NotifyMultiplayerVitalsChanged();
     }
-
 
     public void ClearShield()
     {
         CurrentShield = 0;
 
         Debug.Log("[Player] Shield cleared.");
+        NotifyMultiplayerVitalsChanged();
     }
-
 
     private void Die()
     {
         Debug.Log("[Player] Player died.");
-
         // Death behaviour will be implemented later.
     }
 
@@ -102,9 +86,21 @@ public class PlayerHealth : MonoBehaviour
         maxHealth += amount;
         currentHealth = maxHealth;
 
-        Debug.Log(
-            $"[Player] Max health increased by {amount}. " +
-            $"Fully healed: {currentHealth}/{maxHealth}"
+        Debug.Log($"[Player] Max health increased by {amount}. Fully healed: {currentHealth}/{maxHealth}");
+        NotifyMultiplayerVitalsChanged();
+    }
+
+    public void SetHealthFromNetwork(int health, int shield)
+    {
+        currentHealth = Mathf.Clamp(health, 0, maxHealth);
+        CurrentShield = Mathf.Max(0, shield);
+
+        Debug.Log($"[Player] Network health updated. Health: {currentHealth}/{maxHealth} | Shield: {CurrentShield}"
         );
+    }
+
+    private void NotifyMultiplayerVitalsChanged()
+    {
+        NetworkCombatManager.Instance?.ReportLocalPlayerVitals(this);
     }
 }

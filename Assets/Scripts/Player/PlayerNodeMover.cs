@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
 public class PlayerNodeMover : MonoBehaviour
 {
@@ -136,6 +137,24 @@ public class PlayerNodeMover : MonoBehaviour
 
         RoomNode target = FindBestNeighbor(desiredDir);
         if (target == null) return;
+
+        NetworkCombatManager networkCombat = NetworkCombatManager.Instance;
+
+        if (networkCombat != null && networkCombat.IsSpawned)
+        {
+            DungeonGenerator generator = FindAnyObjectByType<DungeonGenerator>();
+
+            if (generator != null)
+            {
+                string targetRoomId = generator.GetRoomId(target);
+
+                if (networkCombat.IsRoomLocked(targetRoomId))
+                {
+                    Debug.Log($"[PlayerNodeMover] Cannot enter room '{targetRoomId}': it is locked by an active combat.");
+                    return;
+                }
+            }
+        }
 
         if (BlockLeaving)
         {

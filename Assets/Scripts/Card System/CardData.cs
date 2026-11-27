@@ -67,24 +67,39 @@ public class CardData : ScriptableObject
         return view;
     }
 
+
     public virtual void OnPlay(PlayerHealth player, Enemy target, int currentLevel = 1)
     {
-        if (cardSound != null) PlayCardFeedback(null, currentLevel);
+        if (cardSound != null)
+            PlayCardFeedback(null, currentLevel);
 
+        ApplyEffects(player, target, currentLevel);
+    }
+
+    public virtual void ApplyEffects(PlayerHealth player, Enemy target, int currentLevel = 1)
+    {
         switch (type)
         {
             case CardType.Attack:
                 Debug.LogWarning($"[Card] {displayName} was played.");
-                if (target != null) target.TakeDamage(effectValue);
-                else Debug.LogWarning("TARGET IS NULL.");
+
+                if (target != null)
+                    target.TakeDamage(effectValue);
+                else
+                    Debug.LogWarning("TARGET IS NULL.");
+
                 break;
 
             case CardType.Defense:
-                if (player != null) player.AddShield(effectValue);
+                if (player != null)
+                    player.AddShield(effectValue);
+
                 break;
 
             case CardType.Ability:
-                if (player == null) return;
+                if (player == null)
+                    return;
+
                 switch (abilityType)
                 {
                     case AbilityType.Heal:
@@ -92,9 +107,16 @@ public class CardData : ScriptableObject
                         break;
 
                     case AbilityType.DamageOverTime:
-                        if (target != null) target.ApplyDamageOverTime(effectValue, effectDuration, this, currentLevel);
+                        if (target != null)
+                            target.ApplyDamageOverTime(
+                                effectValue,
+                                effectDuration,
+                                this,
+                                currentLevel
+                            );
                         break;
                 }
+
                 break;
 
             case CardType.Trap:
@@ -103,10 +125,15 @@ public class CardData : ScriptableObject
         }
     }
 
-    public void PlayCardFeedback(Transform soundOrigin = null, int currentLevel = 1)
+
+    public void PlayCardFeedback(Transform soundOrigin = null, int currentLevel = 1, float volumeMultiplier = 1f)
     {
         Vector3 position;
-        if (soundOrigin != null) position = soundOrigin.position;
+
+        if (soundOrigin != null)
+        {
+            position = soundOrigin.position;
+        }
         else
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -120,9 +147,11 @@ public class CardData : ScriptableObject
 
         source.spatialBlend = 1f;
         source.rolloffMode = AudioRolloffMode.Linear;
-
         source.outputAudioMixerGroup = cardAudioGroup;
 
-        audioHost.AddComponent<CardAudioPlayer>().PlaySequence(source, cardSound, shinySound, currentLevel);
+        source.volume = Mathf.Clamp01(volumeMultiplier);
+
+        audioHost.AddComponent<CardAudioPlayer>()
+            .PlaySequence(source, cardSound, shinySound, currentLevel);
     }
 }

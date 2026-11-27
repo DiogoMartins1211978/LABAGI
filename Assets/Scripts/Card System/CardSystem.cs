@@ -355,9 +355,36 @@ public class CardSystem : MonoBehaviour
 
         CardInstance playedCard = hand[selected];
 
+
+        NetworkCombatManager networkCombat = NetworkCombatManager.Instance;
+
+        if (networkCombat != null && networkCombat.IsLocalPlayerInMultiplayerCombat)
+        {
+            if (!networkCombat.TrySubmitCard(playedCard.Data, playedCard.Level))
+            {
+                Debug.LogWarning("[Cards] Multiplayer card submission failed.");
+                return;
+            }
+
+            IsPlayerTurn = false;
+
+            hand[selected] = queue.Dequeue();
+            queue.Enqueue(playedCard);
+
+            CardPlayed?.Invoke(playedCard.Data);
+
+            LogHand($"Submitted {playedCard.Data.displayName}. Waiting for other player...");
+
+            StateChanged?.Invoke();
+
+            return;
+        }
+
+
         IsPlayerTurn = false;
 
         playedCard.Data.OnPlay(playerHealth, activeEnemy, playedCard.Level);
+        NetworkCombatManager.Instance?.TryBroadcastCardAudio(playedCard.Data, playedCard.Level);
 
         hand[selected] = queue.Dequeue();
         queue.Enqueue(playedCard);
