@@ -13647,7 +13647,6 @@ GameObject:
   - component: {fileID: 934676980}
   - component: {fileID: 934676979}
   - component: {fileID: 934676978}
-  - component: {fileID: 934676981}
   m_Layer: 0
   m_Name: VRSetup
   m_TagString: Untagged
@@ -13699,23 +13698,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &934676981
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 934676977}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ecae6ffac6548e1b105b635868daeb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VRRoomRig
-  player: {fileID: 604149155}
-  origin: {fileID: 2011576848}
-  enableLidar: 1
-  enableCombat: 1
-  hideDesktopBody: 1
 --- !u!1 &947082634
 GameObject:
   m_ObjectHideFlags: 0

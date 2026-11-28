@@ -30,6 +30,21 @@ public class BestiaryBookView : MonoBehaviour
     AnimationClip sampledClip;
     public bool IsTransitioning => transition != null;
     public bool IsVisible => bookRoot != null && bookRoot.activeSelf;
+    public Transform Root => bookRoot != null ? bookRoot.transform : null;
+    bool trackedView;
+
+    public void ConfigureTrackedView(Camera camera)
+    {
+        trackedView = true;
+        // The desktop preview used to keep these blend-shape meshes visible.
+        // In XR the model changes position and the preview camera stays off.
+        foreach (var surface in model.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            surface.updateWhenOffscreen = true;
+        foreach (var animator in model.GetComponentsInChildren<Animator>(true))
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        foreach (var outline in model.GetComponentsInChildren<BookEdgeOutline>(true))
+            outline.ConfigureView(camera);
+    }
 
     void Awake()
     {
@@ -44,6 +59,16 @@ public class BestiaryBookView : MonoBehaviour
         }
         surfaces = model.GetComponentsInChildren<SkinnedMeshRenderer>(true);
         foreach (var animator in model.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
+        // SampleAnimation accepts a non-legacy imported clip in the Editor
+        // without an Animator, but player builds require one on this exact
+        // sampling root (an Animator on an FBX child does not satisfy it).
+        var sampler = model.GetComponent<Animator>();
+        if (sampler == null) sampler = model.AddComponent<Animator>();
+        sampler.runtimeAnimatorController = null;
+        sampler.applyRootMotion = false;
+        sampler.updateMode = AnimatorUpdateMode.UnscaledTime;
+        sampler.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        sampler.enabled = true;
         ClearPose();
         openClip.SampleAnimation(model, openClip.length);
         sampledClip = openClip;
@@ -127,6 +152,14 @@ public class BestiaryBookView : MonoBehaviour
             time = Time.realtimeSinceStartup - start;
         }
         Sample(clip, backwards ? 0 : clip.length);
+        if (trackedView && clip == openClip)
+        {
+            int changed = 0;
+            foreach (var surface in surfaces)
+                for (int i = 0; i < surface.sharedMesh.blendShapeCount; i++)
+                    if (Mathf.Abs(surface.GetBlendShapeWeight(i)) > 0.01f) changed++;
+            Debug.Log("[VR Book] Open animation sampled; nonzero blend shapes=" + changed, this);
+        }
     }
 
     IEnumerator Reveal(bool includeBookmarks = false)

@@ -9,6 +9,14 @@ public sealed class PauseSaveMenu : MonoBehaviour
     [SerializeField] TMP_Text statusLabel;
     [SerializeField] SaveGameSession session;
     [SerializeField] MenuNarration narration;
+    string unavailableReason;
+
+    public void ConfigureUnavailable(string reason)
+    {
+        unavailableReason = reason;
+        if (saveButton != null) saveButton.interactable = false;
+        if (statusLabel != null) statusLabel.text = reason;
+    }
 
     void Awake()
     {
@@ -26,6 +34,7 @@ public sealed class PauseSaveMenu : MonoBehaviour
     void OnEnable()
     {
         if (statusLabel == null) return;
+        if (unavailableReason != null) { statusLabel.text = unavailableReason; return; }
         if (session == null) statusLabel.text = "The save system is unavailable.";
         else if (!session.CanSave(out string reason)) statusLabel.text = reason;
         else statusLabel.text = "Active save: slot " + SaveGames.ActiveSlot + ".";
@@ -36,6 +45,7 @@ public sealed class PauseSaveMenu : MonoBehaviour
         // Keep this button available so keyboard/screen-reader users can hear
         // why a save is unavailable rather than encountering an unexplained gap.
         if (!isActiveAndEnabled || !PauseMenuController.IsPaused) return;
+        if (unavailableReason != null) { Report(unavailableReason); return; }
         if (session == null) { Report("The save system is unavailable."); return; }
         if (!session.CanSave(out string reason)) { Report(reason); return; }
         if (session.TrySave(out string error))

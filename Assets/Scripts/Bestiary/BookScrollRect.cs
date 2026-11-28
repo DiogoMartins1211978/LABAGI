@@ -17,7 +17,7 @@ public class BookScrollRect : ScrollRect
         var position = data.position;
         var press = data.pressPosition;
         var delta = data.delta;
-        if (page != null && page.MapScreenPoint(position, out var mapped))
+        if (page != null && page.isActiveAndEnabled && page.MapScreenPoint(position, out var mapped))
         {
             page.MapScreenPoint(press, out var mappedPress);
             page.MapScreenPoint(position - delta, out var previous);

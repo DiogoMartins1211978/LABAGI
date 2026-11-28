@@ -32,6 +32,16 @@ public class BestiaryController : MonoBehaviour
     bool closing;
     [SerializeField, Min(0)] float toggleCooldown = .4f;
     float nextToggleTime;
+    bool vrPresentation;
+    public GameObject Panel => bestiaryPanel;
+    public Camera PreviewCamera => previewCamera;
+    public BestiaryBookView BookView => bookView;
+
+    public void ConfigureVR(PauseMenuController controller)
+    {
+        pauseController = controller;
+        vrPresentation = true;
+    }
 
     public bool IsOpen => pauseController != null && pauseController.IsShowingOverlay(bestiaryPanel);
 
@@ -74,6 +84,7 @@ public class BestiaryController : MonoBehaviour
 
     void Update()
     {
+        if (vrPresentation) return;
         if (ControlRemapping.BlocksMenuBack) return;
         bool togglePressed = toggleAction != null ? toggleAction.WasPressedThisFrame()
             : Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame;
@@ -93,9 +104,9 @@ public class BestiaryController : MonoBehaviour
     {
         // Stop rendering the book when hidden, including an externally closed overlay.
         if (previewCamera != null && previewCamera != Camera.main)
-            previewCamera.enabled = IsOpen;
+            previewCamera.enabled = IsOpen && !vrPresentation;
         if (!IsOpen && bookView != null && bookView.IsVisible) { closing = false; bookView.HideImmediately(); }
-        if (deckTab != null) deckTab.interactable = cards != null && cards.CurrentMode != CardSystem.Mode.Combat;
+        if (deckTab != null) deckTab.interactable = !vrPresentation && cards != null && cards.CurrentMode != CardSystem.Mode.Combat;
     }
 
     public void Toggle()
@@ -123,6 +134,7 @@ public class BestiaryController : MonoBehaviour
 
     public void OpenDeck()
     {
+        if (vrPresentation) return; // Deck interactions are the next VR stage.
         if (cards == null || deckUI == null || cards.CurrentMode == CardSystem.Mode.Combat)
         {
             if (narration != null) narration.Speak("Deck editing is unavailable during combat.");
@@ -173,12 +185,12 @@ public class BestiaryController : MonoBehaviour
         // parents first so newly instantiated buttons receive Awake immediately.
         SelectSection(section);
         if (bookView != null) bookView.Open();
-        if (!pauseController.TryOpenOverlay(bestiaryPanel, firstSelected))
+        if (!pauseController.TryOpenOverlay(bestiaryPanel, vrPresentation ? null : firstSelected))
         {
             if (bookView != null) bookView.HideImmediately();
             return;
         }
-        previewCamera.enabled = true;
+        previewCamera.enabled = !vrPresentation;
         closing = false;
         deckVisited = section == BookSection.Deck;
         nextToggleTime = Time.unscaledTime + toggleCooldown;

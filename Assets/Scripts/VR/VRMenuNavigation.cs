@@ -11,6 +11,14 @@ public sealed class VRMenuNavigation : MonoBehaviour
     Vector2 previous;
     float nextRepeat;
     public bool UsingJoystick { get; private set; }
+    public Transform Scope { get; set; }
+    public System.Action BackHandler { get; set; }
+
+    System.Collections.Generic.IEnumerable<Transform> Roots()
+    {
+        if (Scope != null) { yield return Scope; yield break; }
+        foreach (var root in gameObject.scene.GetRootGameObjects()) yield return root.transform;
+    }
 
     void Awake()
     {
@@ -28,6 +36,14 @@ public sealed class VRMenuNavigation : MonoBehaviour
 
     public void UsePointer() => UsingJoystick = false;
 
+    bool CanUseSelection(GameObject selected)
+    {
+        if (selected == null || !selected.activeInHierarchy) return false;
+        if (Scope != null && !selected.transform.IsChildOf(Scope)) return false;
+        var control = selected.GetComponent<Selectable>();
+        return control != null && control.IsActive() && control.IsInteractable();
+    }
+
     void Update()
     {
         var events = EventSystem.current;
@@ -41,7 +57,7 @@ public sealed class VRMenuNavigation : MonoBehaviour
             UsingJoystick = true;
             nextRepeat = Time.unscaledTime + (direction == previous ? 0.16f : 0.4f);
             var selected = events.currentSelectedGameObject;
-            if (selected == null || !selected.activeInHierarchy) SelectFirst(events);
+            if (!CanUseSelection(selected)) SelectFirst(events);
             else
             {
                 var data = new AxisEventData(events) { moveVector = direction,
@@ -54,12 +70,14 @@ public sealed class VRMenuNavigation : MonoBehaviour
         if (submit.WasPressedThisFrame())
         {
             UsingJoystick = true;
-            if (events.currentSelectedGameObject == null) SelectFirst(events);
+            if (!CanUseSelection(events.currentSelectedGameObject)) SelectFirst(events);
             var selected = events.currentSelectedGameObject;
-            if (selected != null) ExecuteEvents.Execute(selected, new BaseEventData(events), ExecuteEvents.submitHandler);
+            if (CanUseSelection(selected)) ExecuteEvents.Execute(selected, new BaseEventData(events), ExecuteEvents.submitHandler);
         }
         if (cancel.WasPressedThisFrame())
-            foreach (var root in gameObject.scene.GetRootGameObjects())
+        {
+            if (BackHandler != null) { BackHandler(); return; }
+            foreach (var root in Roots())
                 foreach (var focus in root.GetComponentsInChildren<MenuPanelFocus>(true))
                     if (focus.gameObject.activeInHierarchy && focus.BackControl != null
                         && focus.BackControl.IsActive() && focus.BackControl.IsInteractable())
@@ -68,11 +86,12 @@ public sealed class VRMenuNavigation : MonoBehaviour
                         focus.BackControl.onClick.Invoke();
                         return;
                     }
+        }
     }
 
     void SelectFirst(EventSystem events)
     {
-        foreach (var root in gameObject.scene.GetRootGameObjects())
+        foreach (var root in Roots())
             foreach (var focus in root.GetComponentsInChildren<MenuPanelFocus>(true))
                 if (focus.gameObject.activeInHierarchy && focus.InitialControl != null
                     && focus.InitialControl.IsActive() && focus.InitialControl.IsInteractable())
@@ -80,7 +99,7 @@ public sealed class VRMenuNavigation : MonoBehaviour
                     events.SetSelectedGameObject(focus.InitialControl.gameObject);
                     return;
                 }
-        foreach (var root in gameObject.scene.GetRootGameObjects())
+        foreach (var root in Roots())
             foreach (var control in root.GetComponentsInChildren<Selectable>())
                 if (control.IsActive() && control.IsInteractable())
                 {

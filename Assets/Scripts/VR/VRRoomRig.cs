@@ -6,8 +6,13 @@ using UnityEngine.SceneManagement;
 // First integration stage: head-relative room movement only. Add to a separate
 // root in the copied VR scene, not the PC/mobile scene or the XR rig prefab asset.
 [DefaultExecutionOrder(-20000)]
+[DisallowMultipleComponent]
 public sealed class VRRoomRig : MonoBehaviour
 {
+    static VRRoomRig activeBridge;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetBridge() => activeBridge = null;
     [SerializeField] PlayerNodeMover player;
     [SerializeField] XROrigin origin;
     [Tooltip("Enable headset-directed scanning while keeping combat and enemy discovery off for this test.")]
@@ -22,6 +27,12 @@ public sealed class VRRoomRig : MonoBehaviour
 
     void Awake()
     {
+        if (activeBridge != null && activeBridge != this && activeBridge.gameObject.scene == gameObject.scene)
+        {
+            Debug.LogWarning("[VR] Ignored a duplicate VRRoomRig in this scene.", this);
+            enabled = false;
+            return;
+        }
         if (player == null || origin == null || origin.Camera == null)
         {
             Debug.LogError("VR Room Rig: assign PlayerNodeMover and the XR Origin with its camera.", this);
@@ -34,6 +45,7 @@ public sealed class VRRoomRig : MonoBehaviour
             enabled = false;
             return;
         }
+        activeBridge = this;
         var sceneOrigin = origin;
         origin = VRRuntimeSession.GetOrCreate().ReuseRig(origin);
         // Set before PlayerNodeMover.Awake resolves its action reference. Keep
@@ -86,6 +98,7 @@ public sealed class VRRoomRig : MonoBehaviour
         origin.Camera.backgroundColor = Color.black;
         VRRuntimeSession.GetOrCreate().Adopt(origin);
         gameObject.AddComponent<VRPauseMenu>().Initialize(origin.Camera);
+        gameObject.AddComponent<VRBestiary>().Initialize(origin.Camera);
         Debug.Log("[VR] Left stick changes rooms; headset controls looking. LiDAR " + (enableLidar ? "enabled" : "disabled")
             + "; combat " + (enableCombat ? "enabled" : "disabled") + "; left Menu opens pause. Saving and rewards remain off.", this);
     }
@@ -162,6 +175,7 @@ public sealed class VRRoomRig : MonoBehaviour
 
     void OnDestroy()
     {
+        if (activeBridge == this) activeBridge = null;
         SceneManager.sceneLoaded -= SilenceEnemies;
         if (movementAsset != null) movementAsset.Disable();
         if (movementReference != null) Destroy(movementReference);

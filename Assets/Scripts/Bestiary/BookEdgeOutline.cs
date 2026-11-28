@@ -18,6 +18,8 @@ public class BookEdgeOutline : MonoBehaviour
     GameObject drawing;
     struct Edge { public int a, b, firstFace, secondFace; }
 
+    public void ConfigureView(Camera camera) => viewCamera = camera;
+
     // Build adjacency in the open pose, before the closed covers can overlap.
     public void PrepareTopology()
     {

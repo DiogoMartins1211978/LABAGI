@@ -13,6 +13,7 @@ public class MenuNarration : MonoBehaviour
 
     CancellationTokenSource speechCancellation;
     bool narrationEnabled;
+    bool destroyed;
 
     void Start()
     {
@@ -62,7 +63,7 @@ public class MenuNarration : MonoBehaviour
 
     async void PlaySpeech(string text)
     {
-        if (!speech.IsInitialized || string.IsNullOrWhiteSpace(text))
+        if (destroyed || speech == null || !speech.IsInitialized || string.IsNullOrWhiteSpace(text))
             return;
 
         speechCancellation?.Cancel();
@@ -84,12 +85,13 @@ public class MenuNarration : MonoBehaviour
         }
         catch (Exception exception)
         {
-            Debug.LogException(exception, this);
+            if (!destroyed && this != null) Debug.LogException(exception, this);
         }
     }
 
     void OnDestroy()
     {
+        destroyed = true;
         speechCancellation?.Cancel();
         speechCancellation?.Dispose();
 

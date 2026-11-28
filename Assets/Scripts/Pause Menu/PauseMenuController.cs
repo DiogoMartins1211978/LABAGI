@@ -31,6 +31,9 @@ public class PauseMenuController : MonoBehaviour
     GameObject previousSelection;
     GameObject activeOverlay;
     bool selectOnOpen = true;
+    bool externalPauseInput;
+    public GameObject PausePanel => pausePanel;
+    public Button ResumeButton => resumeButton;
 
     public bool IsShowingOverlay(GameObject overlay) => ownsPause && overlay != null && activeOverlay == overlay;
 
@@ -41,10 +44,11 @@ public class PauseMenuController : MonoBehaviour
         openedFrame = blockThroughFrame = -1;
     }
 
-    public void ConfigurePanel(GameObject panel, Button resume, bool focusFirstButton = true)
+    public void ConfigurePanel(GameObject panel, Button resume, bool focusFirstButton = true, bool externalInput = false)
     {
         pausePanel = panel; resumeButton = resume;
         selectOnOpen = focusFirstButton;
+        externalPauseInput = externalInput;
     }
 
     void Start()
@@ -67,7 +71,7 @@ public class PauseMenuController : MonoBehaviour
             blockThroughFrame = Time.frameCount;
         }
 
-        if (ControlRemapping.BlocksMenuBack) return;
+        if (externalPauseInput || ControlRemapping.BlocksMenuBack) return;
         bool escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
         bool start = Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame;
         bool back = Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame;

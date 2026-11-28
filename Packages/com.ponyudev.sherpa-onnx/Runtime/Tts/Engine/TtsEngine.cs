@@ -27,6 +27,7 @@ namespace PonyuDev.SherpaOnnx.Tts.Engine
         private SemaphoreSlim _semaphore;
         private OfflineTtsConfig _lastConfig;
         private int _poolSize;
+        private int _disposed;
 
         public int SampleRate { get; private set; }
         public int NumSpeakers { get; private set; }
@@ -164,8 +165,11 @@ namespace PonyuDev.SherpaOnnx.Tts.Engine
 
         public void Dispose()
         {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
             Unload();
-            _lifecycleLock.Dispose();
+            // Queued workers can still arrive after cancellation. Keep the
+            // managed lock usable until those tasks release this engine; the
+            // native pool itself has already been disposed by Unload.
         }
 
         // ── Simple generation ──
@@ -584,53 +588,42 @@ namespace PonyuDev.SherpaOnnx.Tts.Engine
         // ── Pool core ──
 
         /// <summary>
-        /// Async-friendly counterpart of <see cref="RentAndGenerate"/>. Uses
-        /// <see cref="SemaphoreSlim.WaitAsync(CancellationToken)"/> so a
-        /// caller waiting for a free engine instance can be cancelled.
-        /// <para/>
-        /// Important: does NOT hold <see cref="_lifecycleLock"/> across the
-        /// await, because <see cref="ReaderWriterLockSlim"/> is thread-affine
-        /// and would deadlock. Callers must not <c>Unload</c>/<c>Resize</c>
-        /// while async generations are in flight; cancel them first via CT.
+        /// Runs pool access and native generation under one worker-thread read
+        /// lock. Cancellation on IL2CPP cannot interrupt the native call, so
+        /// Unload/Resize must wait for that call to return before freeing it.
+        /// No thread-affine lock is held across an await.
         /// </summary>
-        private async Task<TtsResult> RentAndGenerateAsync(
+        private Task<TtsResult> RentAndGenerateAsync(
             Func<OfflineTts, TtsResult> action, CancellationToken ct)
         {
-            if (!IsLoaded)
+            return Task.Run(() =>
             {
-                SherpaOnnxLog.RuntimeError(
-                    "[SherpaOnnx] TtsEngine: engine not loaded.");
-                return null;
-            }
-
-            var semaphore = _semaphore;
-            if (semaphore == null)
-                return null;
-
-            await semaphore.WaitAsync(ct).ConfigureAwait(false);
-
-            OfflineTts tts = null;
-            bool dequeued = false;
-            try
-            {
-                if (!_available.TryDequeue(out tts))
-                {
-                    SherpaOnnxLog.RuntimeError(
-                        "[SherpaOnnx] TtsEngine: no engine available.");
-                    return null;
-                }
-                dequeued = true;
-
                 ct.ThrowIfCancellationRequested();
-
-                return await Task.Run(() => action(tts), ct).ConfigureAwait(false);
-            }
-            finally
-            {
-                if (dequeued && tts != null)
-                    _available.Enqueue(tts);
-                semaphore.Release();
-            }
+                _lifecycleLock.EnterReadLock();
+                try
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (Volatile.Read(ref _disposed) != 0 || !IsLoaded) return null;
+                    var semaphore = _semaphore;
+                    semaphore.Wait(ct);
+                    OfflineTts tts = null;
+                    try
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        if (!_available.TryDequeue(out tts)) return null;
+                        return action(tts);
+                    }
+                    finally
+                    {
+                        if (tts != null) _available.Enqueue(tts);
+                        semaphore.Release();
+                    }
+                }
+                finally
+                {
+                    _lifecycleLock.ExitReadLock();
+                }
+            }, ct);
         }
 
         private TtsResult RentAndGenerate(Func<OfflineTts, TtsResult> action)
