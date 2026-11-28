@@ -65,7 +65,7 @@ public sealed class VRBestiary : MonoBehaviour
         PreparePages();
         toggle = new InputAction("VR Bestiary", InputActionType.Button, "<XRController>{LeftHand}/secondaryButton");
         toggle.Enable();
-        Debug.Log("[VR] Y opens the bestiary; rays/joysticks browse, A/X confirms, B/Y closes. Deck remains disabled.", this);
+        Debug.Log("[VR] Y opens the book; rays/joysticks browse, A/X confirms, B/Y closes. Deck editing is available outside combat.", this);
     }
 
     void Update()
@@ -75,8 +75,15 @@ public sealed class VRBestiary : MonoBehaviour
         bool pressed = down && !held;
         held = down;
         if (!pressed) return;
-        if (!book.IsOpen && !PauseMenuController.BlocksGameplayInput) PlaceBook();
-        book.Toggle();
+        if (book.IsOpen)
+        {
+            if (!book.BookView.IsTransitioning) book.Close();
+        }
+        else if (!PauseMenuController.BlocksGameplayInput)
+        {
+            PlaceBook();
+            book.OpenBestiary();
+        }
     }
 
     void LateUpdate()

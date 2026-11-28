@@ -24,6 +24,13 @@ public class BookDeckUI : MonoBehaviour
     float[] fontSizes;
     int collectionPage, deckPage, collectionPageCount = 1, deckPageCount = 1;
     Coroutine pendingFocus;
+    bool vrControls;
+    public void ConfigureVR() => vrControls = true;
+    public void ShowMinimumRequired()
+    {
+        if (deckHeading != null && cards != null)
+            deckHeading.text = "Need " + cards.minDeckRequired + " cards to close";
+    }
     public bool CanEdit => cards != null && cards.CurrentMode != CardSystem.Mode.Combat;
 
     void Awake()
@@ -49,6 +56,7 @@ public class BookDeckUI : MonoBehaviour
     }
     void Update()
     {
+        if (vrControls) return; // XR rays and VRMenuNavigation submit the buttons.
         BookInput.HandleInteract(collectionGrid.parent);
         BookInput.HandleInteract(deckGrid.parent);
         BookInput.HandleInteract(closeButton.transform.parent);
@@ -124,7 +132,7 @@ public class BookDeckUI : MonoBehaviour
 
             deckSlots[i].Bind(this, card, true, level, scale);
         }
-        deckHeading.text = "Deck";
+        deckHeading.text = vrControls ? "Deck — minimum " + cards.minDeckRequired : "Deck";
         collectionFolio.text = "— " + BestiaryUI.Roman(collectionPage + 1) + " —";
         deckFolio.text = "— " + (cards.deck.Count == 0 ? "0" : BestiaryUI.Roman(cards.deck.Count))
             + " / " + BestiaryUI.Roman(cards.deckSize) + " —";
@@ -158,6 +166,7 @@ public class BookDeckUI : MonoBehaviour
     }
     public void Activate(CardData card, bool inDeck)
     {
+        if (bookView != null && bookView.IsTransitioning) return;
         if (!CanEdit) { Say("Deck editing is unavailable during combat."); return; }
         int before = cards.deck.Count;
         if (inDeck) cards.RemoveFromDeck(card); else cards.AddToDeck(card);

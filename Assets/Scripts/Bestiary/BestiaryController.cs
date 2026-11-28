@@ -41,6 +41,7 @@ public class BestiaryController : MonoBehaviour
     {
         pauseController = controller;
         vrPresentation = true;
+        if (deckUI != null) deckUI.ConfigureVR();
     }
 
     public bool IsOpen => pauseController != null && pauseController.IsShowingOverlay(bestiaryPanel);
@@ -106,7 +107,7 @@ public class BestiaryController : MonoBehaviour
         if (previewCamera != null && previewCamera != Camera.main)
             previewCamera.enabled = IsOpen && !vrPresentation;
         if (!IsOpen && bookView != null && bookView.IsVisible) { closing = false; bookView.HideImmediately(); }
-        if (deckTab != null) deckTab.interactable = !vrPresentation && cards != null && cards.CurrentMode != CardSystem.Mode.Combat;
+        if (deckTab != null) deckTab.interactable = cards != null && deckUI != null && cards.CurrentMode != CardSystem.Mode.Combat;
     }
 
     public void Toggle()
@@ -134,7 +135,6 @@ public class BestiaryController : MonoBehaviour
 
     public void OpenDeck()
     {
-        if (vrPresentation) return; // Deck interactions are the next VR stage.
         if (cards == null || deckUI == null || cards.CurrentMode == CardSystem.Mode.Combat)
         {
             if (narration != null) narration.Speak("Deck editing is unavailable during combat.");
@@ -202,6 +202,7 @@ public class BestiaryController : MonoBehaviour
         if (!IsOpen || closing) return;
         if (deckVisited && cards != null && cards.CurrentMode != CardSystem.Mode.Combat && cards.deck.Count < cards.minDeckRequired)
         {
+            if (vrPresentation && deckUI != null) deckUI.ShowMinimumRequired();
             if (narration != null) narration.Speak("Your deck needs at least " + cards.minDeckRequired + " cards before closing. Current deck: " + cards.deck.Count + ".");
             if (Section != BookSection.Deck) SwitchSection(BookSection.Deck);
             return;
